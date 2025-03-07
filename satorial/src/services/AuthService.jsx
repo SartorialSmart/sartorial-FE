@@ -2,8 +2,8 @@ import axiosInstance from '../../utils/axiosConfig';
 import { API } from '../api/apiEndpoints';
 
 const AuthService = {
-  registerCompany: async (userData) => {
-    const response = await axiosInstance.post(API.USER_MANAGEMENT.AUTH.REGISTER_COMPANY, userData);
+  registerOrganization: async (userData) => {
+    const response = await axiosInstance.post(API.USER_MANAGEMENT.AUTH.REGISTER_ORGANIZATION, userData);
     return response.data;
   },
 
@@ -17,9 +17,6 @@ const AuthService = {
     return response.data;
   },
 
-  getAuthenticatedUser: async () => {
-    const response = await axiosInstance.get(API.USER_MANAGEMENT.STAFF.DETAIL('me'));
-  },
 
   updateStaff: async (staffId, staffData) => {
     const response = await axiosInstance.put(API.USER_MANAGEMENT.STAFF.UPDATE + staffId + '/', staffData);
@@ -30,6 +27,22 @@ const AuthService = {
     const response = await axiosInstance.delete(API.USER_MANAGEMENT.STAFF.DETAIL(staffId));
     return response.data;
   },
+
+  getAuthenticatedUser: async () => {
+    try {
+      const response = await axiosInstance.get(API.USER_MANAGEMENT.AUTH.DETAIL);
+
+      return response.data; 
+    } catch (error) {
+
+      if (error.response?.status === 401) {
+        localStorage.removeItem('accessToken'); 
+      }
+      throw error;
+    }
+  },
+
+  
 };
 
 export default AuthService;

@@ -1,26 +1,92 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import AdminRegister from './pages/Auth/AdminRegister';
-// import Dashboard from './pages/Dashboard';
-// import Login from './pages/Auth/AdminLogin';
-import ProtectedRoute from '../utils/ProtectedRoutes'
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import ProtectedRoute from "../utils/ProtectedRoutes";
+import OrganizationRegister from "./pages/Auth/OrganizationRegister";
+import Login from "./pages/Auth/Login";
+import DashboardLayout from "./pages/dashboard/DashboardLayout";
+import LandingPage from "./pages/home/Home";
+
+import ClientDashboard from "./pages/clientPages/ClientDashboard";
+import ClientsListDisplay from "./pages/clientPages/ClientsListDisplay";
+import ClientOrderListDisplay from "./pages/clientPages/ClientOrderListDisplay";
+import AllocationsListDisplay from "./pages/clientPages/AllocationListDisplay";
+import ChatDisplay from "./pages/clientPages/ChatDisplay";
+import GetHelpDisplay from "./pages/clientPages/GetHelpDisplay";
+import ClientDataDisplay from "./pages/clientPages/ClientDataDisplay";
+
+import OrderDashboardDisplay from "./pages/orderPages/OrderDashboard";
+import OrderListDisplay from "./pages/orderPages/OrderListDisplay";
+import BillsListDisplay from "./pages/orderPages/BillsListDisplay";
+import PaymentsListDisplay from "./pages/orderPages/PaymentsListDisplay";
+import VendorCategoryListDisplay from "./pages/orderPages/VendorCategoryListDisplay";
+
+import StaffListDisplay from "./pages/staffPages/StaffListDisplay";
+import ExitedStaffsListDisplay from "./pages/staffPages/ExitedStaffsListDisplay";
+import PayrollListDisplay from "./pages/staffPages/PayrollListDisplay";
+import GeneratePayrollListDisplay from "./pages/staffPages/GeneratePayrollListDisplay";
+
+const dashboards = [
+  "client",
+  "order",
+  "expenses",
+  "reports",
+  "settings",
+  "subscriptions",
+  "staff",
+  "inventories",
+];
+
+const protectedRoutes = [
+
+  { path: "/dashboard", element: <DashboardLayout /> },
+
+
+  { path: "/client/client-dashboard", element: <ClientDashboard /> },
+  { path: "/client/clients-list", element: <ClientsListDisplay /> },
+  { path: "/client/orders-list", element: <ClientOrderListDisplay /> },
+  { path: "/client/allocations-list", element: <AllocationsListDisplay /> },
+  { path: "/chat", element: <ChatDisplay /> },
+  { path: "/client-data/:clientId", element: <ClientDataDisplay /> },
+
+
+  { path: "/order/order-dashboard", element: <OrderDashboardDisplay /> },
+  { path: "/order/orders-list", element: <OrderListDisplay /> },
+  { path: "/order/bills-list", element: <BillsListDisplay /> },
+  { path: "/order/payments-list", element: <PaymentsListDisplay /> },
+  { path: "/order/vendor-category-list", element: <VendorCategoryListDisplay /> },
+
+  { path: "/staff/staff-list", element: <StaffListDisplay /> },
+  { path: "/staff/exited-staffs-list", element: <ExitedStaffsListDisplay /> },
+  { path: "/staff/payroll-list", element: <PayrollListDisplay /> },
+  { path: "/staff/generate-payroll", element: <GeneratePayrollListDisplay /> },
+
+
+];
 
 const App = () => {
   return (
     <Router>
       <Routes>
-        {/* <Route path="/login" element={<Login />} /> */}
-        <Route path="/register" element={<AdminRegister />} />
-        
-        {/* Protected Route for Dashboard */}
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              {/* <Dashboard /> */}
-            </ProtectedRoute>
-          } 
-        />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/register" element={<OrganizationRegister />} />
+        <Route path="/login" element={<Login />} />
+
+
+        {dashboards.map((dashboard, index) => (
+          <Route
+            key={index}
+            path={`/${dashboard}/help-centre`}
+            element={<ProtectedRoute><GetHelpDisplay /></ProtectedRoute>}
+          />
+        ))}
+
+
+        {protectedRoutes.map(({ path, element }, index) => (
+          <Route key={index} path={path} element={<ProtectedRoute>{element}</ProtectedRoute>} />
+        ))}
+
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

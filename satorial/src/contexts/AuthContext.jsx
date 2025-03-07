@@ -11,8 +11,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await AuthService.register(userData);
-      return response;
+      return await AuthService.register(userData);
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
@@ -22,30 +21,49 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await AuthService.login(credentials);
-      localStorage.setItem('accessToken', response.token);
-      await fetchAuthenticatedUser();  
+      
+      console.log("Full Login API Response:", response); 
+
+      const accessToken = response.access_token; 
+      const refreshToken = response.refresh_token;
+  
+      if (!accessToken || !refreshToken) {
+        console.error("Response missing tokens:", response);
+        throw new Error("Access or Refresh token missing in response");
+      }
+  
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      
+      await fetchAuthenticatedUser();
     } catch (error) {
-      console.error('Login failed:', error.response?.data || error.message);
+      console.error("Login failed:", error.response?.data || error.message);
       throw error;
     }
   };
+  
+  
+
 
   const fetchAuthenticatedUser = async () => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
+  
     if (!token) {
       setLoading(false);
       return;
     }
+  
     try {
-      const userData = await AuthService.getAuthenticatedUser();
+      const userData = await AuthService.getAuthenticatedUser(token);
       setUser(userData);
     } catch (error) {
-      console.error('Failed to fetch authenticated user:', error.response?.data || error.message);
-      logout();  
+      console.error("Failed to fetch authenticated user:", error.response?.data || error.message);
+      logout();
     } finally {
       setLoading(false);
     }
   };
+  
 
   const logout = () => {
     localStorage.removeItem('accessToken');
@@ -58,7 +76,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ user, loading, register, login, logout }}>
-      {!loading ? children : <div>Loading application...</div>} 
+      {!loading ? children : <div>Loading application...</div>}
     </AuthContext.Provider>
   );
 };
