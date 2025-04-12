@@ -1,17 +1,15 @@
-import ClientSideABrLayout from "../../components/navs/ClientSideBarLayout";
-import ClientData from "../../components/entityData/ClientData";
+import OrderSideABrLayout from "../../components/navs/OrderSideBarLayout";
+import OrderDetail from "../../components/entityData/orderData.jsx/OrderDetail";
 
 
-
-
-const ClientDataDisplay = () => {
+const OrderDetailDisplay = () => {
   return (
-    <ClientSideABrLayout>
+    <OrderSideABrLayout>
       <div className="bg-gray-100 p-6 rounded-sm min-h-screen ">
-        <ClientData />
+        <OrderDetail />
       </div>
-    </ClientSideABrLayout>
+    </OrderSideABrLayout>
   );
 };
 
-export default ClientDataDisplay;
+export default OrderDetailDisplay;

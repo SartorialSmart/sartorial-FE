@@ -49,19 +49,19 @@ const dashboardItems = [
     title: "Report",
     icon: <Clock size={20} />,
     img: PATTERN_5,
-    button_link: "/reports/reports-dashboard",
+    button_link: "/reports/reports/dashboard",
   },
   {
     title: "Expenses",
     icon: <DollarSign size={20} />,
     img: PATTERN_6,
-    button_link: "/expenses/expenses-dashboard",
+    button_link: "/expenses/overview",
   },
   {
     title: "Inventory",
     icon: <Box size={20} />,
     img: PATTERN_1,
-    button_link: "/inventory/inventory-dash-board",
+    button_link: "/inventory/list/overview",
   },
   {
     title: "Subscription",

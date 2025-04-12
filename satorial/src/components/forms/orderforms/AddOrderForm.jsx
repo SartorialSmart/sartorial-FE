@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
+import { useAuth } from "../../../contexts/AuthContext";
+import DatePicker from "react-date-picker";
+import "react-date-picker/dist/DatePicker.css";
+import "react-calendar/dist/Calendar.css";
 import AddOrderCategoryForm from "./AddOrderCategoryForm";
 import OrderCategoryService from "../../../services/OrderCategoryService";
 import ClientService from "../../../services/ClientService";
@@ -12,17 +16,21 @@ const AddOrderForm = () => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [clients, setClients] = useState([]);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
 
   // State for error modal
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [errorTitle, setErrorTitle] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState({
+    created_by: user.id,
     client: "",
     client_email: "",
-    order_title: "Priscilla’s Wedding Dress",
-    order_description: "Binta's Wedding Dress",
+    order_title: "",
+    order_description: "",
     start_date: "",
     end_date: "",
     order_price: "",
@@ -34,65 +42,92 @@ const AddOrderForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
 
-  const refreshCategories = async () => {
-    try {
-      const response = await OrderCategoryService.getCategories();
-      setCategories(response.data || []);
-    } catch (error) {
-      setErrorTitle("Error");
-      setErrorMessage("Failed to refresh categories.");
-      setIsErrorModalOpen(true); // Show error modal
+    // Handle date fields separately
+    if (name === "start_date" || name === "end_date") {
+      const dateValue = value ? new Date(value) : null; // Convert to Date object if value exists
+      if (name === "start_date") {
+        setStartDate(dateValue);
+      } else if (name === "end_date") {
+        setEndDate(dateValue);
+      }
+
+      // Update form data with the formatted date (YYYY-MM-DD)
+      setFormData((prev) => ({
+        ...prev,
+        [name]: dateValue ? dateValue.toISOString().split("T")[0] : "",
+      }));
+    } else {
+      // Handle other fields
+      setFormData((prev) => {
+        const updatedData = { ...prev, [name]: value };
+
+        // Recalculate balance only if order_price or initial_deposit changes
+        if (name === "order_price" || name === "initial_deposit") {
+          const orderPrice = parseFloat(updatedData.order_price) || 0;
+          const initialDeposit = parseFloat(updatedData.initial_deposit) || 0;
+          updatedData.balance = Math.max(
+            orderPrice - initialDeposit,
+            0
+          ).toFixed(2); // Ensure balance is non-negative and formatted
+        }
+
+        return updatedData;
+      });
     }
   };
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await OrderCategoryService.getCategories();
-        console.log("Categories API Response:", response);
-        setCategories(Array.isArray(response) ? response : []);
-      } catch (error) {
-        setErrorTitle("Error");
-        setErrorMessage("Failed to fetch categories.");
-        setIsErrorModalOpen(true); // Show error modal
-      }
-    };
+  const validateForm = () => {
+    const {
+      client,
+      client_email,
+      order_title,
+      start_date,
+      end_date,
+      order_price,
+      initial_deposit,
+    } = formData;
 
-    const fetchClients = async () => {
-      try {
-        const response = await ClientService.getClients();
-        console.log("Clients API Response:", response);
-        setClients(Array.isArray(response) ? response : []);
-      } catch (error) {
-        setErrorTitle("Error");
-        setErrorMessage("Failed to fetch clients.");
-        setIsErrorModalOpen(true); // Show error modal
-      }
-    };
+    if (
+      !client ||
+      !client_email ||
+      !order_title ||
+      !start_date ||
+      !end_date ||
+      !order_price ||
+      !initial_deposit
+    ) {
+      setErrorTitle("Validation Error");
+      setErrorMessage("Please fill in all required fields.");
+      return false;
+    }
 
-    fetchCategories();
-    fetchClients();
-  }, []);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(client_email)) {
+      setErrorTitle("Validation Error");
+      setErrorMessage("Please enter a valid email address.");
+      return false;
+    }
+
+    if (isNaN(parseFloat(order_price)) || isNaN(parseFloat(initial_deposit))) {
+      setErrorTitle("Validation Error");
+      setErrorMessage("Price and deposit must be valid numbers.");
+      return false;
+    }
+
+    if (new Date(end_date) < new Date(start_date)) {
+      setErrorTitle("Validation Error");
+      setErrorMessage("End date must be after the start date.");
+      return false;
+    }
+
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate required fields
-    if (
-      !formData.client ||
-      !formData.client_email ||
-      !formData.order_title ||
-      !formData.start_date ||
-      !formData.end_date ||
-      !formData.order_price ||
-      !selectedCategory // Ensure a category is selected
-    ) {
-      setErrorTitle("Validation Error");
-      setErrorMessage("Please fill in all required fields.");
-      setIsErrorModalOpen(true); // Show error modal
+    if (!validateForm()) {
+      setIsErrorModalOpen(true);
       return;
     }
 
@@ -101,10 +136,10 @@ const AddOrderForm = () => {
     try {
       await OrderService.createOrder({
         ...formData,
-        order_category: selectedCategory, // Include selected category ID
+        order_category: selectedCategory,
       });
 
-      // Reset form data on success
+      // Reset form data and selected category
       setFormData({
         client: "",
         client_email: "",
@@ -125,11 +160,53 @@ const AddOrderForm = () => {
         error.response?.data?.message ||
           "Failed to create order. Please try again."
       );
-      setIsErrorModalOpen(true); // Show error modal
+      setIsErrorModalOpen(true);
     } finally {
       setLoading(false);
     }
   };
+
+  const refreshCategories = async () => {
+    try {
+      const response = await OrderCategoryService.getCategories();
+      setCategories(response.data || []);
+    } catch (error) {
+      setErrorTitle("Error");
+      setErrorMessage("Failed to refresh categories.");
+      setIsErrorModalOpen(true);
+    }
+  };
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await OrderCategoryService.getCategories();
+        setCategories(Array.isArray(response) ? response : []);
+      } catch (error) {
+        setErrorTitle("Error");
+        setErrorMessage("Failed to fetch categories.");
+        setIsErrorModalOpen(true);
+      }
+    };
+    const selectedClient = clients.find((c) => c.id === formData.client);
+    if (selectedClient) {
+      setFormData((prev) => ({ ...prev, client_email: selectedClient.email }));
+    }
+
+    const fetchClients = async () => {
+      try {
+        const response = await ClientService.getClients();
+        setClients(Array.isArray(response) ? response : []);
+      } catch (error) {
+        setErrorTitle("Error");
+        setErrorMessage("Failed to fetch clients.");
+        setIsErrorModalOpen(true);
+      }
+    };
+
+    fetchCategories();
+    fetchClients();
+  }, []);
 
   return (
     <div className="bg-gray-100 flex items-center justify-center rounded-lg">
@@ -146,6 +223,7 @@ const AddOrderForm = () => {
                 value={formData.client}
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                disabled={loading}
               >
                 <option value="">Select Customer</option>
                 {clients.map((client) => (
@@ -167,6 +245,7 @@ const AddOrderForm = () => {
                 value={formData.client_email}
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                disabled={loading}
               />
             </div>
           </div>
@@ -181,6 +260,7 @@ const AddOrderForm = () => {
               value={formData.order_title}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+              disabled={loading}
             />
           </div>
 
@@ -200,6 +280,7 @@ const AddOrderForm = () => {
                         ? "bg-blue-600 text-white"
                         : "border-gray-300 text-gray-600"
                     }`}
+                    disabled={loading}
                   >
                     {category.name}
                   </button>
@@ -220,6 +301,7 @@ const AddOrderForm = () => {
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
               rows="3"
+              disabled={loading}
             />
           </div>
 
@@ -234,6 +316,7 @@ const AddOrderForm = () => {
                 value={formData.start_date}
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                disabled={loading}
               />
             </div>
 
@@ -247,6 +330,7 @@ const AddOrderForm = () => {
                 value={formData.end_date}
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                disabled={loading}
               />
             </div>
           </div>
@@ -263,6 +347,7 @@ const AddOrderForm = () => {
                 value={formData.order_price}
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                disabled={loading}
               />
             </div>
 
@@ -275,6 +360,7 @@ const AddOrderForm = () => {
                 value={formData.order_type}
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                disabled={loading}
               >
                 <option value="Single">Single</option>
                 <option value="Bulk">Bulk</option>
@@ -292,6 +378,7 @@ const AddOrderForm = () => {
                 value={formData.initial_deposit}
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                disabled={loading}
               />
             </div>
 
@@ -304,7 +391,7 @@ const AddOrderForm = () => {
                 name="balance"
                 placeholder="₦ Enter Amount"
                 value={formData.balance}
-                onChange={handleChange}
+                readOnly
                 className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>

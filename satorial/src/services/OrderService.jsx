@@ -54,7 +54,7 @@ const OrderService = {
    */
   updateOrder: async (orderId, orderData) => {
     try {
-      const response = await axiosInstance.put(API.ORDER_MANAGEMENT.ORDERS.DETAIL(orderId), orderData);
+      const response = await axiosInstance.put(API.ORDER_MANAGEMENT.ORDERS.UPDATE(orderId), orderData);
       return response.data;
     } catch (error) {
       console.error(`Error updating order ${orderId}:`, error);

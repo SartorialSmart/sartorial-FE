@@ -19,11 +19,29 @@ import OrderListDisplay from "./pages/orderPages/OrderListDisplay";
 import BillsListDisplay from "./pages/orderPages/BillsListDisplay";
 import PaymentsListDisplay from "./pages/orderPages/PaymentsListDisplay";
 import VendorCategoryListDisplay from "./pages/orderPages/VendorCategoryListDisplay";
+import OrderDetailDisplay from "./pages/orderPages/OrderDetailDisplay";
+import EditOrderFormDisplay from "./pages/orderPages/EditOrderFormDisplay";
 
 import StaffListDisplay from "./pages/staffPages/StaffListDisplay";
 import ExitedStaffsListDisplay from "./pages/staffPages/ExitedStaffsListDisplay";
 import PayrollListDisplay from "./pages/staffPages/PayrollListDisplay";
 import GeneratePayrollListDisplay from "./pages/staffPages/GeneratePayrollListDisplay";
+
+import ReportDashboardDisplay from "./pages/reportPages/ReportDashboardDisplay";
+import MonthlyDataReportDisplay from "./pages/reportPages/MonthlyDataReportDisplay";
+import SalesReportDisplay from "./pages/reportPages/SalesReportDisplay";
+import PaymentsReportDisplay from "./pages/reportPages/PaymentsReportDisplay";
+import OrderReportDisplay from "./pages/reportPages/OrderReportDisplay";
+import BillsReportDisplay from "./pages/reportPages/BillsReportDisplay";
+import StaffPerformanceReportDisplay from "./pages/reportPages/StaffPerformanceReportDisplay";
+
+import ExpensesDashboardDisplay from "./pages/expensesPages/ExpensesDashboardDisplay";
+import ExpensesCategoryListDisplay from "./pages/expensesPages/ExpensesCategoryListDisplay";
+
+import InventoryListDisplay from "./pages/inventories/InventoryListDisplay";
+import InventoryCategoryListDisplay from "./pages/inventories/InventoryListDisplay";
+import DispenseInventoryListDisplay from "./pages/inventories/DispenseInventoryListDisplay";
+
 
 const dashboards = [
   "client",
@@ -54,12 +72,30 @@ const protectedRoutes = [
   { path: "/order/bills-list", element: <BillsListDisplay /> },
   { path: "/order/payments-list", element: <PaymentsListDisplay /> },
   { path: "/order/vendor-category-list", element: <VendorCategoryListDisplay /> },
+  { path: "/order/detail/:orderId", element: <OrderDetailDisplay /> },
+  { path: "/order/edit/:orderId", element: <EditOrderFormDisplay /> },
 
   { path: "/staff/staff-list", element: <StaffListDisplay /> },
   { path: "/staff/exited-staffs-list", element: <ExitedStaffsListDisplay /> },
   { path: "/staff/payroll-list", element: <PayrollListDisplay /> },
   { path: "/staff/generate-payroll", element: <GeneratePayrollListDisplay /> },
 
+
+  { path: "/reports/reports/dashboard", element: <ReportDashboardDisplay /> },
+  { path: "/reports/monthly/data", element: <MonthlyDataReportDisplay /> },
+  { path: "/reports/sales/report", element: <SalesReportDisplay /> },
+  { path: "/reports/payments/report", element: <PaymentsReportDisplay /> },
+  { path: "/reports/orders/report", element: <OrderReportDisplay /> },
+  { path: "/reports/bills/report", element: <BillsReportDisplay /> },
+  { path: "/reports/staff/performance/report", element: <StaffPerformanceReportDisplay /> },
+
+  { path: "/expenses/overview", element: <ExpensesDashboardDisplay /> },
+  { path: "/expenses/category/list", element: <ExpensesCategoryListDisplay /> },
+
+  { path: "/inventory/list/overview", element: <InventoryListDisplay /> },
+  { path: "/inventory/category/list", element: <InventoryCategoryListDisplay /> },
+  { path: "/inventory/dispense/list", element: <DispenseInventoryListDisplay /> },
+  
 
 ];
 

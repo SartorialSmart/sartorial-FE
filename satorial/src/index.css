@@ -15,3 +15,7 @@
       "wdth" 100;
   }
   
+  .dashed-line {
+    border-left: 2px dashed;
+  }
+  

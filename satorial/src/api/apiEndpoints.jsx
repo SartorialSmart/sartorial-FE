@@ -69,6 +69,7 @@ export const API = {
           CREATE: '/orders/orders/',
           LIST: '/orders/orders/',
           DETAIL: (orderId) => `/orders/orders/${orderId}/`,
+          UPDATE: (orderId) => `/orders/orders/${orderId}/`,
           ORDER_LIST: '/orders/orders/list/',
         },
         VENDORS: {
@@ -78,21 +79,29 @@ export const API = {
         },
 
         VENDOR_CATEGORIES: {
-          CREATE: '//ordersvendors-category/',
+          CREATE: '/orders/vendors-category/',
           LIST: '/orders/vendors-category/',
           DETAIL: (categoryId) => `/vendors-category/${categoryId}/`,
-          WITH_BILL_COUNT: '/vendors-bills/',
+          WITH_BILL_COUNT: '/orders/vendors-bills/',
         },
 
         BILLS: {
-          CREATE: '/bills/',
-          LIST: '/bills/',
-          DETAIL: (billId) => `/bills/${billId}/`,
-          BILL_LIST: '/bills/list/',
+          CREATE: '/orders/bills/',
+          LIST: '/orders/bills/',
+          DETAIL: (billId) => `/orders/bills/${billId}/`,
+          UPDATE: (billId) => `/orders/bills/${billId}/`,
+          BILL_LIST: '/orders/bills/list/',
+
+          BILL_PAYMENT: {
+            CREATE: '/orders/bill-payments/',
+            LIST: '/orders/bill-payments/',
+            DETAIL: (paymentId) => `/orders/bill-payments/${paymentId}/`,
+            UPDATE: (paymentId) => `/orders/bill-payments/${paymentId}/`,
+          },
         },
         ORDER_PAYMENTS: {
-          CREATE: '/order-payments/',
-          LIST: '/order-payments/',
+          CREATE: '/orders/order-payments/',
+          LIST: '/orders/order-payments/',
           DETAIL: (paymentId) => `/orders/order-payments/${paymentId}/`,
           PAYMENT_LIST: '/orders/order-payments/list/',
         },

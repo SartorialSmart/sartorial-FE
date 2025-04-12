@@ -40,7 +40,7 @@ const ToolbarWithDateFilter_4 = () => {
 
         </div>
 
-        <div className="flex items-start space-x-3">
+        <div className="flex items-start space-x-3 justify-end">
           <input
             type="text"
             placeholder="Search here..."

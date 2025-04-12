@@ -1,0 +1,92 @@
+import { useState } from "react";
+import { MoreVertical, Search, Download } from "lucide-react";
+
+const ExpensesList = () => {
+  const [selectedFilter, setSelectedFilter] = useState("All");
+
+  const expenses = Array(8).fill({
+    date: "14/04/2024 10:30AM",
+    category: "Materials",
+    amount: "500,000",
+    createdBy: "Kemi Johnson",
+    paidTo: "Lara Adams",
+  });
+
+  return (
+    <div className="p-6 bg-gray-100 min-h-screen">
+      {/* Filter & Search Bar */}
+      <div className="flex items-center justify-between mb-4">
+        {/* Dropdown */}
+        <select
+          className="border rounded-md px-3 py-2 text-gray-700 bg-white"
+          value={selectedFilter}
+          onChange={(e) => setSelectedFilter(e.target.value)}
+        >
+          <option value="All">All</option>
+          <option value="Materials">Materials</option>
+          <option value="Labor">Labor</option>
+        </select>
+
+        {/* Search Bar */}
+        <div className="relative w-1/3">
+          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search here..."
+            className="pl-10 pr-4 py-2 border rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-300"
+          />
+        </div>
+
+        {/* Export Button */}
+        <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm">
+          <Download size={16} />
+          Export
+        </button>
+      </div>
+
+      {/* Expenses Table */}
+      <div className="bg-white rounded-lg shadow">
+        <table className="w-full border-collapse">
+          {/* Table Header */}
+          <thead className="bg-gray-100">
+            <tr className="text-left text-gray-600">
+              <th className="p-3">
+                <input type="checkbox" />
+              </th>
+              {["Date/Time", "Category", "Amount", "Created by", "Paid to", "Actions"].map(
+                (header, idx) => (
+                  <th key={idx} className="p-3 font-medium">
+                    {header}
+                  </th>
+                )
+              )}
+            </tr>
+          </thead>
+
+          {/* Table Body */}
+          <tbody>
+            {expenses.map((expense, index) => (
+              <tr key={index} className="border-t">
+                <td className="p-3">
+                  <input type="checkbox" />
+                </td>
+                <td className="p-3">{expense.date}</td>
+                <td className="p-3">{expense.category}</td>
+                <td className="p-3">{expense.amount}</td>
+                <td className="p-3">{expense.createdBy}</td>
+                <td className="p-3">{expense.paidTo}</td>
+                <td className="p-3">
+                  <button className="p-2 rounded-full hover:bg-gray-200">
+                    <MoreVertical size={18} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default ExpensesList;
