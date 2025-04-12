@@ -5,29 +5,7 @@ export const API = {
         REGISTER_ORGANIZATION: '/users/register-organization/', 
         DETAIL: '/users/me/',
       },
-      STAFF: {
-        LIST: '/users/staff-list/',
-        DETAIL: (staffId) => `/users/staff/detail/${staffId}/`,
-        ADD: '/users/add-staff/',
-        UPDATE: '/users/staffs/',
-        DELETE: (staffId) => `/staffs/${staffId}`,
-      },
-      SALARY: {
-        UPDATE: '/users/update-salary/',
-      },
-      EXITED_STAFF: {
-        LIST: '/users/exited-staff-list/',
-        DETAIL: (staffId) => `/users/exited-staff/${staffId}/`,
-        ADD: '/users/exited-staff/',
-      },
-      ATTENDANCE: {
-        LIST: '/users/attendance/',
-        DETAIL: (attendanceId) => `/attendance/${attendanceId}/`,
-      },
-      PAYROLL: {
-        LIST: '/users/payroll/',
-        DETAIL: (payrollId) => `/users/payroll/${payrollId}/`,
-      },
+      
     },
 
     CLIENT_MANAGEMENT: {
@@ -129,5 +107,32 @@ export const API = {
           SUMMARY: '/expenses/summary/',
         },
       },
+
+      STAFF_MANAGEMENT: {
+        STAFF: {
+          LIST: '/users/staff-list/',
+          DETAIL: (staffId) => `/users/staff/detail/${staffId}/`,
+          ADD: '/users/add-staff/',
+          UPDATE: '/users/staffs/',
+          DELETE: (staffId) => `/staffs/${staffId}`,
+        },
+        SALARY: {
+          UPDATE: '/users/update-salary/',
+        },
+        EXITED_STAFF: {
+          LIST: '/users/exited-staff-list/',
+          DETAIL: (staffId) => `/users/exited-staff/${staffId}/`,
+          ADD: '/users/exited-staff/',
+        },
+        ATTENDANCE: {
+          LIST: '/users/attendance/',
+          DETAIL: (attendanceId) => `/attendance/${attendanceId}/`,
+        },
+        PAYROLL: {
+          LIST: '/users/payroll/',
+          DETAIL: (payrollId) => `/users/payroll/${payrollId}/`,
+        },
+      }
+
   };
   

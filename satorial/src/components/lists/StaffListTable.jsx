@@ -1,60 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 import { MoreVertical } from "lucide-react";
+import { Spin } from "antd";
+import StaffService from "../../services/StaffService";
 
 const StaffListTable = () => {
+  const navigate = useNavigate(); // ✅ Initialize navigate
   const columns = [
-    { label: "Name", key: "name" },
+    { label: "Name", key: "first_name" },
     { label: "Email", key: "email" },
-    { label: "Phone Number", key: "phone" },
+    { label: "Phone Number", key: "phone_number" },
     { label: "Role", key: "role" },
-    { label: "Employment Date", key: "employmentDate" },
+    { label: "Employment Date", key: "employment_date" },
   ];
 
   const [selectedStaff, setSelectedStaff] = useState([]);
-  const [staffList, setStaffList] = useState([
-    {
-      name: "Tunde Bakare",
-      email: "tunde@gmail.com",
-      phone: "08022336587",
-      role: "Tailor",
-      employmentDate: "12/05/2024",
-    },
-    {
-      name: "Tunde Bakare",
-      email: "tunde@gmail.com",
-      phone: "08022336587",
-      role: "Tailor",
-      employmentDate: "12/05/2024",
-    },
-    {
-      name: "Tunde Bakare",
-      email: "tunde@gmail.com",
-      phone: "08022336587",
-      role: "Tailor",
-      employmentDate: "12/05/2024",
-    },
-    {
-      name: "Tunde Bakare",
-      email: "tunde@gmail.com",
-      phone: "08022336587",
-      role: "Tailor",
-      employmentDate: "12/05/2024",
-    },
-    {
-      name: "Tunde Bakare",
-      email: "tunde@gmail.com",
-      phone: "08022336587",
-      role: "Tailor",
-      employmentDate: "12/05/2024",
-    },
-    {
-      name: "Tunde Bakare",
-      email: "tunde@gmail.com",
-      phone: "08022336587",
-      role: "Tailor",
-      employmentDate: "12/05/2024",
-    },
-  ]);
+  const [staffList, setStaffList] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const fetchStaffList = async () => {
+      setLoading(true);
+      try {
+        const data = await StaffService.listStaff();
+        if (Array.isArray(data.results)) {
+          setStaffList(data.results);
+        } else {
+          throw new Error("Invalid data format");
+        }
+      } catch (error) {
+        setError("Failed to load staff list");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStaffList();
+  }, []);
 
   const handleSelectAll = (e) => {
     setSelectedStaff(e.target.checked ? staffList.map((s) => s.email) : []);
@@ -66,9 +51,68 @@ const StaffListTable = () => {
     );
   };
 
+  const handleDropdownToggle = (email, e) => {
+    e.stopPropagation();
+    setDropdownOpen(dropdownOpen === email ? null : email);
+  };
+
+  const handleAction = (action, staff, e) => {
+    e.stopPropagation();
+    if (action === "view") {
+      navigate(`/staff/staff-detail/${staff.id}`); // ✅ Proper navigation
+    } else if (action === "delete") {
+      console.log("Delete staff:", staff);
+      // delete logic
+    }
+    setDropdownOpen(null);
+  };
+
+  const handleOutsideClick = useCallback((event) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setDropdownOpen(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("click", handleOutsideClick);
+    return () => {
+      document.removeEventListener("click", handleOutsideClick);
+    };
+  }, [handleOutsideClick]);
+
+  const DropdownMenu = ({ staff }) => (
+    <div
+      ref={dropdownRef}
+      className="absolute right-0 mt-2 w-32 bg-white shadow-lg rounded-lg border dropdown-menu z-50"
+    >
+      <button
+        className="w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
+        onClick={(e) => handleAction("view", staff, e)}
+      >
+        View
+      </button>
+      <button
+        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+        onClick={(e) => handleAction("delete", staff, e)}
+      >
+        Delete
+      </button>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 bg-gray-100">
       <h2 className="text-2xl font-semibold mb-4">Staff List</h2>
+
+      {error && <div className="text-red-500 text-center mb-4">{error}</div>}
 
       <div className="overflow-x-auto bg-white rounded-lg shadow-md border">
         <table className="w-full border-collapse min-w-[600px]">
@@ -92,31 +136,41 @@ const StaffListTable = () => {
           </thead>
 
           <tbody>
-            {staffList.map((staff, index) => (
-              <tr key={index} className="border-t hover:bg-gray-50 transition">
-                <td className="p-3 sm:p-4 w-12">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4"
-                    checked={selectedStaff.includes(staff.email)}
-                    onChange={() => handleSelect(staff.email)}
-                  />
-                </td>
-                {columns.map((col, colIndex) => (
-                  <td key={colIndex} className="p-3 sm:p-4 text-sm sm:text-base">
-                    {staff[col.key]}
-                  </td>
-                ))}
-                <td className="sm:p-4 w-10 text-gray-600">
-                  <div className="border-[1px] border-[#9e9e9e] rounded-md">
-                    <MoreVertical
-                      size={18}
-                      className="cursor-pointer hover:text-gray-800 text-[#9e9e9e] transition m-1"
+            {staffList.length > 0 ? (
+              staffList.map((staff, index) => (
+                <tr key={index} className="border-t hover:bg-gray-50 transition">
+                  <td className="p-3 sm:p-4 w-12">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4"
+                      checked={selectedStaff.includes(staff.email)}
+                      onChange={() => handleSelect(staff.email)}
                     />
-                  </div>
+                  </td>
+                  {columns.map((col, colIndex) => (
+                    <td key={colIndex} className="p-3 sm:p-4 text-sm sm:text-base">
+                      {staff[col.key]}
+                    </td>
+                  ))}
+                  <td className="sm:p-4 w-10 text-gray-600">
+                    <div className="relative">
+                      <MoreVertical
+                        size={18}
+                        className="cursor-pointer hover:text-gray-800 text-[#9e9e9e] transition m-1"
+                        onClick={(e) => handleDropdownToggle(staff.email, e)}
+                      />
+                      {dropdownOpen === staff.email && <DropdownMenu staff={staff} />}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={columns.length + 1} className="text-center p-4">
+                  No staff available
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

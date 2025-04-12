@@ -23,6 +23,7 @@ import OrderDetailDisplay from "./pages/orderPages/OrderDetailDisplay";
 import EditOrderFormDisplay from "./pages/orderPages/EditOrderFormDisplay";
 
 import StaffListDisplay from "./pages/staffPages/StaffListDisplay";
+import StaffDetailDisplay from "./pages/staffPages/StaffDetailDisplay";
 import ExitedStaffsListDisplay from "./pages/staffPages/ExitedStaffsListDisplay";
 import PayrollListDisplay from "./pages/staffPages/PayrollListDisplay";
 import GeneratePayrollListDisplay from "./pages/staffPages/GeneratePayrollListDisplay";
@@ -41,6 +42,7 @@ import ExpensesCategoryListDisplay from "./pages/expensesPages/ExpensesCategoryL
 import InventoryListDisplay from "./pages/inventories/InventoryListDisplay";
 import InventoryCategoryListDisplay from "./pages/inventories/InventoryListDisplay";
 import DispenseInventoryListDisplay from "./pages/inventories/DispenseInventoryListDisplay";
+
 
 
 const dashboards = [
@@ -76,6 +78,7 @@ const protectedRoutes = [
   { path: "/order/edit/:orderId", element: <EditOrderFormDisplay /> },
 
   { path: "/staff/staff-list", element: <StaffListDisplay /> },
+  { path: "/staff/staff-detail/:id", element: <StaffDetailDisplay /> },
   { path: "/staff/exited-staffs-list", element: <ExitedStaffsListDisplay /> },
   { path: "/staff/payroll-list", element: <PayrollListDisplay /> },
   { path: "/staff/generate-payroll", element: <GeneratePayrollListDisplay /> },
