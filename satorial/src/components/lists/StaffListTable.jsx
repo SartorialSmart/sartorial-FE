@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 import { MoreVertical } from "lucide-react";
 import { Spin } from "antd";
-import StaffService from "../../services/StaffService";
+import StaffService from "../../services/staffServices/StaffService";
 
 const StaffListTable = () => {
   const navigate = useNavigate(); // ✅ Initialize navigate
@@ -19,6 +19,9 @@ const StaffListTable = () => {
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState(null);
+
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -59,10 +62,10 @@ const StaffListTable = () => {
   const handleAction = (action, staff, e) => {
     e.stopPropagation();
     if (action === "view") {
-      navigate(`/staff/staff-detail/${staff.id}`); // ✅ Proper navigation
+      navigate(`/staff/staff-detail/${staff.slug}`); // ✅ Proper navigation
     } else if (action === "delete") {
-      console.log("Delete staff:", staff);
-      // delete logic
+      setStaffToDelete(staff);
+      setShowDeleteModal(true); // Show modal
     }
     setDropdownOpen(null);
   };
@@ -174,6 +177,44 @@ const StaffListTable = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && staffToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-md shadow-lg p-6 w-full max-w-sm">
+            <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
+            <p className="mb-6">
+              Are you sure you want to delete <strong>{staffToDelete.first_name} {staffToDelete.last_name}</strong>?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 text-sm rounded bg-gray-200 hover:bg-gray-300"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setStaffToDelete(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded"
+                onClick={async () => {
+                  try {
+                    await StaffService.deleteStaff(staffToDelete.slug);
+                    setStaffList((prev) => prev.filter((s) => s.slug !== staffToDelete.slug));
+                    setShowDeleteModal(false);
+                    setStaffToDelete(null);
+                  } catch (error) {
+                    console.error("Failed to delete staff:", error);
+                  }
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

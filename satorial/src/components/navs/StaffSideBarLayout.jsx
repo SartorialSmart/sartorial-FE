@@ -10,7 +10,6 @@ const StaffSideBarLayout = ({ children }) => {
     { icon: <Users size={18} />, label: "Staffs", path: "/staff/staff-list" },
     { icon: <LogOut size={18} />, label: "Exit Staff", path: "/staff/exited-staffs-list" },
     { icon: <DollarSign size={18} />, label: "Payroll", path: "/staff/payroll-list" },
-    { icon: <LifeBuoy size={18} />, label: "Generate Payroll", path: "/staff/generate-payroll" },
     { icon: <HelpCircle size={18} />, label: "Help Centre", path: "/client/help-centre" },
   ];
 

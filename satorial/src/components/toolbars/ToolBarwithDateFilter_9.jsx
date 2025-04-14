@@ -2,9 +2,12 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import ExitStaffFormModal from "../modals/formModals/ExitStaffFormModal";
 import AddButton from "../buttons/AddButton";
+import { useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 const ToolbarWithDateFilter_9 = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="flex items-center justify-between py-4 px-6 rounded-lg shadow-sm">
@@ -16,9 +19,12 @@ const ToolbarWithDateFilter_9 = () => {
       </div>
 
       <div className="">
-        <div className="flex items-center space-x-2 mb-6">
-          <AddButton text="Genrate Payroll" onClick={() => setIsModalOpen(true)} />
-        </div>
+      <div className="flex items-center space-x-2 mb-6">
+      <AddButton 
+        text="Compute Payroll" 
+        onClick={() => navigate("/staff/generate-payroll")} 
+      />
+    </div>
 
         <div className="flex items-start space-x-3">
           <input

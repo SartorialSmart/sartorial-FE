@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { X, Upload, Eye, EyeOff } from "lucide-react";
-import StaffService from "../../../services/StaffService";
+import StaffService from "../../../services/staffServices/StaffService";
 import { toast } from "react-toastify";
 
 const AddStaffForm = ({ onClose }) => {

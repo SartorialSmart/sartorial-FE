@@ -1,5 +1,5 @@
-import axiosInstance from "../../utils/axiosConfig";
-import { API } from "../api/apiEndpoints";
+import axiosInstance from "../../../utils/axiosConfig";
+import { API } from "../../api/apiEndpoints";
 
 const StaffService = {
   // List all staff members
@@ -9,9 +9,9 @@ const StaffService = {
   },
 
   // Get single staff detail
-  getStaffDetail: async (staffId) => {
+  getStaffDetail: async (slug) => {
     const response = await axiosInstance.get(
-      API.STAFF_MANAGEMENT.STAFF.DETAIL(staffId)
+      API.STAFF_MANAGEMENT.STAFF.DETAIL(slug)
     );
     return response.data;
   },
@@ -20,7 +20,7 @@ const StaffService = {
     const formData = new FormData();
 
     for (const key in staffData) {
-      if (staffData.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(staffData, key)) {
         formData.append(key, staffData[key]);
       }
     }
@@ -42,17 +42,30 @@ const StaffService = {
     }
   },
 
-  updateStaff: async (staffId, updatedData) => {
+  updateStaff: async (slug, updatedData) => {
+    const formData = new FormData();
+
+    for (const key in updatedData) {
+      if (Object.prototype.hasOwnProperty.call(updatedData, key)) {
+        formData.append(key, updatedData[key]);
+      }
+    }
+
     const response = await axiosInstance.put(
-      `${API.STAFF_MANAGEMENT.STAFF.UPDATE}${staffId}/`,
-      updatedData
+      API.STAFF_MANAGEMENT.STAFF.UPDATE(slug),
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
     );
     return response.data;
   },
 
-  deleteStaff: async (staffId) => {
+  deleteStaff: async (slug) => {
     const response = await axiosInstance.delete(
-      API.STAFF_MANAGEMENT.STAFF.DELETE(staffId)
+      API.STAFF_MANAGEMENT.STAFF.DELETE(slug)
     );
     return response.data;
   },
