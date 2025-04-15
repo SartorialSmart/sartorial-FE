@@ -5,13 +5,23 @@ const VendorService = {
   // Create a new vendor
   createVendor: async (vendorData) => {
     try {
-      const response = await axiosInstance.post(API.ORDER_MANAGEMENT.VENDORS.CREATE, vendorData);
+      const response = await axiosInstance.post(
+        API.ORDER_MANAGEMENT.VENDORS.CREATE,
+        vendorData,
+        {
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
       return response.data;
     } catch (error) {
       console.error("❌ Error creating vendor:", error.response?.data || error.message);
       throw new Error(error.response?.data?.message || "Failed to create vendor. Please try again.");
     }
   },
+  
 
   // Fetch the list of all vendors
   getVendorsList: async () => {

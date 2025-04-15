@@ -42,6 +42,7 @@ import ExpensesCategoryListDisplay from "./pages/expensesPages/ExpensesCategoryL
 import InventoryListDisplay from "./pages/inventories/InventoryListDisplay";
 import InventoryCategoryListDisplay from "./pages/inventories/InventoryListDisplay";
 import DispenseInventoryListDisplay from "./pages/inventories/DispenseInventoryListDisplay";
+import VendorListDisplay from "./pages/orderPages/VendorListDisplay";
 
 
 
@@ -74,6 +75,8 @@ const protectedRoutes = [
   { path: "/order/bills-list", element: <BillsListDisplay /> },
   { path: "/order/payments-list", element: <PaymentsListDisplay /> },
   { path: "/order/vendor-category-list", element: <VendorCategoryListDisplay /> },
+  { path: "/order/vendor-list", element: <VendorListDisplay /> },
+  
   { path: "/order/detail/:orderId", element: <OrderDetailDisplay /> },
   { path: "/order/edit/:orderId", element: <EditOrderFormDisplay /> },
 

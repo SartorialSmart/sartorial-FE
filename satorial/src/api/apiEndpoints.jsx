@@ -41,6 +41,7 @@ export const API = {
       LIST: "/orders/order-categories/",
       DETAIL: (categoryId) => `/order-categories/${categoryId}/`,
     },
+    
     ORDERS: {
       CREATE: "/orders/orders/",
       LIST: "/orders/orders/",
@@ -48,6 +49,7 @@ export const API = {
       UPDATE: (orderId) => `/orders/orders/${orderId}/`,
       ORDER_LIST: "/orders/orders/list/",
     },
+
     VENDORS: {
       CREATE: "/orders/vendors/",
       LIST: "/orders/vendors/",
@@ -75,20 +77,24 @@ export const API = {
         UPDATE: (paymentId) => `/orders/bill-payments/${paymentId}/`,
       },
     },
+
     ORDER_PAYMENTS: {
       CREATE: "/orders/order-payments/",
       LIST: "/orders/order-payments/",
       DETAIL: (paymentId) => `/orders/order-payments/${paymentId}/`,
       PAYMENT_LIST: "/orders/order-payments/list/",
     },
+
     INVOICES: {
       CREATE: "/orders/Invoice/",
       DETAIL: "/orders/Invoice/",
       BY_ORDER_ID: (orderId) => `/orders/invoices/order/${orderId}/`,
     },
+
     DASHBOARD: {
       OVERVIEW: "/orders/order-dashboard/",
     },
+
   },
 
   EXPENSE_MANAGEMENT: {
