@@ -12,10 +12,12 @@ const Login = () => {
     email: "",
     password: "",
   });
+
   const [errors, setErrors] = useState({
     email: "",
     password: "",
   });
+
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -48,7 +50,7 @@ const Login = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    // Clear error when user starts typing
+
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });
     }
@@ -56,9 +58,9 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     try {
       setIsLoading(true);
       setErrorMessage("");
@@ -74,8 +76,7 @@ const Login = () => {
       }, 2000);
     } catch (error) {
       let message = "Login failed. Please check your credentials.";
-      
-      // Handle different error formats
+
       if (error.response?.data) {
         if (typeof error.response.data === "string") {
           message = error.response.data;
@@ -83,7 +84,9 @@ const Login = () => {
           message = error.response.data.detail;
         } else {
           message = Object.entries(error.response.data)
-            .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(", ") : errors}`)
+            .map(([field, errors]) =>
+              `${field}: ${Array.isArray(errors) ? errors.join(", ") : errors}`
+            )
             .join(". ");
         }
       } else if (error.message) {
@@ -101,12 +104,13 @@ const Login = () => {
     <div className="flex min-h-screen bg-gray-100">
       {/* Message Modal */}
       <MessageModal
-        isOpen={showModal}
+        isOpen={showModal && (successMessage || errorMessage)}
         type={successMessage ? "success" : "error"}
         message={successMessage || errorMessage}
         onClose={() => {
           setShowModal(false);
           setErrorMessage("");
+          setSuccessMessage("");
         }}
       />
 
@@ -118,7 +122,7 @@ const Login = () => {
         <div className="bg-black bg-opacity-40 w-full h-full flex flex-col justify-between p-16">
           <h1 className="text-white text-5xl font-bold mb-6">Sartorial</h1>
           <div>
-            <h2 className="text-5xl md:text-5xl font-semibold text-white drop-shadow-lg">
+            <h2 className="text-5xl font-semibold text-white drop-shadow-lg">
               The Smarter Way to <br /> Manage Your Projects
             </h2>
             <p className="text-white text-sm leading-relaxed">
@@ -143,7 +147,9 @@ const Login = () => {
                 onChange={handleChange}
                 placeholder="Enter your email"
                 className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                  errors.email ? "border-red-500 focus:ring-red-200" : "focus:ring-blue-400 border-gray-300"
+                  errors.email
+                    ? "border-red-500 focus:ring-red-200"
+                    : "focus:ring-blue-400 border-gray-300"
                 }`}
                 required
               />
@@ -161,7 +167,9 @@ const Login = () => {
                 onChange={handleChange}
                 placeholder="Enter your password"
                 className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                  errors.password ? "border-red-500 focus:ring-red-200" : "focus:ring-blue-400 border-gray-300"
+                  errors.password
+                    ? "border-red-500 focus:ring-red-200"
+                    : "focus:ring-blue-400 border-gray-300"
                 }`}
                 required
               />
@@ -178,7 +186,7 @@ const Login = () => {
                   type="checkbox"
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                <label htmlFor="remember-me" className="ml-2 text-sm text-gray-700">
                   Remember me
                 </label>
               </div>
@@ -199,9 +207,25 @@ const Login = () => {
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Processing...
                 </>
@@ -250,7 +274,10 @@ const Login = () => {
           <div className="mt-6 text-center">
             <p className="text-gray-500">
               Don't have an account?{" "}
-              <Link to="/register" className="text-blue-600 hover:text-blue-500 hover:underline">
+              <Link
+                to="/register"
+                className="text-blue-600 hover:text-blue-500 hover:underline"
+              >
                 Sign up
               </Link>
             </p>

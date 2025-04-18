@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OLIFNG - Launching Soon</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4a6cf7;
+      --secondary: #ff6b6b;
+      --dark: #1e293b;
+      --light: #f8fafc;
+      --accent: #f59e0b;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #1f1c2c, #928dab);
+      color: var(--light);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-attachment: fixed;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 3rem 2rem;
+      text-align: center;
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .subheading {
+      font-size: 1.3rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 2.5rem;
+      line-height: 1.6;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .launch-badge {
+      display: inline-block;
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--accent);
+      padding: 0.8rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+      margin-bottom: 2.5rem;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .contact {
+      margin: 2.5rem 0;
+      font-size: 1.1rem;
+      line-height: 1.8;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .contact-icon {
+      margin-right: 10px;
+      color: var(--primary);
+    }
+
+    .socials {
+      margin-top: 2.5rem;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .socials a {
+      color: var(--light);
+      font-size: 1.8rem;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .socials a:hover {
+      transform: translateY(-5px) scale(1.1);
+      background: var(--primary);
+      box-shadow: 0 10px 20px rgba(74, 108, 247, 0.3);
+    }
+
+    .footer {
+      margin-top: 3rem;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* Countdown timer - optional */
+    .countdown {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+
+    .countdown-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      border-radius: 10px;
+      min-width: 80px;
+    }
+
+    .countdown-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .countdown-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.7;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+      }
+
+      .subheading {
+        font-size: 1.1rem;
+      }
+
+      .socials {
+        gap: 1rem;
+      }
+
+      .socials a {
+        width: 45px;
+        height: 45px;
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>OLIFNG</h1>
+    <p class="subheading">Innovatively empowering businesses to sustainably thrive and create lasting values through cutting-edge solutions.</p>
+    
+    <div class="launch-badge">
+      <i class="fas fa-rocket" style="margin-right: 8px;"></i>
+      We're Launching Soon!
+    </div>
+
+    <!-- Optional Countdown Timer - Uncomment to use -->
+    <!--
+    <div class="countdown">
+      <div class="countdown-item">
+        <div class="countdown-number" id="days">00</div>
+        <div class="countdown-label">Days</div>
+      </div>
+      <div class="countdown-item">
+        <div class="countdown-number" id="hours">00</div>
+        <div class="countdown-label">Hours</div>
+      </div>
+      <div class="countdown-item">
+        <div class="countdown-number" id="minutes">00</div>
+        <div class="countdown-label">Minutes</div>
+      </div>
+      <div class="countdown-item">
+        <div class="countdown-number" id="seconds">00</div>
+        <div class="countdown-label">Seconds</div>
+      </div>
+    </div>
+    -->
+
+    <div class="contact">
+      <div class="contact-item">
+        <i class="fas fa-map-marker-alt contact-icon"></i>
+        <span>Former Tommy Guest Inn, Kubwa, Abuja</span>
+      </div>
+      <div class="contact-item">
+        <i class="fas fa-phone-alt contact-icon"></i>
+        <span>+234 803 496 8152</span>
+      </div>
+      <div class="contact-item">
+        <i class="fas fa-envelope contact-icon"></i>
+        <span>info.olifng@gmail.com</span>
+      </div>
+    </div>
+
+    <div class="socials">
+      <a href="https://www.facebook.com/olifng" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+      <a href="https://www.instagram.com/olifng" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+      <a href="https://www.twitter.com/olifng" target="_blank" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>
+      <a href="https://t.me/olifng" target="_blank" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
+      <a href="https://www.youtube.com/@olifng" target="_blank" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+      <a href="https://www.tiktok.com/@olifng" target="_blank" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+    </div>
+
+    <div class="footer">
+      &copy; <span id="year">2025</span> OLIFNG. All rights reserved.
+    </div>
+  </div>
+
+  <script>
+    // Update copyright year automatically
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Optional: Countdown timer script - Uncomment if using countdown
+    /*
+    function updateCountdown() {
+      const launchDate = new Date('2025-01-01').getTime();
+      const now = new Date().getTime();
+      const distance = launchDate - now;
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      document.getElementById('days').textContent = days.toString().padStart(2, '0');
+      document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+      document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+      document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+    */
+  </script>
+</body>
+</html>

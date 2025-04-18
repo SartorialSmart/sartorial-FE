@@ -43,6 +43,8 @@ import InventoryListDisplay from "./pages/inventories/InventoryListDisplay";
 import InventoryCategoryListDisplay from "./pages/inventories/InventoryListDisplay";
 import DispenseInventoryListDisplay from "./pages/inventories/DispenseInventoryListDisplay";
 import VendorListDisplay from "./pages/orderPages/VendorListDisplay";
+import SubscriptionPanelDisplay from "./pages/subscriptionPages/SubscriptionPanelDisplay";
+import PricingPlansDisplay from "./pages/subscriptionPages/PricingPlansDisplay";
 
 
 
@@ -101,6 +103,10 @@ const protectedRoutes = [
   { path: "/inventory/list/overview", element: <InventoryListDisplay /> },
   { path: "/inventory/category/list", element: <InventoryCategoryListDisplay /> },
   { path: "/inventory/dispense/list", element: <DispenseInventoryListDisplay /> },
+
+  { path: "/subscriptions/panel", element: <SubscriptionPanelDisplay /> },
+  { path: "/subscriptions/pricing/plan", element: <PricingPlansDisplay /> },
+
   
 
 ];

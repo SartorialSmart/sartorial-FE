@@ -95,7 +95,7 @@ const OrganizationRegister = () => {
       <div className="flex w-full md:w-1/2 justify-center items-center p-8 bg-white">
         <div className="w-full max-w-md">
           <h2 className="text-3xl font-bold text-gray-800 mb-6">
-            Welcome to E-Wallet!
+            Welcome to Sartorial Smart!
           </h2>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>

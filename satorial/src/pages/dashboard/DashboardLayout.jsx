@@ -67,7 +67,7 @@ const dashboardItems = [
     title: "Subscription",
     icon: <Calendar size={20} />,
     img: PATTERN_2,
-    button_link: "/subscription/subscription-dashboard",
+    button_link: "/subscriptions/panel",
   },
   {
     title: "Settings",
