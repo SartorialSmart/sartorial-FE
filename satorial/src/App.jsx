@@ -45,6 +45,7 @@ import DispenseInventoryListDisplay from "./pages/inventories/DispenseInventoryL
 import VendorListDisplay from "./pages/orderPages/VendorListDisplay";
 import SubscriptionPanelDisplay from "./pages/subscriptionPages/SubscriptionPanelDisplay";
 import PricingPlansDisplay from "./pages/subscriptionPages/PricingPlansDisplay";
+import AddVendorFormDisplay from "./pages/orderPages/AddVendorFormDisplay";
 
 
 
@@ -78,6 +79,8 @@ const protectedRoutes = [
   { path: "/order/payments-list", element: <PaymentsListDisplay /> },
   { path: "/order/vendor-category-list", element: <VendorCategoryListDisplay /> },
   { path: "/order/vendor-list", element: <VendorListDisplay /> },
+  { path: "/order/vendor/add", element: <AddVendorFormDisplay /> },
+  
   
   { path: "/order/detail/:orderId", element: <OrderDetailDisplay /> },
   { path: "/order/edit/:orderId", element: <EditOrderFormDisplay /> },

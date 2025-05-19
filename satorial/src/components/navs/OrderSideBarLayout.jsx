@@ -20,6 +20,7 @@ const OrderSideABrLayout = ({ children }) => {
     { icon: <CreditCard />, label: "Payments", path: "/order/payments-list" },
     { icon: <FileText />, label: "Bills", path: "/order/bills-list" },
     { icon: <Store />, label: "Vendor", path: "/order/vendor-list" },
+    { icon: <Store />, label: "Create Vendor", path: "/order/vendor/add" },
     { icon: <Store />, label: "Vendor Category", path: "/order/vendor-category-list" },
     { icon: <HelpCircle />, label: "Help Centre", path: "/order/help-centre" },
   ];

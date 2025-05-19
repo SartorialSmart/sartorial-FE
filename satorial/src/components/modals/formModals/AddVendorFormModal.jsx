@@ -16,7 +16,7 @@ const AddVendorFormModal = ({ isOpen, onClose }) => {
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="bg-white rounded-lg shadow-lg w-full max-w-3xl relative flex flex-col max-h-[90vh] overflow-hidden"
+            className="bg-white rounded-lg shadow-lg w-full max-w-5xl relative flex flex-col max-h-[90vh] overflow-hidden"
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 50, opacity: 0 }}
@@ -29,7 +29,7 @@ const AddVendorFormModal = ({ isOpen, onClose }) => {
 
 
             <div className="flex-1 overflow-y-auto p-6">
-              {step === 1 && <AddVendorForm onNext={() => setStep(2)} onClose={onClose} />}
+            <AddVendorForm onClose={onClose} />
             </div>
           </motion.div>
         </motion.div>
