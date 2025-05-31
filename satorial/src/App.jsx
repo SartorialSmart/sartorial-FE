@@ -1,5 +1,10 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import ProtectedRoute from "../utils/ProtectedRoutes";
 import OrganizationRegister from "./pages/Auth/OrganizationRegister";
 import Login from "./pages/Auth/Login";
@@ -47,7 +52,7 @@ import SubscriptionPanelDisplay from "./pages/subscriptionPages/SubscriptionPane
 import PricingPlansDisplay from "./pages/subscriptionPages/PricingPlansDisplay";
 import AddVendorFormDisplay from "./pages/orderPages/AddVendorFormDisplay";
 
-
+import ProfileSettingsDisplay from "./pages/settingsPages/ProfileSettingsDisplay";
 
 const dashboards = [
   "client",
@@ -61,9 +66,7 @@ const dashboards = [
 ];
 
 const protectedRoutes = [
-
   { path: "/dashboard", element: <DashboardLayout /> },
-
 
   { path: "/client/client-dashboard", element: <ClientDashboard /> },
   { path: "/client/clients-list", element: <ClientsListDisplay /> },
@@ -72,16 +75,17 @@ const protectedRoutes = [
   { path: "/chat", element: <ChatDisplay /> },
   { path: "/client-data/:clientId", element: <ClientDataDisplay /> },
 
-
   { path: "/order/order-dashboard", element: <OrderDashboardDisplay /> },
   { path: "/order/orders-list", element: <OrderListDisplay /> },
   { path: "/order/bills-list", element: <BillsListDisplay /> },
   { path: "/order/payments-list", element: <PaymentsListDisplay /> },
-  { path: "/order/vendor-category-list", element: <VendorCategoryListDisplay /> },
+  {
+    path: "/order/vendor-category-list",
+    element: <VendorCategoryListDisplay />,
+  },
   { path: "/order/vendor-list", element: <VendorListDisplay /> },
   { path: "/order/vendor/add", element: <AddVendorFormDisplay /> },
-  
-  
+
   { path: "/order/detail/:orderId", element: <OrderDetailDisplay /> },
   { path: "/order/edit/:orderId", element: <EditOrderFormDisplay /> },
 
@@ -91,27 +95,34 @@ const protectedRoutes = [
   { path: "/staff/payroll-list", element: <PayrollListDisplay /> },
   { path: "/staff/generate-payroll", element: <GeneratePayrollListDisplay /> },
 
-
   { path: "/reports/reports/dashboard", element: <ReportDashboardDisplay /> },
   { path: "/reports/monthly/data", element: <MonthlyDataReportDisplay /> },
   { path: "/reports/sales/report", element: <SalesReportDisplay /> },
   { path: "/reports/payments/report", element: <PaymentsReportDisplay /> },
   { path: "/reports/orders/report", element: <OrderReportDisplay /> },
   { path: "/reports/bills/report", element: <BillsReportDisplay /> },
-  { path: "/reports/staff/performance/report", element: <StaffPerformanceReportDisplay /> },
+  {
+    path: "/reports/staff/performance/report",
+    element: <StaffPerformanceReportDisplay />,
+  },
 
   { path: "/expenses/overview", element: <ExpensesDashboardDisplay /> },
   { path: "/expenses/category/list", element: <ExpensesCategoryListDisplay /> },
 
   { path: "/inventory/list/overview", element: <InventoryListDisplay /> },
-  { path: "/inventory/category/list", element: <InventoryCategoryListDisplay /> },
-  { path: "/inventory/dispense/list", element: <DispenseInventoryListDisplay /> },
+  {
+    path: "/inventory/category/list",
+    element: <InventoryCategoryListDisplay />,
+  },
+  {
+    path: "/inventory/dispense/list",
+    element: <DispenseInventoryListDisplay />,
+  },
 
   { path: "/subscriptions/panel", element: <SubscriptionPanelDisplay /> },
   { path: "/subscriptions/pricing/plan", element: <PricingPlansDisplay /> },
 
-  
-
+  { path: "/settings", element: <ProfileSettingsDisplay /> },
 ];
 
 const App = () => {
@@ -122,20 +133,25 @@ const App = () => {
         <Route path="/register" element={<OrganizationRegister />} />
         <Route path="/login" element={<Login />} />
 
-
         {dashboards.map((dashboard, index) => (
           <Route
             key={index}
             path={`/${dashboard}/help-centre`}
-            element={<ProtectedRoute><GetHelpDisplay /></ProtectedRoute>}
+            element={
+              <ProtectedRoute>
+                <GetHelpDisplay />
+              </ProtectedRoute>
+            }
           />
         ))}
 
-
         {protectedRoutes.map(({ path, element }, index) => (
-          <Route key={index} path={path} element={<ProtectedRoute>{element}</ProtectedRoute>} />
+          <Route
+            key={index}
+            path={path}
+            element={<ProtectedRoute>{element}</ProtectedRoute>}
+          />
         ))}
-
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

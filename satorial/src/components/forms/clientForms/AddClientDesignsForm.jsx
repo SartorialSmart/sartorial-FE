@@ -3,6 +3,10 @@ import { X, Upload } from "lucide-react";
 import ClientService from "../../../services/ClientService";
 import SuccessModal from "../../modals/SuccessModal";
 
+// Add these constants at the top
+const MAX_FILE_SIZE = 1024 * 1024; // 1MB in bytes
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+
 const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -13,24 +17,85 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
     isError: false,
   });
 
+  const compressImage = async (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions while maintaining aspect ratio
+          if (width > 1200) {
+            height *= 1200 / width;
+            width = 1200;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              resolve(new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              }));
+            },
+            'image/jpeg',
+            0.6 // compression quality
+          );
+        };
+      };
+    });
+  };
+
+  const validateFile = (file) => {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      throw new Error('Invalid file type. Only JPG and PNG files are allowed.');
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error('File size too large. Maximum size is 1MB.');
+    }
+    return true;
+  };
+
   const handleFileUpload = async (event) => {
     const files = Array.from(event.target.files);
     if (files.length === 0) return;
 
-    const previewImages = files.map((file) => ({
-      id: URL.createObjectURL(file),
-      localUrl: URL.createObjectURL(file),
-      uploadedUrl: null,
-    }));
-
-    setDesigns((prevDesigns) => [...prevDesigns, ...previewImages]);
-
-    setLoading(true);
-    const formData = new FormData();
-    files.forEach((file) => formData.append("images", file));
-    formData.append("client", clientId);
-
     try {
+      // Validate and compress files
+      const processedFiles = await Promise.all(
+        files.map(async (file) => {
+          try {
+            validateFile(file);
+            return await compressImage(file);
+          } catch (error) {
+            throw new Error(`Error processing ${file.name}: ${error.message}`);
+          }
+        })
+      );
+
+      const previewImages = processedFiles.map((file) => ({
+        id: URL.createObjectURL(file),
+        localUrl: URL.createObjectURL(file),
+        uploadedUrl: null,
+      }));
+
+      setDesigns((prevDesigns) => [...prevDesigns, ...previewImages]);
+
+      setLoading(true);
+      const formData = new FormData();
+      processedFiles.forEach((file) => formData.append("images", file));
+      formData.append("client", clientId);
+
       const uploadedImages = await ClientService.uploadStyleImage(formData);
 
       if (Array.isArray(uploadedImages)) {
@@ -65,11 +130,11 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
         throw new Error("Invalid response from server");
       }
     } catch (error) {
-      console.error("Error uploading images:", error);
+      console.error("Error processing images:", error);
       setModal({
         show: true,
         title: "Upload Failed",
-        message: error.message || "Failed to upload designs. Please try again.",
+        message: error.message || "Failed to process images. Please try again.",
         isError: true,
       });
     } finally {
