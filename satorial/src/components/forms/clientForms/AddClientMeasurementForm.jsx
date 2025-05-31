@@ -47,19 +47,6 @@ const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId }) => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [errors, setErrors] = useState({
-    length: "",
-    shoulder: "",
-    upper_chest: "",
-    bust: "",
-    waist: "",
-    seat: "",
-    armhole: "",
-    sleeve_length: "",
-    sleeve_circumference: "",
-    front_neck_depth: "",
-    back_neck_depth: "",
-  });
 
   // Load stored measurements when the component mounts
   useEffect(() => {
@@ -75,35 +62,9 @@ const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId }) => {
     const updatedMeasurements = { ...measurements, [name]: value };
     setMeasurements(updatedMeasurements);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedMeasurements));
-    
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    let isValid = true;
-
-    Object.entries(measurements).forEach(([key, value]) => {
-      if (!value || value.trim() === "") {
-        newErrors[key] = `${key.replace(/_/g, " ")} is required`;
-        isValid = false;
-      } else if (isNaN(value) || parseFloat(value) <= 0) {
-        newErrors[key] = `Please enter a valid measurement`;
-        isValid = false;
-      }
-    });
-
-    setErrors(newErrors);
-    return isValid;
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
     setLoading(true);
     setError(null);
 
@@ -144,26 +105,15 @@ const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId }) => {
                   alt={key}
                   className="w-12 h-12 object-contain"
                 />
-                <div className="flex-1 relative">
-                  <label className="text-gray-600 capitalize">
-                    {key.replace(/_/g, " ")}
-                  </label>
+                <div className="flex-1">
+                  <label className="text-gray-600 capitalize">{key.replace(/_/g, " ")}</label>
                   <input
                     type="number"
                     name={key}
                     value={measurements[key]}
                     onChange={handleChange}
-                    className={`border ${
-                      errors[key] ? "border-red-500" : "border-gray-300"
-                    } rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 ${
-                      errors[key] ? "focus:ring-red-200" : "focus:ring-blue-200"
-                    }`}
+                    className="border rounded-lg px-4 py-2 w-full"
                   />
-                  {errors[key] && (
-                    <p className="absolute -bottom-5 left-0 text-red-500 text-xs">
-                      {errors[key]}
-                    </p>
-                  )}
                 </div>
               </div>
             ))}
