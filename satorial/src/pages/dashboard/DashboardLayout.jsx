@@ -27,7 +27,7 @@ const dashboardItems = [
     img: PATTERN_1,
     button_link: "/client/client-dashboard",
     color: "bg-blue-100",
-    textColor: "text-blue-800"
+    textColor: "text-blue-800",
   },
   {
     title: "Order Management",
@@ -35,7 +35,7 @@ const dashboardItems = [
     img: PATTERN_2,
     button_link: "/order/order-dashboard",
     color: "bg-purple-100",
-    textColor: "text-purple-800"
+    textColor: "text-purple-800",
   },
   {
     title: "Staff",
@@ -43,7 +43,7 @@ const dashboardItems = [
     img: PATTERN_3,
     button_link: "/staff/staff-list",
     color: "bg-green-100",
-    textColor: "text-green-800"
+    textColor: "text-green-800",
   },
   {
     title: "My Orders",
@@ -51,7 +51,7 @@ const dashboardItems = [
     img: PATTERN_4,
     button_link: "/my-orders",
     color: "bg-yellow-100",
-    textColor: "text-yellow-800"
+    textColor: "text-yellow-800",
   },
   {
     title: "Report",
@@ -59,7 +59,7 @@ const dashboardItems = [
     img: PATTERN_5,
     button_link: "/reports/reports/dashboard",
     color: "bg-red-100",
-    textColor: "text-red-800"
+    textColor: "text-red-800",
   },
   {
     title: "Expenses",
@@ -67,7 +67,7 @@ const dashboardItems = [
     img: PATTERN_6,
     button_link: "/expenses/overview",
     color: "bg-indigo-100",
-    textColor: "text-indigo-800"
+    textColor: "text-indigo-800",
   },
   {
     title: "Inventory",
@@ -75,7 +75,7 @@ const dashboardItems = [
     img: PATTERN_1,
     button_link: "/inventory/list/overview",
     color: "bg-pink-100",
-    textColor: "text-pink-800"
+    textColor: "text-pink-800",
   },
   {
     title: "Subscription",
@@ -83,15 +83,15 @@ const dashboardItems = [
     img: PATTERN_2,
     button_link: "/subscriptions/panel",
     color: "bg-teal-100",
-    textColor: "text-teal-800"
+    textColor: "text-teal-800",
   },
   {
     title: "Settings",
     icon: <Settings size={20} />,
     img: PATTERN_3,
-    button_link: "/settings/settings-dashboard",
+    button_link: "/settings",
     color: "bg-gray-100",
-    textColor: "text-gray-800"
+    textColor: "text-gray-800",
   },
 ];
 
@@ -108,9 +108,11 @@ const DashboardLayout = () => {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
               Welcome back, {user?.first_name || "User"}!
             </h1>
-            <p className="text-gray-600 mt-1">What would you like to do today?</p>
+            <p className="text-gray-600 mt-1">
+              What would you like to do today?
+            </p>
           </div>
-          
+
           <IconButton
             icon={HelpCircle}
             text="Help Centre"
@@ -127,7 +129,7 @@ const DashboardLayout = () => {
               className="relative rounded-xl shadow-sm overflow-hidden flex flex-col border border-gray-200 hover:shadow-md transition-shadow duration-300"
             >
               {/* Card Background with Overlay */}
-              <div 
+              <div
                 className="absolute inset-0 bg-cover bg-center z-0"
                 style={{ backgroundImage: `url(${item.img})` }}
               >
@@ -137,7 +139,9 @@ const DashboardLayout = () => {
               {/* Card Content */}
               <div className="relative z-10 flex flex-col h-full p-5">
                 {/* Icon */}
-                <div className={`w-12 h-12 ${item.color} rounded-lg flex items-center justify-center mb-4`}>
+                <div
+                  className={`w-12 h-12 ${item.color} rounded-lg flex items-center justify-center mb-4`}
+                >
                   {item.icon}
                 </div>
 
@@ -168,7 +172,9 @@ const DashboardLayout = () => {
 
         {/* Quick Stats Section (optional) */}
         <div className="mt-12 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Stats</h2>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            Quick Stats
+          </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Add your quick stats widgets here */}
             <div className="bg-blue-50 p-4 rounded-lg">
