@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import VendorService from "../../../services/VendorService";
 import VendorCategoryService from "../../../services/VendorCategoryService";
-// import SuccessModal from "../../modals/SuccessModal";
+import SuccessModal from "../../modals/SuccessModal";
 import {
   Upload,
   User,
@@ -13,6 +13,10 @@ import {
 } from "lucide-react";
 
 const AddVendorForm = () => {
+  // Add loading and error states for categories
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState(null);
+
   const [formData, setFormData] = useState({
     vendor_type: "Individual",
     vendor_name: "",
@@ -36,16 +40,50 @@ const AddVendorForm = () => {
 
   useEffect(() => {
     const fetchCategories = async () => {
+      setCategoriesLoading(true);
+      setCategoriesError(null);
       try {
-        const response = await VendorCategoryService.getAllCategories();
-        setCategories(response.data);
+        const response = await VendorCategoryService.getCategoriesList();
+        setCategories(response.data || []); // Ensure we always have an array
       } catch (error) {
         console.error("Error fetching categories:", error);
+        setCategoriesError(
+          error.message || "Failed to fetch vendor categories"
+        );
+        setCategories([]); // Set empty array on error
+      } finally {
+        setCategoriesLoading(false);
       }
     };
 
     fetchCategories();
   }, []);
+
+  // Add error boundary fallback UI
+  if (categoriesError) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <h3 className="text-red-800 font-medium">Error loading form</h3>
+        <p className="text-red-600">{categoriesError}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-2 px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Add loading state UI
+  if (categoriesLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
+        <span className="ml-2 text-gray-600">Loading form...</span>
+      </div>
+    );
+  }
 
   const validateForm = () => {
     const newErrors = {};

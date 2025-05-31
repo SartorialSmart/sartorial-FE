@@ -145,10 +145,14 @@ const DashboardLayout = () => {
                   {item.icon}
                 </div>
 
-                {/* Title */}
-                <h3 className={`text-xl font-semibold ${item.textColor} mb-2`}>
-                  {item.title}
-                </h3>
+                {/* Title - Updated styling */}
+                <div className="flex">
+                  <h3
+                    className={`text-xl font-semibold rounded-lg py-2 px-4 ${item.color} ${item.textColor} whitespace-nowrap`}
+                  >
+                    {item.title}
+                  </h3>
+                </div>
 
                 {/* Spacer to push button to bottom */}
                 <div className="flex-grow"></div>

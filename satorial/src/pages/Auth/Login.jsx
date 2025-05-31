@@ -1,27 +1,59 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import MessageModal from "../../components/modals/MessageModal";
 import loginBg from "../../assets/images/bg-2.jpg";
 import { useNavigate, Link } from "react-router-dom";
+import googleIcon from "../../assets/images/google-logo.svg";
+import twitterIcon from "../../assets/images/twitter-logo.svg";
 
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // Initialize all state as false/empty to prevent leftover state
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-
   const [errors, setErrors] = useState({
     email: "",
     password: "",
   });
-
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
+
+  // Aggressive state clearing on mount and unmount
+  useEffect(() => {
+    // Clear everything on mount
+    setShowModal(false);
+    setErrorMessage("");
+    setSuccessMessage("");
+    setIsLoading(false);
+
+    // Debug logging
+    console.log("Login component mounted - clearing all state");
+
+    // Cleanup function for unmount
+    return () => {
+      console.log("Login component unmounting - clearing state");
+      setShowModal(false);
+      setErrorMessage("");
+      setSuccessMessage("");
+      setIsLoading(false);
+    };
+  }, []);
+
+  // Additional effect to monitor state changes (for debugging)
+  useEffect(() => {
+    console.log("Modal state changed:", {
+      showModal,
+      errorMessage,
+      successMessage,
+      shouldShow: showModal && Boolean(successMessage || errorMessage),
+    });
+  }, [showModal, errorMessage, successMessage]);
 
   const validateForm = () => {
     let valid = true;
@@ -51,6 +83,7 @@ const Login = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
 
+    // Clear field error when user starts typing
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });
     }
@@ -58,13 +91,13 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     try {
       setIsLoading(true);
       setErrorMessage("");
       setSuccessMessage("");
+      setShowModal(false);
 
       await login(formData);
 
@@ -84,8 +117,11 @@ const Login = () => {
           message = error.response.data.detail;
         } else {
           message = Object.entries(error.response.data)
-            .map(([field, errors]) =>
-              `${field}: ${Array.isArray(errors) ? errors.join(", ") : errors}`
+            .map(
+              ([field, errors]) =>
+                `${field}: ${
+                  Array.isArray(errors) ? errors.join(", ") : errors
+                }`
             )
             .join(". ");
         }
@@ -100,19 +136,44 @@ const Login = () => {
     }
   };
 
+  const handleModalClose = () => {
+    console.log("Modal close handler called");
+    setShowModal(false);
+    setErrorMessage("");
+    setSuccessMessage("");
+  };
+
+  // Force clear all modal state
+  const forceCloseModal = () => {
+    console.log("Force closing modal");
+    setShowModal(false);
+    setErrorMessage("");
+    setSuccessMessage("");
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Message Modal */}
-      <MessageModal
-        isOpen={showModal && (successMessage || errorMessage)}
-        type={successMessage ? "success" : "error"}
-        message={successMessage || errorMessage}
-        onClose={() => {
-          setShowModal(false);
-          setErrorMessage("");
-          setSuccessMessage("");
-        }}
-      />
+      {/* Debug button - remove after fixing */}
+      {(showModal || errorMessage || successMessage) && (
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            onClick={forceCloseModal}
+            className="bg-red-500 text-white px-4 py-2 rounded text-sm"
+          >
+            Force Close Modal (Debug)
+          </button>
+        </div>
+      )}
+
+      {/* Message Modal - Only render when needed */}
+      {showModal && (successMessage || errorMessage) && (
+        <MessageModal
+          isOpen={true}
+          type={successMessage ? "success" : "error"}
+          message={successMessage || errorMessage}
+          onClose={handleModalClose}
+        />
+      )}
 
       {/* Left Side - Background */}
       <div
@@ -136,7 +197,9 @@ const Login = () => {
       {/* Right Side - Login Form */}
       <div className="flex w-full md:w-1/2 justify-center items-center p-8 bg-white">
         <div className="w-full max-w-md">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">Welcome Back!</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">
+            Welcome Back!
+          </h2>
           <form className="space-y-4" onSubmit={handleSubmit} noValidate>
             <div>
               <label className="block text-gray-700 mb-1">Email</label>
@@ -186,7 +249,10 @@ const Login = () => {
                   type="checkbox"
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 text-sm text-gray-700">
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 text-sm text-gray-700"
+                >
                   Remember me
                 </label>
               </div>
@@ -241,7 +307,9 @@ const Login = () => {
                 <div className="w-full border-t border-gray-300"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                <span className="px-2 bg-white text-gray-500">
+                  Or continue with
+                </span>
               </div>
             </div>
 
@@ -250,22 +318,14 @@ const Login = () => {
                 type="button"
                 className="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                <img
-                  src="https://img.icons8.com/color/24/google-logo.png"
-                  alt="Google"
-                  className="h-5 w-5 mr-2"
-                />
+                <img src={googleIcon} alt="Google" className="h-5 w-5 mr-2" />
                 Google
               </button>
               <button
                 type="button"
                 className="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                <img
-                  src="https://img.icons8.com/color/24/twitter.png"
-                  alt="Twitter"
-                  className="h-5 w-5 mr-2"
-                />
+                <img src={twitterIcon} alt="Twitter" className="h-5 w-5 mr-2" />
                 Twitter
               </button>
             </div>
