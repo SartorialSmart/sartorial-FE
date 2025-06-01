@@ -43,6 +43,18 @@ const AddOrderForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
+    // Handle client selection specifically
+    if (name === "client") {
+      const selectedClient = clients.find((c) => c.id === value);
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        // Auto-fill the email if client is found
+        client_email: selectedClient ? selectedClient.email : "",
+      }));
+      return;
+    }
+
     // Handle date fields separately
     if (name === "start_date" || name === "end_date") {
       const dateValue = value ? new Date(value) : null; // Convert to Date object if value exists
@@ -57,24 +69,24 @@ const AddOrderForm = () => {
         ...prev,
         [name]: dateValue ? dateValue.toISOString().split("T")[0] : "",
       }));
-    } else {
-      // Handle other fields
-      setFormData((prev) => {
-        const updatedData = { ...prev, [name]: value };
-
-        // Recalculate balance only if order_price or initial_deposit changes
-        if (name === "order_price" || name === "initial_deposit") {
-          const orderPrice = parseFloat(updatedData.order_price) || 0;
-          const initialDeposit = parseFloat(updatedData.initial_deposit) || 0;
-          updatedData.balance = Math.max(
-            orderPrice - initialDeposit,
-            0
-          ).toFixed(2); // Ensure balance is non-negative and formatted
-        }
-
-        return updatedData;
-      });
+      return;
     }
+
+    // Handle other fields
+    setFormData((prev) => {
+      const updatedData = { ...prev, [name]: value };
+
+      // Recalculate balance only if order_price or initial_deposit changes
+      if (name === "order_price" || name === "initial_deposit") {
+        const orderPrice = parseFloat(updatedData.order_price) || 0;
+        const initialDeposit = parseFloat(updatedData.initial_deposit) || 0;
+        updatedData.balance = Math.max(orderPrice - initialDeposit, 0).toFixed(
+          2
+        ); // Ensure balance is non-negative and formatted
+      }
+
+      return updatedData;
+    });
   };
 
   const validateForm = () => {

@@ -150,7 +150,6 @@ const AddClientForm = ({ onNext, onClose }) => {
 
       if (createdClient?.id) {
         setClientId(createdClient.id);
-        localStorage.setItem("clientId", createdClient.id);
 
         const addressData = {
           client: createdClient.id,
@@ -163,6 +162,31 @@ const AddClientForm = ({ onNext, onClose }) => {
         };
 
         await ClientService.createClientAddress(addressData);
+
+        // Clear all stored form data
+        Object.keys(initialFormData).forEach((key) => {
+          localStorage.removeItem(key);
+        });
+        localStorage.removeItem("clientId");
+        localStorage.removeItem("clientImagePreview");
+
+        // Reset form state
+        setFormData({
+          first_name: "",
+          last_name: "",
+          email: "",
+          phone_number: "",
+          birthdate: "",
+          gender: "Female",
+          house_number: "",
+          street: "",
+          city: "",
+          state: "",
+          country: "",
+          postal_code: "",
+          client_image: null,
+        });
+        setPreview(null);
 
         onNext(createdClient.id);
       }

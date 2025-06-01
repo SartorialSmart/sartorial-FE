@@ -5,7 +5,7 @@ import SuccessModal from "../../modals/SuccessModal";
 
 // Add these constants at the top
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB in bytes
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg"];
 
 const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
   const [designs, setDesigns] = useState([]);
@@ -25,7 +25,7 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
         const img = new Image();
         img.src = event.target.result;
         img.onload = () => {
-          const canvas = document.createElement('canvas');
+          const canvas = document.createElement("canvas");
           let width = img.width;
           let height = img.height;
 
@@ -38,17 +38,19 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
           canvas.width = width;
           canvas.height = height;
 
-          const ctx = canvas.getContext('2d');
+          const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, width, height);
 
           canvas.toBlob(
             (blob) => {
-              resolve(new File([blob], file.name, {
-                type: 'image/jpeg',
-                lastModified: Date.now(),
-              }));
+              resolve(
+                new File([blob], file.name, {
+                  type: "image/jpeg",
+                  lastModified: Date.now(),
+                })
+              );
             },
-            'image/jpeg',
+            "image/jpeg",
             0.6 // compression quality
           );
         };
@@ -58,10 +60,10 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
 
   const validateFile = (file) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      throw new Error('Invalid file type. Only JPG and PNG files are allowed.');
+      throw new Error("Invalid file type. Only JPG and PNG files are allowed.");
     }
     if (file.size > MAX_FILE_SIZE) {
-      throw new Error('File size too large. Maximum size is 1MB.');
+      throw new Error("File size too large. Maximum size is 1MB.");
     }
     return true;
   };
@@ -101,8 +103,12 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
       if (Array.isArray(uploadedImages)) {
         setDesigns((prevDesigns) =>
           prevDesigns.map((design) => {
-            const uploadedImage = uploadedImages.find((img) => design.id === img.id);
-            return uploadedImage ? { ...design, uploadedUrl: uploadedImage.image } : design;
+            const uploadedImage = uploadedImages.find(
+              (img) => design.id === img.id
+            );
+            return uploadedImage
+              ? { ...design, uploadedUrl: uploadedImage.image }
+              : design;
           })
         );
 
@@ -153,18 +159,22 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
       return;
     }
 
-    // If you have additional save logic, put it here
-    // Otherwise just show success
     setModal({
       show: true,
       title: "Saved!",
       message: "Client designs have been saved successfully",
       isError: false,
+      // The form will close when user clicks Continue due to the updated closeModal function
     });
   };
 
   const closeModal = () => {
     setModal({ ...modal, show: false });
+
+    // If it was a success message, close the form too
+    if (!modal.isError) {
+      onClose(); // Close the entire form
+    }
   };
 
   return (
@@ -181,40 +191,50 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
             <h3 className="text-lg font-semibold mb-3">Uploaded Designs</h3>
             <div className="grid grid-cols-3 gap-4">
               {designs.map((design, index) => (
-                <div key={design.id || index} className="flex flex-col items-center">
+                <div
+                  key={design.id || index}
+                  className="flex flex-col items-center"
+                >
                   <img
                     src={design.uploadedUrl || design.localUrl}
                     alt={`Design ${index + 1}`}
                     className="w-28 h-28 rounded-lg object-cover"
                   />
-                  <p className="text-sm text-gray-600 mt-2">Design {index + 1}</p>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Design {index + 1}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="flex items-center gap-3 border rounded-lg p-2">
-            <input 
-              type="file" 
-              multiple 
-              accept="image/*" 
-              onChange={handleFileUpload} 
-              className="hidden" 
-              id="fileUpload" 
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+              id="fileUpload"
               disabled={loading}
             />
-            <label 
-              htmlFor="fileUpload" 
-              className={`flex-1 ${loading ? 'text-gray-400' : 'text-gray-600 cursor-pointer'}`}
+            <label
+              htmlFor="fileUpload"
+              className={`flex-1 ${
+                loading ? "text-gray-400" : "text-gray-600 cursor-pointer"
+              }`}
             >
-              {loading ? 'Uploading...' : 'Choose files'}
+              {loading ? "Uploading..." : "Choose files"}
             </label>
-            <button 
-              className={`${loading ? 'bg-gray-100' : 'bg-gray-200'} px-4 py-1 rounded-lg`}
+            <label
+              htmlFor="fileUpload"
+              className={`${
+                loading ? "bg-gray-100" : "bg-gray-200"
+              } px-4 py-1 rounded-lg cursor-pointer`}
               disabled={loading}
             >
               <Upload size={16} />
-            </button>
+            </label>
           </div>
 
           {loading && (
@@ -225,15 +245,15 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
           )}
 
           <div className="flex justify-between mt-6">
-            <button 
-              onClick={onBack} 
+            <button
+              onClick={onBack}
               className="border border-gray-400 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-100"
               disabled={loading}
             >
               Back: Measurements
             </button>
-            <button 
-              onClick={handleSave} 
+            <button
+              onClick={handleSave}
               className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
               disabled={loading}
             >

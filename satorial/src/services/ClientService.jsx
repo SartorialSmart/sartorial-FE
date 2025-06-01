@@ -186,18 +186,22 @@ const ClientService = {
 
   uploadStyleImage: async (imageData) => {
     try {
+      // Log the FormData contents for debugging
+      console.log('Client ID:', imageData.get('client'));
+      console.log('Number of images:', imageData.getAll('images').length);
+
       const response = await axiosInstance.post(
         API.CLIENT_MANAGEMENT.STYLE_IMAGES.CREATE,
         imageData,
         {
           headers: {
-            "Content-Type": "multipart/form-data", 
+            "Content-Type": "multipart/form-data",
           },
         }
       );
       return response.data;
     } catch (error) {
-      console.error("Error uploading style image:", error);
+      console.error("Error uploading style image:", error.response?.data || error);
       throw error;
     }
   },
