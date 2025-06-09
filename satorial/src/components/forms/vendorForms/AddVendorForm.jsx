@@ -11,22 +11,8 @@ import {
   MapPin,
   Loader2,
 } from "lucide-react";
-// import SuccessModal from "../../modals/SuccessModal";
-// import {
-//   Upload,
-//   User,
-//   Briefcase,
-//   Mail,
-//   Phone,
-//   MapPin,
-//   Loader2,
-// } from "lucide-react";
 
 const AddVendorForm = () => {
-  // Add loading and error states for categories
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const [categoriesError, setCategoriesError] = useState(null);
-
   const [formData, setFormData] = useState({
     vendor_type: "Individual",
     vendor_name: "",
@@ -43,6 +29,8 @@ const AddVendorForm = () => {
   });
 
   const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -53,14 +41,12 @@ const AddVendorForm = () => {
       setCategoriesLoading(true);
       setCategoriesError(null);
       try {
-        const response = await VendorCategoryService.getCategoriesList();
-        setCategories(response.data || []); // Ensure we always have an array
+        const data = await VendorCategoryService.getCategoriesWithBillCount();
+        setCategories(data || []); // Ensure we always have an array
       } catch (error) {
         console.error("Error fetching categories:", error);
-        setCategoriesError(
-          error.message || "Failed to fetch vendor categories"
-        );
-        setCategories([]); // Set empty array on error
+        setCategoriesError(error.message || "Failed to fetch vendor categories");
+        setCategories([]);
       } finally {
         setCategoriesLoading(false);
       }
@@ -375,15 +361,27 @@ const AddVendorForm = () => {
                   name="vendor_category"
                   value={formData.vendor_category}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={categoriesLoading}
+                  className={`w-full px-4 py-2 border ${
+                    categoriesLoading ? "bg-gray-50" : "bg-white"
+                  } border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                 >
                   <option value="">Select a category</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
+                  {categoriesLoading ? (
+                    <option disabled>Loading categories...</option>
+                  ) : categories.length > 0 ? (
+                    categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>No categories available</option>
+                  )}
                 </select>
+                {categoriesError && (
+                  <p className="mt-1 text-sm text-red-600">{categoriesError}</p>
+                )}
               </div>
             </div>
           </div>

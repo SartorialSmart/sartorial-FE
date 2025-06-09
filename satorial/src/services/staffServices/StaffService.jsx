@@ -17,15 +17,28 @@ const StaffService = {
   },
 
   addStaff: async (staffData) => {
-    const formData = new FormData();
-
-    for (const key in staffData) {
-      if (Object.prototype.hasOwnProperty.call(staffData, key)) {
-        formData.append(key, staffData[key]);
-      }
-    }
-
     try {
+      const formData = new FormData();
+
+      // Append each field to FormData with the correct field names
+      Object.keys(staffData).forEach((key) => {
+        // Skip null or undefined values
+        if (staffData[key] != null) {
+          // Handle file objects separately
+          if (key === "avatar" && staffData[key] instanceof File) {
+            formData.append(key, staffData[key]);
+          } else {
+            // Convert non-string values to string
+            formData.append(key, String(staffData[key]));
+          }
+        }
+      });
+
+      // Log FormData entries for debugging
+      for (let [key, value] of formData.entries()) {
+        console.log(`FormData entry - ${key}:`, value);
+      }
+
       const response = await axiosInstance.post(
         API.STAFF_MANAGEMENT.STAFF.ADD,
         formData,

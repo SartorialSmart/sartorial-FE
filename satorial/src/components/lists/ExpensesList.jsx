@@ -1,16 +1,48 @@
-import { useState } from "react";
-import { MoreVertical, Search, Download } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MoreVertical, Search, Download, Loader2 } from "lucide-react";
+import ExpensesService from "../../services/expensesServices/ExpensesService";
 
 const ExpensesList = () => {
   const [selectedFilter, setSelectedFilter] = useState("All");
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const expenses = Array(8).fill({
-    date: "14/04/2024 10:30AM",
-    category: "Materials",
-    amount: "500,000",
-    createdBy: "Kemi Johnson",
-    paidTo: "Lara Adams",
-  });
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+
+  const fetchExpenses = async () => {
+    try {
+      setLoading(true);
+      const response = await ExpensesService.getExpenseList();
+      setExpenses(response.data || []);
+      setError(null);
+    } catch (error) {
+      console.error("Error fetching expenses:", error);
+      setError("Failed to load expenses. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 bg-gray-100 min-h-screen">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -53,35 +85,52 @@ const ExpensesList = () => {
               <th className="p-3">
                 <input type="checkbox" />
               </th>
-              {["Date/Time", "Category", "Amount", "Created by", "Paid to", "Actions"].map(
-                (header, idx) => (
-                  <th key={idx} className="p-3 font-medium">
-                    {header}
-                  </th>
-                )
-              )}
+              {[
+                "Date/Time",
+                "Category",
+                "Amount",
+                "Created by",
+                "Paid to",
+                "Actions",
+              ].map((header, idx) => (
+                <th key={idx} className="p-3 font-medium">
+                  {header}
+                </th>
+              ))}
             </tr>
           </thead>
 
           {/* Table Body */}
           <tbody>
-            {expenses.map((expense, index) => (
-              <tr key={index} className="border-t">
-                <td className="p-3">
-                  <input type="checkbox" />
-                </td>
-                <td className="p-3">{expense.date}</td>
-                <td className="p-3">{expense.category}</td>
-                <td className="p-3">{expense.amount}</td>
-                <td className="p-3">{expense.createdBy}</td>
-                <td className="p-3">{expense.paidTo}</td>
-                <td className="p-3">
-                  <button className="p-2 rounded-full hover:bg-gray-200">
-                    <MoreVertical size={18} />
-                  </button>
+            {expenses.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="text-center py-4 text-gray-500">
+                  No expenses found
                 </td>
               </tr>
-            ))}
+            ) : (
+              expenses.map((expense) => (
+                <tr key={expense.id} className="border-t">
+                  <td className="p-3">
+                    <input type="checkbox" />
+                  </td>
+                  <td className="p-3">
+                    {new Date(expense.created_at).toLocaleString()}
+                  </td>
+                  <td className="p-3">{expense.category}</td>
+                  <td className="p-3">
+                    {Number(expense.amount).toLocaleString()}
+                  </td>
+                  <td className="p-3">{expense.created_by}</td>
+                  <td className="p-3">{expense.paid_to}</td>
+                  <td className="p-3">
+                    <button className="p-2 rounded-full hover:bg-gray-200">
+                      <MoreVertical size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

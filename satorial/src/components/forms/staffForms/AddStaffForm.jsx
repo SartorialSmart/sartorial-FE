@@ -15,7 +15,7 @@ const AddStaffForm = ({ onClose }) => {
     salary: "",
     employmentDate: "",
     birthdayDate: "",
-    gender: "male",
+    gender: "Male", // Capitalize initial value
     avatar: null,
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -27,7 +27,7 @@ const AddStaffForm = ({ onClose }) => {
     if (file) {
       // Set the file in formData
       setFormData({ ...formData, avatar: file });
-      
+
       // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -47,7 +47,8 @@ const AddStaffForm = ({ onClose }) => {
   };
 
   const generatePassword = () => {
-    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
+    const chars =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
     let password = "";
     for (let i = 0; i < 12; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -63,28 +64,39 @@ const AddStaffForm = ({ onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      first_name: formData.firstName,
-      last_name: formData.lastName,
-      email: formData.email,
-      phone_number: formData.phone,
-      department: formData.department,
-      staff_role: formData.staff_role,
-      password: formData.password,
-      salary: formData.salary,
-      employment_date: formData.employmentDate,
-      birthday_date: formData.birthdayDate,
-      gender: formData.gender.charAt(0).toUpperCase() + formData.gender.slice(1),
-      avatar: formData.avatar,
-    };
-
     try {
-      const response = await StaffService.addStaff(payload);
+      const staffData = {
+        first_name: formData.firstName.trim(),
+        last_name: formData.lastName.trim(),
+        email: formData.email.trim(),
+        phone_number: formData.phone.trim(),
+        department: formData.department,
+        staff_role: formData.staff_role,
+        password: formData.password,
+        salary: formData.salary,
+        employment_date: formData.employmentDate,
+        birthday_date: formData.birthdayDate,
+        gender: formData.gender, // Remove toLowerCase() to keep capitalization
+        avatar: formData.avatar,
+      };
+
+      // Log the data being sent
+      console.log("Sending staff data:", staffData);
+
+      const response = await StaffService.addStaff(staffData);
       toast.success("Staff created successfully!");
       onClose();
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to create staff. Check input.");
+      console.error("Staff creation error:", error.response?.data || error);
+
+      if (error.response?.data) {
+        const validationErrors = Object.entries(error.response.data)
+          .map(([field, errors]) => `${field}: ${errors.join(", ")}`)
+          .join("\n");
+        toast.error(validationErrors);
+      } else {
+        toast.error("Failed to create staff. Please check your input.");
+      }
     }
   };
 
@@ -139,12 +151,10 @@ const AddStaffForm = ({ onClose }) => {
                 onClick={triggerFileInput}
                 className="flex items-center gap-2 px-4 py-2 text-blue-600 border rounded-md"
               >
-                <Upload size={16} /> 
+                <Upload size={16} />
                 {avatarPreview ? "Change Photo" : "Upload Photo"}
               </button>
-              <p className="text-xs text-gray-500 mt-1">
-                JPG, PNG (Max 2MB)
-              </p>
+              <p className="text-xs text-gray-500 mt-1">JPG, PNG (Max 2MB)</p>
             </div>
           </div>
 
@@ -314,16 +324,21 @@ const AddStaffForm = ({ onClose }) => {
           </div>
 
           <div className="col-span-2">
-            <label className="text-sm font-medium text-gray-700">Gender</label>
+            <label className="text-sm font-medium text-gray-700">
+              Gender *
+            </label>
             <div className="flex items-center gap-4">
               <label className="flex items-center">
                 <input
                   type="radio"
                   name="gender"
-                  value="male"
-                  checked={formData.gender === "male"}
-                  onChange={handleChange}
+                  value="Male"
+                  checked={formData.gender === "Male"}
+                  onChange={(e) =>
+                    setFormData({ ...formData, gender: e.target.value })
+                  }
                   className="mr-1"
+                  required
                 />
                 Male
               </label>
@@ -331,10 +346,13 @@ const AddStaffForm = ({ onClose }) => {
                 <input
                   type="radio"
                   name="gender"
-                  value="female"
-                  checked={formData.gender === "female"}
-                  onChange={handleChange}
+                  value="Female"
+                  checked={formData.gender === "Female"}
+                  onChange={(e) =>
+                    setFormData({ ...formData, gender: e.target.value })
+                  }
                   className="mr-1"
+                  required
                 />
                 Female
               </label>

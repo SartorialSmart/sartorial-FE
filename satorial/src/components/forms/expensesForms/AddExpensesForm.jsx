@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ExpensesService from "../../../services/expensesServices/ExpensesService";
 import ExpensescategoryService from "../../../services/expensesServices/ExpensesCategoryService";
 import VendorService from "../../../services/VendorService";
+import StaffService from "../../../services/staffServices/StaffService";
 
 const AddExpensesForm = () => {
   const [form, setForm] = useState({
@@ -15,15 +16,20 @@ const AddExpensesForm = () => {
 
   const [categories, setCategories] = useState([]); // Initialize as empty array
   const [vendors, setVendors] = useState([]); // Initialize as empty array
+  const [staff, setStaff] = useState([]); // Initialize as empty array
   const [loading, setLoading] = useState(false); // To track loading state
   const [error, setError] = useState(""); // To handle errors
   const [successMessage, setSuccessMessage] = useState(""); // To show success message
+
+  // Add file preview state
+  const [receiptPreview, setReceiptPreview] = useState(null);
 
   // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await ExpensescategoryService.getExpenseCategoriesList();
+        const response =
+          await ExpensescategoryService.getExpenseCategoriesList();
         setCategories(response.data || []); // Ensure it's an array
       } catch (err) {
         setError("Error fetching categories. Please try again later.");
@@ -38,7 +44,7 @@ const AddExpensesForm = () => {
     const fetchVendors = async () => {
       try {
         const response = await VendorService.getVendorsList();
-        setVendors(response.data || []); // Ensure it's an array
+        setVendors(response || []); // Ensure it's an array
       } catch (err) {
         setError("Error fetching vendors. Please try again later.");
       }
@@ -47,45 +53,118 @@ const AddExpensesForm = () => {
     fetchVendors();
   }, []);
 
+  // Fetch staff
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const response = await StaffService.listStaff();
+        // Access the results array from the response
+        setStaff(response.results || []);
+      } catch (err) {
+        console.error('Error fetching staff:', err);
+        setError("Error fetching staff list. Please try again later.");
+      }
+    };
+
+    fetchStaff();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    setForm({
-      ...form,
-      [name]: files ? files[0] : name === 'amount' ? parseFloat(value.replace(/[^0-9.-]+/g, "")) : value,
-    });
+    
+    if (name === 'receipt' && files?.[0]) {
+      // Handle file upload
+      const file = files[0];
+      // Create a preview URL for the file
+      const previewUrl = URL.createObjectURL(file);
+      setReceiptPreview(previewUrl);
+      setForm(prev => ({
+        ...prev,
+        [name]: file
+      }));
+    } else if (name === 'amount') {
+      // Handle amount with number conversion
+      setForm(prev => ({
+        ...prev,
+        [name]: parseFloat(value.replace(/[^0-9.-]+/g, ""))
+      }));
+    } else {
+      // Handle other inputs
+      setForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // Start loading
+    setLoading(true);
 
-    // Create FormData to handle file upload
-    const formData = new FormData();
-    formData.append("category", form.category);
-    formData.append("amount", form.amount);
-    formData.append("createdBy", form.createdBy);
-    formData.append("paidTo", form.paidTo);
-    formData.append("receipt", form.receipt); // File upload
-    formData.append("description", form.description);
+    // Log raw form data
+    console.log('Raw form data:', {
+      category: form.category,
+      amount: form.amount,
+      createdBy: form.createdBy,
+      paidTo: form.paidTo,
+      description: form.description,
+      receipt: form.receipt ? {
+        name: form.receipt.name,
+        size: form.receipt.size,
+        type: form.receipt.type
+      } : null
+    });
 
     try {
-      // Call the createExpense service
+      const formData = new FormData();
+      
+      // Append basic fields
+      formData.append("category", String(form.category));
+      formData.append("amount", String(form.amount));
+      formData.append("created_by", String(form.createdBy));
+      formData.append("paid_to", String(form.paidTo));
+      formData.append("description", String(form.description));
+
+      // Handle receipt file
+      if (form.receipt instanceof File) {
+        formData.append("receipt", form.receipt);
+      }
+
+      // Log FormData entries
+      console.log('FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value instanceof File ? {
+          name: value.name,
+          size: value.size,
+          type: value.type
+        } : value);
+      }
+
       const response = await ExpensesService.createExpense(formData);
       setSuccessMessage("Expense created successfully!");
-      setError(""); // Clear any previous errors
+      setError("");
+      
+      // Clean up preview URL
+      if (receiptPreview) {
+        URL.revokeObjectURL(receiptPreview);
+      }
+
+      // Reset form
       setForm({
         category: "",
-        amount: 150000, // Reset amount to initial value
+        amount: 150000,
         createdBy: "",
         paidTo: "",
         receipt: null,
         description: "",
-      }); // Reset form
+      });
+      setReceiptPreview(null);
     } catch (err) {
-      setError("Error creating expense. Please try again later.");
-      setSuccessMessage(""); // Clear success message if error occurs
+      console.error("Error creating expense:", err);
+      setError(err.response?.data?.message || "Error creating expense. Please try again later.");
+      setSuccessMessage("");
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
   };
 
@@ -149,8 +228,15 @@ const AddExpensesForm = () => {
               className="w-full border border-gray-300 rounded-md px-3 py-2"
             >
               <option value="">Select</option>
-              <option value="staff1">Staff 1</option>
-              <option value="staff2">Staff 2</option>
+              {staff && staff.length > 0 ? (
+                staff.map((staffMember) => (
+                  <option key={staffMember.id} value={staffMember.id}>
+                    {`${staffMember.first_name} ${staffMember.last_name} - ${staffMember.department}`}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No staff available</option>
+              )}
             </select>
           </div>
 
@@ -169,7 +255,7 @@ const AddExpensesForm = () => {
               {vendors && vendors.length > 0 ? (
                 vendors.map((vendor) => (
                   <option key={vendor.id} value={vendor.id}>
-                    {vendor.name}
+                    {vendor.vendor_name}
                   </option>
                 ))
               ) : (
@@ -187,9 +273,20 @@ const AddExpensesForm = () => {
             type="file"
             name="receipt"
             onChange={handleChange}
+            accept="image/*,.pdf"
             required
             className="border border-gray-300 rounded-md px-3 py-2 w-full"
           />
+          {receiptPreview && (
+            <div className="mt-2">
+              <p className="text-sm text-gray-600">File selected</p>
+              {form.receipt && (
+                <p className="text-xs text-gray-500">
+                  {form.receipt.name} ({Math.round(form.receipt.size / 1024)} KB)
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <div>

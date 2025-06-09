@@ -1,7 +1,17 @@
 import { useState, useEffect } from "react";
-import { MoreVertical, Search, Plus, Filter, ChevronDown, Loader2 } from "lucide-react";
+import {
+  MoreVertical,
+  Search,
+  Plus,
+  Filter,
+  ChevronDown,
+  Loader2,
+} from "lucide-react";
 import VendorService from "../../services/VendorService";
 import AddVendorFormModal from "../modals/formModals/AddVendorFormModal";
+
+import Avatar from "../avatar/Avatar";
+import profile from "../../assets/images/default_avatar.svg";
 
 const VendorsList = () => {
   const [selectedFilter, setSelectedFilter] = useState("All");
@@ -12,16 +22,16 @@ const VendorsList = () => {
   const [error, setError] = useState(null);
 
   // Custom Badge Component
-  const CustomBadge = ({ variant = 'default', children }) => {
-    const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium";
-    const variantClasses = variant === 'default' 
-      ? "bg-blue-100 text-blue-800" 
-      : "bg-gray-100 text-gray-800 border border-gray-300";
-    
+  const CustomBadge = ({ variant = "default", children }) => {
+    const baseClasses =
+      "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium";
+    const variantClasses =
+      variant === "default"
+        ? "bg-blue-100 text-blue-800"
+        : "bg-gray-100 text-gray-800 border border-gray-300";
+
     return (
-      <span className={`${baseClasses} ${variantClasses}`}>
-        {children}
-      </span>
+      <span className={`${baseClasses} ${variantClasses}`}>{children}</span>
     );
   };
 
@@ -30,34 +40,15 @@ const VendorsList = () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        const dummyData = Array(8).fill({
-          vendor_type: "Individual",
-          vendor_name: "Lara Adams",
-          vendor_email: "lara@example.com",
-          vendor_phone: "+2348012345678",
-          vendor_country: "Nigeria",
-          vendor_category: { name: "Fabric Supplier" },
-          vendor_image_url: "https://via.placeholder.com/40",
-          is_active: true,
-          created_at: "2023-05-15T10:30:00Z"
-        }).map((item, index) => ({
-          ...item,
-          id: index + 1,
-          vendor_name: `${item.vendor_name} ${index + 1}`,
-          vendor_email: `vendor${index + 1}@example.com`,
-          vendor_type: index % 3 === 0 ? "Company" : "Individual",
-          is_active: index % 4 !== 0
-        }));
-        
-        setVendors(dummyData);
-        // const data = await VendorService.getVendorsList();
-        // setVendors(data);
+        const response = await VendorService.getVendorsList();
+        // The data is directly in the response, not in response.data
+        console.log("Fetched vendors:", response);
+        setVendors(response || []);
       } catch (err) {
         console.error("Failed to fetch vendors", err);
-        setError("Failed to load vendors. Please try again later.");
+        setError(
+          err.message || "Failed to load vendors. Please try again later."
+        );
       } finally {
         setIsLoading(false);
       }
@@ -66,26 +57,59 @@ const VendorsList = () => {
     fetchVendors();
   }, []);
 
-  const filteredVendors = vendors.filter((vendor) =>
-    (selectedFilter === "All" || vendor.vendor_type === selectedFilter) &&
-    vendor.vendor_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Add a refresh function to be called after adding a new vendor
+  const refreshVendors = async () => {
+    setIsLoading(true);
+    try {
+      const response = await VendorService.getVendorsList();
+      setVendors(response.data || []);
+    } catch (err) {
+      console.error("Failed to refresh vendors", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Update modal success handler
+  const handleVendorAdded = async () => {
+    setIsModalOpen(false);
+    await refreshVendors();
+  };
+
+  // Update the filter function to handle null values and add error logging
+  const filteredVendors = vendors.filter((vendor) => {
+    try {
+      const nameMatch = vendor.vendor_name
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const emailMatch = vendor.vendor_email
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const phoneMatch = vendor.vendor_phone
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const typeMatch =
+        selectedFilter === "All" || vendor.vendor_type === selectedFilter;
+
+      return typeMatch && (nameMatch || emailMatch || phoneMatch);
+    } catch (error) {
+      console.error("Error filtering vendor:", vendor, error);
+      return false;
+    }
+  });
 
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    const options = { year: "numeric", month: "short", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Modal */}
-      <AddVendorFormModal 
-        isOpen={isModalOpen} 
+      <AddVendorFormModal
+        isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={() => {
-          // You would typically refresh the vendors list here
-          console.log("New vendor added, refresh list");
-        }}
+        onSuccess={handleVendorAdded}
       />
 
       {/* Header */}
@@ -96,7 +120,7 @@ const VendorsList = () => {
             Manage your vendors and their information
           </p>
         </div>
-        
+
         {/* Add Vendor Button */}
         <button
           onClick={() => setIsModalOpen(true)}
@@ -149,24 +173,26 @@ const VendorsList = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow-sm">
           <div className="text-gray-500 text-md">Total Vendors</div>
-          <div className="text-2xl font-bold text-gray-800">{vendors.length}</div>
+          <div className="text-2xl font-bold text-gray-800">
+            {vendors.length}
+          </div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm">
           <div className="text-gray-500 text-md">Individuals</div>
           <div className="text-2xl font-bold text-gray-800">
-            {vendors.filter(v => v.vendor_type === "Individual").length}
+            {vendors.filter((v) => v.vendor_type === "Individual").length}
           </div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm">
           <div className="text-gray-500 text-md">Companies</div>
           <div className="text-2xl font-bold text-gray-800">
-            {vendors.filter(v => v.vendor_type === "Company").length}
+            {vendors.filter((v) => v.vendor_type === "Company").length}
           </div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm">
           <div className="text-gray-500 text-md">Active Vendors</div>
           <div className="text-2xl font-bold text-gray-800">
-            {vendors.filter(v => v.is_active).length}
+            {vendors.filter((v) => v.is_active).length}
           </div>
         </div>
       </div>
@@ -180,7 +206,7 @@ const VendorsList = () => {
         ) : error ? (
           <div className="text-center p-8 text-red-500">
             {error}
-            <button 
+            <button
               onClick={() => window.location.reload()}
               className="mt-2 text-blue-600 hover:text-blue-800 text-md font-medium"
             >
@@ -192,25 +218,46 @@ const VendorsList = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Vendor
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Contact
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Type
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Category
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Status
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Added
                   </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Actions
                   </th>
                 </tr>
@@ -224,43 +271,57 @@ const VendorsList = () => {
                           <div className="flex-shrink-0 h-10 w-10">
                             <img
                               className="h-10 w-10 rounded-full object-cover"
-                              src={vendor.vendor_image_url || "https://via.placeholder.com/40"}
-                              alt={vendor.vendor_name}
+                              src={vendor.vendor_image_url || profile}
+                              alt={vendor.vendor_name || "Vendor"}
                             />
                           </div>
                           <div className="ml-4">
                             <div className="text-md font-medium text-gray-900">
-                              {vendor.vendor_name}
+                              {vendor.vendor_name || "N/A"}
                             </div>
                             <div className="text-md text-gray-500">
-                              {vendor.vendor_country}
+                              {vendor.vendor_country || "N/A"}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-md text-gray-900">{vendor.vendor_email}</div>
-                        <div className="text-md text-gray-500">{vendor.vendor_phone}</div>
+                        <div className="text-md text-gray-900">
+                          {vendor.vendor_email || "N/A"}
+                        </div>
+                        <div className="text-md text-gray-500">
+                          {vendor.vendor_phone || "N/A"}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <CustomBadge variant={vendor.vendor_type === "Company" ? "default" : "outline"}>
-                          {vendor.vendor_type}
+                        <CustomBadge
+                          variant={
+                            vendor.vendor_type === "Company"
+                              ? "default"
+                              : "outline"
+                          }
+                        >
+                          {vendor.vendor_type || "Individual"}
                         </CustomBadge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">
-                        {vendor.vendor_category?.name || "—"}
+                        {vendor.vendor_category || "—"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          vendor.is_active 
-                            ? "bg-green-100 text-green-800" 
-                            : "bg-gray-100 text-gray-800"
-                        }`}>
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            vendor.is_active
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
                           {vendor.is_active ? "Active" : "Inactive"}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">
-                        {formatDate(vendor.created_at)}
+                        {vendor.created_at
+                          ? formatDate(vendor.created_at)
+                          : "—"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-md font-medium">
                         <button className="text-blue-600 hover:text-blue-900 mr-3">
@@ -274,10 +335,13 @@ const VendorsList = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-6 py-4 text-center text-md text-gray-500">
+                    <td
+                      colSpan={7}
+                      className="px-6 py-4 text-center text-md text-gray-500"
+                    >
                       No vendors found matching your criteria.
                       {searchTerm && (
-                        <button 
+                        <button
                           onClick={() => setSearchTerm("")}
                           className="ml-2 text-blue-600 hover:text-blue-800"
                         >
@@ -297,8 +361,10 @@ const VendorsList = () => {
       {filteredVendors.length > 0 && (
         <div className="mt-4 flex justify-between items-center bg-white px-4 py-3 rounded-b-lg shadow-sm">
           <div className="text-md text-gray-500">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">10</span> of{' '}
-            <span className="font-medium">{filteredVendors.length}</span> results
+            Showing <span className="font-medium">1</span> to{" "}
+            <span className="font-medium">10</span> of{" "}
+            <span className="font-medium">{filteredVendors.length}</span>{" "}
+            results
           </div>
           <div className="flex space-x-2">
             <button className="px-3 py-1 border rounded-md text-md font-medium text-gray-700 bg-white hover:bg-gray-50">
