@@ -12,11 +12,16 @@ const ExpensesList = () => {
     fetchExpenses();
   }, []);
 
+  // Update the fetchExpenses function
   const fetchExpenses = async () => {
     try {
       setLoading(true);
-      const response = await ExpensesService.getExpenseList();
-      setExpenses(response.data || []);
+      const data = await ExpensesService.getExpenseList();
+      console.log("Expenses data:", data); // Debug log
+
+      // Check if data has results property
+      const expensesList = data.results || data || [];
+      setExpenses(expensesList);
       setError(null);
     } catch (error) {
       console.error("Error fetching expenses:", error);
@@ -115,11 +120,16 @@ const ExpensesList = () => {
                     <input type="checkbox" />
                   </td>
                   <td className="p-3">
-                    {new Date(expense.created_at).toLocaleString()}
+                    {expense.created_at
+                      ? new Date(expense.created_at).toLocaleString()
+                      : "N/A"}
                   </td>
-                  <td className="p-3">{expense.category}</td>
+                  <td className="p-3">{expense.category?.name || "N/A"}</td>
                   <td className="p-3">
-                    {Number(expense.amount).toLocaleString()}
+                    ₦
+                    {expense.amount
+                      ? Number(expense.amount).toLocaleString()
+                      : "0"}
                   </td>
                   <td className="p-3">{expense.created_by}</td>
                   <td className="p-3">{expense.paid_to}</td>

@@ -51,12 +51,11 @@ const ExpensesOverview = () => {
             </button>
           ))}
         </div>
-        <button
-          className="flex justify-end items-center gap-2 px-4 py-2 border rounded-lg bg-white border-gray-300"
+        <AddButton
+          text="Create Expenses"
           onClick={() => setIsModalOpen(true)}
-        >
-          <AddButton text="Create Expenses" />
-        </button>
+          className="flex justify-end items-center gap-2 px-4 py-2 border rounded-lg bg-white border-gray-300"
+        />
       </div>
 
       {/* Order Summary Cards */}
