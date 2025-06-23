@@ -2,10 +2,9 @@ import ClientSideABrLayout from "../../components/navs/ClientSideBarLayout";
 import GetHelp from "../../components/helpcenter/HelpCenter";
 
 const GetHelpDisplay = () => {
-  
   return (
     <ClientSideABrLayout>
-      <div className="bg-gray-100 p-6 rounded-sm ">
+      <div className=" p-6 rounded-sm ">
         <GetHelp />
       </div>
     </ClientSideABrLayout>

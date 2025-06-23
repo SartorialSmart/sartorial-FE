@@ -98,6 +98,10 @@ const dashboardItems = [
 const DashboardLayout = () => {
   const { user } = useAuth();
 
+  const handleHelpClick = () => {
+    return (window.location.href = "/help-centre");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -116,7 +120,7 @@ const DashboardLayout = () => {
           <IconButton
             icon={HelpCircle}
             text="Help Centre"
-            onClick={() => alert("Help Clicked")}
+            onClick={handleHelpClick}
             className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-300"
           />
         </div>

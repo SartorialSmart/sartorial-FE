@@ -1,3 +1,4 @@
+import axios from "axios";
 import axiosInstance from "../../utils/axiosConfig";
 import { API } from "../api/apiEndpoints";
 
@@ -47,23 +48,21 @@ const ClientService = {
   updateClient: async (clientId, clientData, isMultipart = false) => {
     try {
       const headers = isMultipart
-        ? { "Content-Type": "multipart/form-data" } 
+        ? { "Content-Type": "multipart/form-data" }
         : { "Content-Type": "application/json" };
-  
+
       const response = await axiosInstance.put(
         API.CLIENT_MANAGEMENT.CLIENTS.DETAIL(clientId),
         clientData,
         { headers }
       );
-  
+
       return response.data;
     } catch (error) {
       console.error("Error updating client:", error.response?.data || error);
       throw error;
     }
   },
-  
-  
 
   deleteClient: async (clientId) => {
     try {
@@ -183,12 +182,23 @@ const ClientService = {
       throw error;
     }
   },
-
   uploadStyleImage: async (imageData) => {
     try {
-      // Log the FormData contents for debugging
-      console.log('Client ID:', imageData.get('client'));
-      console.log('Number of images:', imageData.getAll('images').length);
+      console.log("=== Service Debug ===");
+      console.log("API Endpoint:", API.CLIENT_MANAGEMENT.STYLE_IMAGES.CREATE);
+
+      // Log all FormData entries
+      console.log("FormData entries in service:");
+      for (let pair of imageData.entries()) {
+        if (pair[1] instanceof File) {
+          console.log(`${pair[0]}: File - ${pair[1].name}`);
+        } else {
+          console.log(`${pair[0]}: ${pair[1]}`);
+        }
+      }
+
+      console.log("Client from FormData:", imageData.get("client"));
+      console.log("Images count:", imageData.getAll("images").length);
 
       const response = await axiosInstance.post(
         API.CLIENT_MANAGEMENT.STYLE_IMAGES.CREATE,
@@ -201,11 +211,16 @@ const ClientService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error uploading style image:", error.response?.data || error);
+      console.error("=== API Error Debug ===");
+      console.error("Error response:", error.response?.data);
+      console.error("Request config:", {
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers,
+      });
       throw error;
     }
   },
-
 
   getStyleImages: async () => {
     try {
@@ -231,15 +246,15 @@ const ClientService = {
     }
   },
 
-
   deleteStyleImage: async (imageId) => {
     try {
-      const response =  await axiosInstance.delete(API.CLIENT_MANAGEMENT.STYLE_IMAGES.DELETE(imageId));
+      const response = await axiosInstance.delete(
+        API.CLIENT_MANAGEMENT.STYLE_IMAGES.DELETE(imageId)
+      );
       return response.data;
     } catch (error) {
-      throw error
+      throw error;
     }
-
   },
 
   getClientDashboard: async () => {

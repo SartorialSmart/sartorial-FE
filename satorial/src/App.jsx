@@ -53,6 +53,7 @@ import PricingPlansDisplay from "./pages/subscriptionPages/PricingPlansDisplay";
 import AddVendorFormDisplay from "./pages/orderPages/AddVendorFormDisplay";
 
 import ProfileSettingsDisplay from "./pages/settingsPages/ProfileSettingsDisplay";
+import ForgotPassword from "./pages/Auth/ForgotPassword";
 
 const dashboards = [
   "client",
@@ -123,6 +124,8 @@ const protectedRoutes = [
   { path: "/subscriptions/pricing/plan", element: <PricingPlansDisplay /> },
 
   { path: "/settings", element: <ProfileSettingsDisplay /> },
+
+  { path: "/help-centre", element: <GetHelpDisplay /> },
 ];
 
 const App = () => {
@@ -132,6 +135,7 @@ const App = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<OrganizationRegister />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {dashboards.map((dashboard, index) => (
           <Route

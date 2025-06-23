@@ -1,11 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Wallet, Banknote } from "lucide-react";
 import AddButton from "../buttons/AddButton";
 import AddExpensesFormModal from "../modals/formModals/AddExpensesFormModal";
+import ExpensesService from "../../services/expensesServices/ExpensesService";
+import ExpensescategoryService from "../../services/expensesServices/ExpensesCategoryService";
 
 const ExpensesOverview = () => {
   const [activeFilter, setActiveFilter] = useState("All Time");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [totalExpense, setTotalExpense] = useState(null);
+  const [totalCategories, setTotalCategories] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const filters = [
     "All Time",
@@ -16,16 +22,53 @@ const ExpensesOverview = () => {
     "Custom Date",
   ];
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        // Fetch expense summary
+        const summaryRes = await ExpensesService.getExpenseSummary();
+        // Try to get total amount from common keys
+        let total = null;
+        if (summaryRes.data) {
+          total =
+            summaryRes.data.total_expense_amount ||
+            summaryRes.data.total ||
+            summaryRes.data.amount ||
+            0;
+        }
+        setTotalExpense(total);
+
+        // Fetch categories
+        const catRes = await ExpensescategoryService.getExpenseCategoriesList();
+        let categories = Array.isArray(catRes.data)
+          ? catRes.data
+          : catRes.data?.results || [];
+        setTotalCategories(categories.length);
+      } catch {
+        setError("Failed to load expenses overview. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   const cards = [
     {
       title: "Total Expense Amount",
-      value: "₦1,120,000",
+      value: loading
+        ? "Loading..."
+        : error
+        ? "-"
+        : `₦${Number(totalExpense).toLocaleString()}`,
       icon: <Wallet />,
       bg: "bg-green-100",
     },
     {
       title: "Total Expense Categories",
-      value: "11",
+      value: loading ? "Loading..." : error ? "-" : totalCategories,
       icon: <Banknote />,
       bg: "bg-purple-100",
     },
@@ -57,6 +100,10 @@ const ExpensesOverview = () => {
           className="flex justify-end items-center gap-2 px-4 py-2 border rounded-lg bg-white border-gray-300"
         />
       </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
+      )}
 
       {/* Order Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

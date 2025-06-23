@@ -41,7 +41,7 @@ export const API = {
       LIST: "/orders/order-categories/",
       DETAIL: (categoryId) => `/order-categories/${categoryId}/`,
     },
-    
+
     ORDERS: {
       CREATE: "/orders/orders/",
       LIST: "/orders/orders/",
@@ -94,7 +94,6 @@ export const API = {
     DASHBOARD: {
       OVERVIEW: "/orders/order-dashboard/",
     },
-
   },
 
   EXPENSE_MANAGEMENT: {
@@ -105,7 +104,7 @@ export const API = {
       DELETE: (categoryId) => `/expenses-category/${categoryId}/`,
       UPDATE: (categoryId) => `/expenses-category/${categoryId}/`,
     },
-    
+
     EXPENSES: {
       CREATE: "/expenses/expenses/",
       LIST: "/expenses/expenses/",
