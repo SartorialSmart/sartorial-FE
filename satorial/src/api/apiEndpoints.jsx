@@ -48,6 +48,12 @@ export const API = {
       DETAIL: (orderId) => `/orders/orders/${orderId}/`,
       UPDATE: (orderId) => `/orders/orders/${orderId}/`,
       ORDER_LIST: "/orders/orders/list/",
+      ASSIGN: "/orders/orders/assign/",
+      ALLOCATION: "/orders/my-allocations/",
+    },
+
+    CLIENT_ORDERS: {
+      HISTORY: (clientId) => `/orders/orders/client/${clientId}`,
     },
 
     VENDORS: {

@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 import { MoreVertical } from "lucide-react";
 import { Spin } from "antd";
 import StaffService from "../../services/staffServices/StaffService";
+import PropTypes from "prop-types";
 
 const StaffListTable = () => {
   const navigate = useNavigate(); // ✅ Initialize navigate
   const columns = [
-    { label: "Name", key: "first_name" },
+    { label: "Name", key: "full_name" },
     { label: "Email", key: "email" },
     { label: "Phone Number", key: "phone_number" },
     { label: "Role", key: "role" },
@@ -34,7 +35,7 @@ const StaffListTable = () => {
         } else {
           throw new Error("Invalid data format");
         }
-      } catch (error) {
+      } catch {
         setError("Failed to load staff list");
       } finally {
         setLoading(false);
@@ -103,6 +104,13 @@ const StaffListTable = () => {
     </div>
   );
 
+  DropdownMenu.propTypes = {
+    staff: PropTypes.object.isRequired,
+  };
+
+  // Filter out exited staff
+  const filteredStaffList = staffList.filter((staff) => !staff.is_exited);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -126,7 +134,10 @@ const StaffListTable = () => {
                   type="checkbox"
                   className="w-4 h-4"
                   onChange={handleSelectAll}
-                  checked={selectedStaff.length === staffList.length}
+                  checked={
+                    filteredStaffList.length > 0 &&
+                    selectedStaff.length === filteredStaffList.length
+                  }
                 />
               </th>
               {columns.map((col, index) => (
@@ -139,9 +150,12 @@ const StaffListTable = () => {
           </thead>
 
           <tbody>
-            {staffList.length > 0 ? (
-              staffList.map((staff, index) => (
-                <tr key={index} className="border-t hover:bg-gray-50 transition">
+            {filteredStaffList.length > 0 ? (
+              filteredStaffList.map((staff, index) => (
+                <tr
+                  key={index}
+                  className="border-t hover:bg-gray-50 transition"
+                >
                   <td className="p-3 sm:p-4 w-12">
                     <input
                       type="checkbox"
@@ -151,8 +165,15 @@ const StaffListTable = () => {
                     />
                   </td>
                   {columns.map((col, colIndex) => (
-                    <td key={colIndex} className="p-3 sm:p-4 text-sm sm:text-base">
-                      {staff[col.key]}
+                    <td
+                      key={colIndex}
+                      className="p-3 sm:p-4 text-sm sm:text-base"
+                    >
+                      {col.key === "full_name"
+                        ? `${staff.first_name || ""} ${
+                            staff.last_name || ""
+                          }`.trim()
+                        : staff[col.key]}
                     </td>
                   ))}
                   <td className="sm:p-4 w-10 text-gray-600">
@@ -162,7 +183,9 @@ const StaffListTable = () => {
                         className="cursor-pointer hover:text-gray-800 text-[#9e9e9e] transition m-1"
                         onClick={(e) => handleDropdownToggle(staff.email, e)}
                       />
-                      {dropdownOpen === staff.email && <DropdownMenu staff={staff} />}
+                      {dropdownOpen === staff.email && (
+                        <DropdownMenu staff={staff} />
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -184,7 +207,11 @@ const StaffListTable = () => {
           <div className="bg-white rounded-md shadow-lg p-6 w-full max-w-sm">
             <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
             <p className="mb-6">
-              Are you sure you want to delete <strong>{staffToDelete.first_name} {staffToDelete.last_name}</strong>?
+              Are you sure you want to delete{" "}
+              <strong>
+                {staffToDelete.first_name} {staffToDelete.last_name}
+              </strong>
+              ?
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -201,7 +228,9 @@ const StaffListTable = () => {
                 onClick={async () => {
                   try {
                     await StaffService.deleteStaff(staffToDelete.slug);
-                    setStaffList((prev) => prev.filter((s) => s.slug !== staffToDelete.slug));
+                    setStaffList((prev) =>
+                      prev.filter((s) => s.slug !== staffToDelete.slug)
+                    );
                     setShowDeleteModal(false);
                     setStaffToDelete(null);
                   } catch (error) {

@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
-import { X, Calendar } from "lucide-react";
+import { X } from "lucide-react";
+import { DatePicker } from "antd";
+import dayjs from "dayjs";
+import PropTypes from "prop-types";
 import ExitStaffService from "../../../services/staffServices/ExitStaffSrvice";
 import StaffService from "../../../services/staffServices/StaffService";
 
 const ExitStaffForm = ({ onClose }) => {
   const [selectedStaff, setSelectedStaff] = useState("");
-  const [exitDate, setExitDate] = useState("");
+  const [exitDate, setExitDate] = useState(null);
   const [exitReason, setExitReason] = useState("");
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -18,8 +21,8 @@ const ExitStaffForm = ({ onClose }) => {
       setLoading(true);
       try {
         const data = await StaffService.listStaff();
-        setStaffList(data.results); // Assuming the response contains a 'results' field with the list of staff
-      } catch (error) {
+        setStaffList(data.results);
+      } catch {
         setError("Failed to load staff list.");
       } finally {
         setLoading(false);
@@ -30,10 +33,8 @@ const ExitStaffForm = ({ onClose }) => {
   }, []);
 
   const handleSubmit = async () => {
-    // Reset form errors
     setFormErrors({});
 
-    // Validation
     const errors = {};
     if (!selectedStaff) errors.selectedStaff = "Staff selection is required.";
     if (!exitDate) errors.exitDate = "Exit date is required.";
@@ -46,9 +47,13 @@ const ExitStaffForm = ({ onClose }) => {
 
     try {
       setLoading(true);
-      await ExitStaffService.addExitedStaff(selectedStaff, exitDate, exitReason);
+      await ExitStaffService.addExitedStaff(
+        selectedStaff,
+        exitDate,
+        exitReason
+      );
       onClose();
-    } catch (error) {
+    } catch {
       setError("Failed to exit staff.");
     } finally {
       setLoading(false);
@@ -59,11 +64,7 @@ const ExitStaffForm = ({ onClose }) => {
     <div className="bg-white w-[400px] p-6 rounded-lg shadow-lg">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Exit Staff</h2>
-        <button
-          className="text-gray-600"
-          onClick={onClose}
-          aria-label="Close"
-        >
+        <button className="text-gray-600" onClick={onClose} aria-label="Close">
           <X size={20} />
         </button>
       </div>
@@ -71,9 +72,13 @@ const ExitStaffForm = ({ onClose }) => {
       {error && <div className="text-red-500 mb-4">{error}</div>}
 
       <div className="mb-4">
-        <label className="text-sm font-medium text-gray-600">Search staff</label>
+        <label className="text-sm font-medium text-gray-600">
+          Search staff
+        </label>
         <select
-          className={`w-full mt-1 p-2 border ${formErrors.selectedStaff ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none`}
+          className={`w-full mt-1 p-2 border ${
+            formErrors.selectedStaff ? "border-red-500" : "border-gray-300"
+          } rounded-md focus:outline-none`}
           value={selectedStaff}
           onChange={(e) => setSelectedStaff(e.target.value)}
         >
@@ -84,7 +89,11 @@ const ExitStaffForm = ({ onClose }) => {
             </option>
           ))}
         </select>
-        {formErrors.selectedStaff && <p className="text-red-500 text-xs mt-1">{formErrors.selectedStaff}</p>}
+        {formErrors.selectedStaff && (
+          <p className="text-red-500 text-xs mt-1">
+            {formErrors.selectedStaff}
+          </p>
+        )}
       </div>
 
       <div className="mb-4">
@@ -92,27 +101,34 @@ const ExitStaffForm = ({ onClose }) => {
           Exit Date <span className="text-red-500">*</span>
         </label>
         <div className="relative mt-1">
-          <input
-            type="date"
-            className={`w-full p-2 border ${formErrors.exitDate ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none`}
-            value={exitDate}
-            onChange={(e) => setExitDate(e.target.value)}
+          <DatePicker
+            className="w-full"
+            value={exitDate ? dayjs(exitDate) : null}
+            onChange={(date, dateString) => setExitDate(dateString)}
+            status={formErrors.exitDate ? "error" : ""}
           />
-          <Calendar size={18} className="absolute right-3 top-3 text-gray-500" />
         </div>
-        {formErrors.exitDate && <p className="text-red-500 text-xs mt-1">{formErrors.exitDate}</p>}
+        {formErrors.exitDate && (
+          <p className="text-red-500 text-xs mt-1">{formErrors.exitDate}</p>
+        )}
       </div>
 
       <div className="mb-4">
-        <label className="text-sm font-medium text-gray-600">Reason for exit</label>
+        <label className="text-sm font-medium text-gray-600">
+          Reason for exit
+        </label>
         <textarea
-          className={`w-full mt-1 p-2 border ${formErrors.exitReason ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none`}
+          className={`w-full mt-1 p-2 border ${
+            formErrors.exitReason ? "border-red-500" : "border-gray-300"
+          } rounded-md focus:outline-none`}
           placeholder="Enter reason"
           value={exitReason}
           onChange={(e) => setExitReason(e.target.value)}
           rows="3"
         />
-        {formErrors.exitReason && <p className="text-red-500 text-xs mt-1">{formErrors.exitReason}</p>}
+        {formErrors.exitReason && (
+          <p className="text-red-500 text-xs mt-1">{formErrors.exitReason}</p>
+        )}
       </div>
 
       <button
@@ -124,6 +140,10 @@ const ExitStaffForm = ({ onClose }) => {
       </button>
     </div>
   );
+};
+
+ExitStaffForm.propTypes = {
+  onClose: PropTypes.func.isRequired,
 };
 
 export default ExitStaffForm;

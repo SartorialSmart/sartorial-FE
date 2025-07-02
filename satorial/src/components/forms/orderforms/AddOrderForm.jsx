@@ -1,23 +1,18 @@
 import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
-import DatePicker from "react-date-picker";
-import "react-date-picker/dist/DatePicker.css";
-import "react-calendar/dist/Calendar.css";
 import AddOrderCategoryForm from "./AddOrderCategoryForm";
 import OrderCategoryService from "../../../services/OrderCategoryService";
 import ClientService from "../../../services/ClientService";
 import OrderService from "../../../services/OrderService";
 import SuccessModal from "../../modals/SuccessModal";
 
-const AddOrderForm = () => {
+const AddOrderForm = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [clients, setClients] = useState([]);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
 
   // State for error modal
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
@@ -59,17 +54,16 @@ const AddOrderForm = () => {
     if (name === "start_date" || name === "end_date") {
       const dateValue = value ? new Date(value) : null; // Convert to Date object if value exists
       if (name === "start_date") {
-        setStartDate(dateValue);
+        setFormData((prev) => ({
+          ...prev,
+          start_date: dateValue ? dateValue.toISOString().split("T")[0] : "",
+        }));
       } else if (name === "end_date") {
-        setEndDate(dateValue);
+        setFormData((prev) => ({
+          ...prev,
+          end_date: dateValue ? dateValue.toISOString().split("T")[0] : "",
+        }));
       }
-
-      // Update form data with the formatted date (YYYY-MM-DD)
-      setFormData((prev) => ({
-        ...prev,
-        [name]: dateValue ? dateValue.toISOString().split("T")[0] : "",
-      }));
-      return;
     }
 
     // Handle other fields
@@ -166,6 +160,11 @@ const AddOrderForm = () => {
         balance: "",
       });
       setSelectedCategory(null); // Reset selected category
+
+      // Close the form on successful creation
+      if (onClose) {
+        onClose();
+      }
     } catch (error) {
       setErrorTitle("Error");
       setErrorMessage(
@@ -182,7 +181,7 @@ const AddOrderForm = () => {
     try {
       const response = await OrderCategoryService.getCategories();
       setCategories(response.data || []);
-    } catch (error) {
+    } catch {
       setErrorTitle("Error");
       setErrorMessage("Failed to refresh categories.");
       setIsErrorModalOpen(true);
@@ -194,7 +193,7 @@ const AddOrderForm = () => {
       try {
         const response = await OrderCategoryService.getCategories();
         setCategories(Array.isArray(response) ? response : []);
-      } catch (error) {
+      } catch {
         setErrorTitle("Error");
         setErrorMessage("Failed to fetch categories.");
         setIsErrorModalOpen(true);
@@ -209,7 +208,7 @@ const AddOrderForm = () => {
       try {
         const response = await ClientService.getClients();
         setClients(Array.isArray(response) ? response : []);
-      } catch (error) {
+      } catch {
         setErrorTitle("Error");
         setErrorMessage("Failed to fetch clients.");
         setIsErrorModalOpen(true);

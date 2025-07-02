@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { MoreVertical } from "lucide-react";
 import { Link } from "react-router-dom";
 import OrderService from "../../services/OrderService";
 import TrackOrderStatusModal from "../modals/formModals/TrackOrderStatusModal";
 import OrderInvoiceModal from "../modals/formModals/OrderInvoiceModal";
+import AssignOrderModal from "../allocationModals/AssignOrderModal";
 
 const columns = [
   { key: "client_full_name", label: "Client Name" },
@@ -11,10 +12,10 @@ const columns = [
   { key: "order_price", label: "Amount (₦)" },
   { key: "ordered_at", label: "Order Date" },
   { key: "order_status", label: "Status" },
+  { key: "assignment_status", label: "Staff Assignment" },
 ];
 
 const formatAmount = (amount = 0) => `₦${Number(amount).toLocaleString()}`;
-
 
 const getStatusClass = (status) => {
   const statusMap = {
@@ -31,7 +32,10 @@ const OrderListTable = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showTrackModal, setShowTrackModal] = useState(false);
   const [showOrderInvoiceModal, setShowOrderInvoiceModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [modalMode, setModalMode] = useState("assign");
   const dropdownRefs = useRef([]);
+  const buttonRefs = useRef([]);
 
   // Fetch orders from the API
   useEffect(() => {
@@ -40,6 +44,7 @@ const OrderListTable = () => {
         const data = await OrderService.getOrders();
         setOrders(data);
         dropdownRefs.current = new Array(data.length).fill(null);
+        buttonRefs.current = new Array(data.length).fill(null);
       } catch (error) {
         console.error("Failed to fetch orders:", error);
       }
@@ -53,7 +58,9 @@ const OrderListTable = () => {
       if (
         activeDropdown !== null &&
         dropdownRefs.current[activeDropdown] &&
-        !dropdownRefs.current[activeDropdown].contains(event.target)
+        !dropdownRefs.current[activeDropdown].contains(event.target) &&
+        buttonRefs.current[activeDropdown] &&
+        !buttonRefs.current[activeDropdown].contains(event.target)
       ) {
         setActiveDropdown(null);
       }
@@ -83,6 +90,46 @@ const OrderListTable = () => {
     setActiveDropdown(null);
   };
 
+  // Handle assign order click
+  const handleAssignClick = (order) => {
+    setSelectedOrder(order);
+    setModalMode("assign");
+    setShowAssignModal(true);
+  };
+
+  // Handle assign order submission
+  const handleAssign = async (payload) => {
+    try {
+      await OrderService.assignOrder(payload);
+      // Refresh orders after assignment
+      const data = await OrderService.getOrders();
+      setOrders(data);
+      setShowAssignModal(false);
+    } catch (error) {
+      console.error("Failed to assign order:", error);
+    }
+  };
+
+  // Check if order is assigned
+  const isOrderAssigned = (order) => {
+    return order.order_status === "Assigned";
+  };
+
+  // Get dropdown position based on button position
+  const getDropdownPosition = (index) => {
+    if (!buttonRefs.current[index]) return {};
+
+    const button = buttonRefs.current[index];
+    const rect = button.getBoundingClientRect();
+
+    return {
+      position: "fixed",
+      top: rect.bottom + 8,
+      right: window.innerWidth - rect.right,
+      zIndex: 1000,
+    };
+  };
+
   return (
     <div className="p-4 sm:p-6 bg-gray-50">
       <h2 className="text-xl sm:text-2xl font-semibold mb-4 text-gray-800">
@@ -107,7 +154,6 @@ const OrderListTable = () => {
             </tr>
           </thead>
           <tbody>
-            
             {orders.map((order, index) => (
               <tr
                 key={order.id || index}
@@ -131,6 +177,32 @@ const OrderListTable = () => {
                       >
                         {order[col.key]}
                       </span>
+                    ) : col.key === "assignment_status" ? (
+                      <div className="flex items-center justify-between">
+                        {isOrderAssigned(order) ? (
+                          <div className="flex items-center space-x-2">
+                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                            <span className="text-xs text-gray-600">
+                              Staff Assigned
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                            <span className="text-xs text-gray-600">
+                              No Staff Assigned
+                            </span>
+                          </div>
+                        )}
+                        {!isOrderAssigned(order) && (
+                          <button
+                            onClick={() => handleAssignClick(order)}
+                            className="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition"
+                          >
+                            Assign
+                          </button>
+                        )}
+                      </div>
                     ) : (
                       order[col.key]
                     )}
@@ -138,51 +210,13 @@ const OrderListTable = () => {
                 ))}
                 <td className="sm:p-4 w-10 text-gray-600 relative">
                   <button
+                    ref={(el) => (buttonRefs.current[index] = el)}
                     className="border border-gray-400 rounded-md p-1 cursor-pointer hover:text-gray-800 text-gray-500 transition inline-block"
                     onClick={() => toggleDropdown(index)}
                     aria-label="More options"
                   >
                     <MoreVertical size={18} />
                   </button>
-                  {activeDropdown === index && (
-                    <div
-                      ref={(el) => (dropdownRefs.current[index] = el)}
-                      className="absolute right-0 mt-2 w-44 bg-white shadow-md border rounded-md z-10"
-                    >
-                      <ul className="text-sm text-gray-700">
-                        <li className="p-2 hover:bg-gray-100 cursor-pointer">
-                          <Link
-                            to={`/order/detail/${order.id}`}
-                            onClick={() => setActiveDropdown(null)}
-                            className="block"
-                          >
-                            View Order
-                          </Link>
-                        </li>
-                        <li className="p-2 hover:bg-gray-100 cursor-pointer">
-                          <Link
-                            to={`/order/edit/${order.id}`}
-                            onClick={() => setActiveDropdown(null)}
-                            className="block"
-                          >
-                            Edit Order
-                          </Link>
-                        </li>
-                        <li
-                          className="p-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={() => handleTrackOrder(order)}
-                        >
-                          Track Order
-                        </li>
-                        <li
-                          className="p-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={() => handleOrderInvoice(order)} // ✅ Fix: Use button instead of <Link>
-                        >
-                          Generate Invoice
-                        </li>
-                      </ul>
-                    </div>
-                  )}
                 </td>
               </tr>
             ))}
@@ -190,21 +224,74 @@ const OrderListTable = () => {
         </table>
       </div>
 
-      {/* Track Order Modal */}
-      {showTrackModal && selectedOrder && (
-        <TrackOrderStatusModal
-          isOpen={showTrackModal} // ✅ Ensure modal knows when to be displayed
-          onClose={() => setShowTrackModal(false)} // ✅ Properly close modal
-          billId={selectedOrder.id} // ✅ Pass the correct bill ID
-        />
+      {/* Dropdown positioned outside table container */}
+      {activeDropdown !== null && (
+        <div
+          ref={(el) => (dropdownRefs.current[activeDropdown] = el)}
+          className="w-44 bg-white shadow-lg border rounded-md"
+          style={getDropdownPosition(activeDropdown)}
+        >
+          <ul className="text-sm text-gray-700">
+            <li className="p-2 hover:bg-gray-100 cursor-pointer">
+              <Link
+                to={`/order/detail/${orders[activeDropdown]?.id}`}
+                onClick={() => setActiveDropdown(null)}
+                className="block"
+              >
+                View Order
+              </Link>
+            </li>
+            <li className="p-2 hover:bg-gray-100 cursor-pointer">
+              <Link
+                to={`/order/edit/${orders[activeDropdown]?.id}`}
+                onClick={() => setActiveDropdown(null)}
+                className="block"
+              >
+                Edit Order
+              </Link>
+            </li>
+            <li
+              className="p-2 hover:bg-gray-100 cursor-pointer"
+              onClick={() => handleTrackOrder(orders[activeDropdown])}
+            >
+              Track Order
+            </li>
+            <li
+              className="p-2 hover:bg-gray-100 cursor-pointer"
+              onClick={() => handleOrderInvoice(orders[activeDropdown])}
+            >
+              Generate Invoice
+            </li>
+          </ul>
+        </div>
       )}
 
       {/* Track Order Modal */}
+      {showTrackModal && selectedOrder && (
+        <TrackOrderStatusModal
+          isOpen={showTrackModal}
+          onClose={() => setShowTrackModal(false)}
+          billId={selectedOrder.id}
+        />
+      )}
+
+      {/* Order Invoice Modal */}
       {showOrderInvoiceModal && selectedOrder && (
         <OrderInvoiceModal
-          isOpen={showOrderInvoiceModal} // ✅ Ensure modal knows when to be displayed
-          onClose={() => setShowOrderInvoiceModal(false)} // ✅ Properly close modal
-          order={selectedOrder.id} // ✅ Pass the correct bill ID
+          isOpen={showOrderInvoiceModal}
+          onClose={() => setShowOrderInvoiceModal(false)}
+          order={selectedOrder.id}
+        />
+      )}
+
+      {/* Assign Order Modal */}
+      {showAssignModal && selectedOrder && (
+        <AssignOrderModal
+          isOpen={showAssignModal}
+          onClose={() => setShowAssignModal(false)}
+          order={selectedOrder}
+          mode={modalMode}
+          onAssign={handleAssign}
         />
       )}
     </div>

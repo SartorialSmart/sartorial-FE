@@ -2,9 +2,10 @@ import { useState, useRef } from "react";
 import { X, Upload, Eye, EyeOff } from "lucide-react";
 import StaffService from "../../../services/staffServices/StaffService";
 import { toast } from "react-toastify";
+import PropTypes from "prop-types";
 
 const AddStaffForm = ({ onClose }) => {
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     firstName: "",
     lastName: "",
     email: "",
@@ -15,9 +16,10 @@ const AddStaffForm = ({ onClose }) => {
     salary: "",
     employmentDate: "",
     birthdayDate: "",
-    gender: "Male", // Capitalize initial value
+    gender: "Male",
     avatar: null,
-  });
+  };
+  const [formData, setFormData] = useState(initialFormData);
   const [showPassword, setShowPassword] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const fileInputRef = useRef(null);
@@ -83,8 +85,10 @@ const AddStaffForm = ({ onClose }) => {
       // Log the data being sent
       console.log("Sending staff data:", staffData);
 
-      const response = await StaffService.addStaff(staffData);
+      await StaffService.addStaff(staffData);
       toast.success("Staff created successfully!");
+      setFormData(initialFormData);
+      setAvatarPreview(null);
       onClose();
     } catch (error) {
       console.error("Staff creation error:", error.response?.data || error);
@@ -371,6 +375,10 @@ const AddStaffForm = ({ onClose }) => {
       </div>
     </div>
   );
+};
+
+AddStaffForm.propTypes = {
+  onClose: PropTypes.func.isRequired,
 };
 
 export default AddStaffForm;

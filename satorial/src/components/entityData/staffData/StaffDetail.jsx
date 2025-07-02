@@ -13,6 +13,7 @@ import {
 import { Briefcase, CheckCircle, Clock } from "lucide-react";
 import StaffService from "../../../services/staffServices/StaffService";
 import dayjs from "dayjs";
+import PropTypes from "prop-types";
 
 const { Option } = Select;
 
@@ -75,8 +76,14 @@ const StaffDetail = () => {
         }
       });
 
-      if (fileList.length > 0) {
+      if (fileList.length > 0 && fileList[0].originFileObj) {
         formPayload.append("avatar", fileList[0].originFileObj);
+        console.log("Appending avatar:", fileList[0].originFileObj);
+      }
+
+      // Debug: log FormData keys
+      for (let pair of formPayload.entries()) {
+        console.log(pair[0] + ":", pair[1]);
       }
 
       await StaffService.updateStaff(staff.slug, formPayload, true);
@@ -96,7 +103,10 @@ const StaffDetail = () => {
     }
   };
 
-  const handleUploadChange = ({ fileList }) => setFileList(fileList);
+  const handleUploadChange = ({ fileList }) => {
+    console.log("Upload fileList:", fileList);
+    setFileList(fileList);
+  };
 
   if (loading) {
     return (
@@ -126,20 +136,22 @@ const StaffDetail = () => {
           Staff Performance Report
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[["Allocated", "orange", Briefcase], ["Completed", "green", CheckCircle], ["In Progress", "blue", Clock]].map(
-            ([label, color, Icon]) => (
-              <div
-                key={label}
-                className={`bg-${color}-100 rounded-2xl p-6 flex items-center gap-4 shadow-sm`}
-              >
-                <Icon className={`w-10 h-10 text-${color}-500`} />
-                <div>
-                  <div className="text-2xl font-bold text-gray-800">112</div>
-                  <div className="text-gray-600">{label} Orders</div>
-                </div>
+          {[
+            ["Allocated", "orange", Briefcase],
+            ["Completed", "green", CheckCircle],
+            ["In Progress", "blue", Clock],
+          ].map(([label, color, Icon]) => (
+            <div
+              key={label}
+              className={`bg-${color}-100 rounded-2xl p-6 flex items-center gap-4 shadow-sm`}
+            >
+              <Icon className={`w-10 h-10 text-${color}-500`} />
+              <div>
+                <div className="text-2xl font-bold text-gray-800">112</div>
+                <div className="text-gray-600">{label} Orders</div>
               </div>
-            )
-          )}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -154,13 +166,7 @@ const StaffDetail = () => {
             <label className="block text-gray-700 mb-2 font-medium">
               Avatar
             </label>
-            {fileList.length > 0 ? (
-              <img
-                src={URL.createObjectURL(fileList[0].originFileObj)}
-                alt="Avatar Preview"
-                className="w-24 h-24 rounded-full object-cover mb-3 border"
-              />
-            ) : user?.avatar ? (
+            {user?.avatar ? (
               <img
                 src={user.avatar}
                 alt="Current Avatar"
@@ -179,13 +185,11 @@ const StaffDetail = () => {
               disabled={!isEditing}
               showUploadList={false}
             >
-              <button
-                className={`py-2 px-4 border rounded ${
-                  isEditing ? "hover:border-orange-500" : "cursor-not-allowed"
-                } transition`}
-              >
-                Click to Upload
-              </button>
+              {isEditing && (
+                <button className="py-2 px-4 border rounded hover:border-orange-500 transition">
+                  Click to Upload
+                </button>
+              )}
             </Upload>
           </div>
 
@@ -272,7 +276,9 @@ const StaffDetail = () => {
               label="Phone Number *"
               value={formData.phone_number}
               disabled={!isEditing}
-              onChange={(e) => handleInputChange("phone_number", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("phone_number", e.target.value)
+              }
             />
             <SelectField
               label="Role *"
@@ -299,7 +305,9 @@ const StaffDetail = () => {
 
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
-            <label className="block text-gray-700 mb-2">Employment Date *</label>
+            <label className="block text-gray-700 mb-2">
+              Employment Date *
+            </label>
             <DatePicker
               className="w-full"
               value={
@@ -337,10 +345,22 @@ const InputField = ({ label, value, onChange, disabled }) => (
   </div>
 );
 
+InputField.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.any,
+  onChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+};
+
 const SelectField = ({ label, value, onChange, options, disabled }) => (
   <div>
     <label className="block text-gray-700 mb-2">{label}</label>
-    <Select className="w-full" value={value} onChange={onChange} disabled={disabled}>
+    <Select
+      className="w-full"
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+    >
       {options.map((opt) => (
         <Option key={opt} value={opt}>
           {opt.charAt(0).toUpperCase() + opt.slice(1)}
@@ -349,5 +369,13 @@ const SelectField = ({ label, value, onChange, options, disabled }) => (
     </Select>
   </div>
 );
+
+SelectField.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.any,
+  onChange: PropTypes.func.isRequired,
+  options: PropTypes.array.isRequired,
+  disabled: PropTypes.bool,
+};
 
 export default StaffDetail;
