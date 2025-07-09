@@ -4,6 +4,7 @@ import { MoreVertical } from "lucide-react";
 import { Spin } from "antd";
 import StaffService from "../../services/staffServices/StaffService";
 import PropTypes from "prop-types";
+import { createPortal } from "react-dom";
 
 const StaffListTable = () => {
   const navigate = useNavigate(); // ✅ Initialize navigate
@@ -24,6 +25,8 @@ const StaffListTable = () => {
   const [staffToDelete, setStaffToDelete] = useState(null);
 
   const dropdownRef = useRef(null);
+  // For each row, create a ref for the MoreVertical icon
+  const rowRefs = useRef({});
 
   useEffect(() => {
     const fetchStaffList = async () => {
@@ -84,28 +87,51 @@ const StaffListTable = () => {
     };
   }, [handleOutsideClick]);
 
-  const DropdownMenu = ({ staff }) => (
-    <div
-      ref={dropdownRef}
-      className="absolute right-0 mt-2 w-32 bg-white shadow-lg rounded-lg border dropdown-menu z-50"
-    >
-      <button
-        className="w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
-        onClick={(e) => handleAction("view", staff, e)}
+  // DropdownMenu using portal to body for visibility
+  const DropdownMenu = ({ staff, anchorRef }) => {
+    const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+    useEffect(() => {
+      if (anchorRef && anchorRef.current) {
+        const rect = anchorRef.current.getBoundingClientRect();
+        setCoords({
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+        });
+      }
+    }, [anchorRef, dropdownOpen]);
+    return createPortal(
+      <div
+        ref={dropdownRef}
+        style={{
+          position: "absolute",
+          top: coords.top,
+          left: coords.left,
+          minWidth: coords.width,
+          zIndex: 9999,
+        }}
+        className="w-32 bg-white shadow-lg rounded-lg border dropdown-menu"
       >
-        View
-      </button>
-      <button
-        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-        onClick={(e) => handleAction("delete", staff, e)}
-      >
-        Delete
-      </button>
-    </div>
-  );
+        <button
+          className="w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
+          onClick={(e) => handleAction("view", staff, e)}
+        >
+          View
+        </button>
+        <button
+          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+          onClick={(e) => handleAction("delete", staff, e)}
+        >
+          Delete
+        </button>
+      </div>,
+      document.body
+    );
+  };
 
   DropdownMenu.propTypes = {
     staff: PropTypes.object.isRequired,
+    anchorRef: PropTypes.object.isRequired,
   };
 
   // Filter out exited staff
@@ -182,9 +208,15 @@ const StaffListTable = () => {
                         size={18}
                         className="cursor-pointer hover:text-gray-800 text-[#9e9e9e] transition m-1"
                         onClick={(e) => handleDropdownToggle(staff.email, e)}
+                        ref={(el) => {
+                          if (el) rowRefs.current[staff.email] = el;
+                        }}
                       />
                       {dropdownOpen === staff.email && (
-                        <DropdownMenu staff={staff} />
+                        <DropdownMenu
+                          staff={staff}
+                          anchorRef={{ current: rowRefs.current[staff.email] }}
+                        />
                       )}
                     </div>
                   </td>

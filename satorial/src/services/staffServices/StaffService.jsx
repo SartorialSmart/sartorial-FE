@@ -56,22 +56,9 @@ const StaffService = {
   },
 
   updateStaff: async (slug, updatedData) => {
-    const formData = new FormData();
-
-    for (const key in updatedData) {
-      if (Object.prototype.hasOwnProperty.call(updatedData, key)) {
-        formData.append(key, updatedData[key]);
-      }
-    }
-
     const response = await axiosInstance.put(
       API.STAFF_MANAGEMENT.STAFF.UPDATE(slug),
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
+      updatedData
     );
     return response.data;
   },
@@ -81,6 +68,20 @@ const StaffService = {
       API.STAFF_MANAGEMENT.STAFF.DELETE(slug)
     );
     return response.data;
+  },
+
+  // Update staff salary
+  updateSalary: async (payload) => {
+    try {
+      const response = await axiosInstance.post(
+        API.STAFF_MANAGEMENT.SALARY.UPDATE,
+        payload
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating salary:", error);
+      throw error;
+    }
   },
 };
 

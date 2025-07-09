@@ -1,20 +1,28 @@
 import { useState } from "react";
 import SuccessModal from "../modals/SuccessModal";
-import PayRollService from "../../services/staffServices/PayRolService";
+import StaffService from "../../services/staffServices/StaffService";
+import { useEffect } from "react";
 
 const GeneratePayrollTable = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [salary, setSalary] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [isSalaryUpdating, setIsSalaryUpdating] = useState(false);
 
-  const employees = [
-    { id: 1, name: "Kemi Johnson", salary: 200000 },
-    { id: 2, name: "John Doe", salary: 250000 },
-    { id: 3, name: "Jane Smith", salary: 180000 },
-    { id: 4, name: "Michael Brown", salary: 220000 },
-  ];
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const data = await StaffService.listStaff();
+        setEmployees(Array.isArray(data.results) ? data.results : []);
+      } catch {
+        console.error("Error fetching staff");
+        setEmployees([]);
+      }
+    };
+    fetchStaff();
+  }, []);
 
   const handleUpdateClick = (employee) => {
     setSelectedEmployee(employee);
@@ -23,38 +31,26 @@ const GeneratePayrollTable = () => {
   };
 
   const handleSave = async () => {
-    console.log(`Updated salary for ${selectedEmployee.name}: ₦${salary}`);
-    setIsModalOpen(false);
-    setIsSuccessModalOpen(true);
-  };
-
-  const handleGeneratePayroll = async () => {
-    if (!selectedEmployee) {
-      alert("Please select an employee to generate payroll for.");
-      return;
-    }
-
-    setIsLoading(true);
-
-    const payrollData = {
-      employee: selectedEmployee.id,
-      pay_period_start: "2025-04-01",
-      pay_period_end: "2025-04-30",
-      base_salary: salary,
-      overtime_hours: 0,
-      deductions: 0,
-      bonuses: 0,
-    };
-
+    if (!selectedEmployee) return;
+    setIsSalaryUpdating(true);
     try {
-      const response = await PayRollService.createPayroll(payrollData);
-      console.log("Payroll created successfully", response);
+      await StaffService.updateSalary({
+        staff_id: selectedEmployee.id,
+        salary,
+      });
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp.id === selectedEmployee.id
+            ? { ...emp, salary: Number(salary) }
+            : emp
+        )
+      );
+      setIsModalOpen(false);
       setIsSuccessModalOpen(true);
-    } catch (error) {
-      console.error("Error generating payroll:", error);
-      alert("Failed to generate payroll.");
+    } catch {
+      alert("Failed to update salary.");
     } finally {
-      setIsLoading(false);
+      setIsSalaryUpdating(false);
     }
   };
 
@@ -62,12 +58,8 @@ const GeneratePayrollTable = () => {
     <div className="p-6 bg-gray-100">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-semibold">Compute Payroll</h2>
-        <button
-          onClick={handleGeneratePayroll}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md"
-          disabled={isLoading}
-        >
-          {isLoading ? "Generating..." : "Generate Payroll"}
+        <button className="bg-blue-500 text-white px-4 py-2 rounded-md">
+          Generate Payroll
         </button>
       </div>
 
@@ -84,13 +76,26 @@ const GeneratePayrollTable = () => {
             </tr>
           </thead>
           <tbody>
-            {employees.map((employee) => (
-              <tr key={employee.id} className="border-t hover:bg-gray-50 transition">
+            {(Array.isArray(employees) ? employees : []).map((employee) => (
+              <tr
+                key={employee.id || employee.slug || employee.email}
+                className="border-t hover:bg-gray-50 transition"
+              >
                 <td className="p-3 w-12">
                   <input type="checkbox" />
                 </td>
-                <td className="p-3">{employee.name}</td>
-                <td className="p-3">₦{employee.salary.toLocaleString()}</td>
+                <td className="p-3">
+                  {employee.full_name ||
+                    `${employee.first_name || ""} ${
+                      employee.last_name || ""
+                    }`.trim() ||
+                    employee.name ||
+                    employee.username ||
+                    employee.email}
+                </td>
+                <td className="p-3">
+                  ₦{Number(employee.salary).toLocaleString()}
+                </td>
                 <td className="p-3 text-blue-600 cursor-pointer">
                   <button
                     onClick={() => handleUpdateClick(employee)}
@@ -118,11 +123,18 @@ const GeneratePayrollTable = () => {
               className="w-full p-2 border rounded-md"
             />
             <div className="flex justify-end mt-4 gap-2">
-              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 border rounded-md">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 border rounded-md"
+              >
                 Cancel
               </button>
-              <button onClick={handleSave} className="px-4 py-2 bg-blue-500 text-white rounded-md">
-                Save
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                disabled={isSalaryUpdating}
+              >
+                {isSalaryUpdating ? "Saving..." : "Save"}
               </button>
             </div>
           </div>
