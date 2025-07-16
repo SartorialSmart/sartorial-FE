@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { X, Calendar, Upload } from "lucide-react";
 import ClientService from "../../../services/ClientService";
-import { useAuth } from "../../../contexts/AuthContext";
 import SuccessModal from "../../modals/SuccessModal";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import PropTypes from "prop-types";
 
 const AddClientForm = ({ onNext, onClose }) => {
-  const { user } = useAuth();
+  // const { user } = useAuth(); // user is not used
 
   const initialFormData = {
     first_name: localStorage.getItem("first_name") || "",
@@ -26,9 +26,7 @@ const AddClientForm = ({ onNext, onClose }) => {
   };
 
   const [formData, setFormData] = useState(initialFormData);
-  const [clientId, setClientId] = useState(
-    localStorage.getItem("clientId") || ""
-  );
+  // const [clientId, setClientId] = useState(localStorage.getItem("clientId") || ""); // clientId is not used
   const [preview, setPreview] = useState(
     localStorage.getItem("clientImagePreview") || null
   );
@@ -48,6 +46,24 @@ const AddClientForm = ({ onNext, onClose }) => {
     country: "",
     postal_code: "",
   });
+
+  // Clear localStorage when component unmounts or page is reloaded
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      Object.keys(initialFormData).forEach((key) => {
+        localStorage.removeItem(key);
+      });
+      localStorage.removeItem("clientId");
+      localStorage.removeItem("clientImagePreview");
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      handleBeforeUnload(); // Also clear on unmount
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   useEffect(() => {
     const storedPreview = localStorage.getItem("clientImagePreview");
@@ -149,7 +165,7 @@ const AddClientForm = ({ onNext, onClose }) => {
       const createdClient = await ClientService.createClient(formDataToSend);
 
       if (createdClient?.id) {
-        setClientId(createdClient.id);
+        // setClientId(createdClient.id); // clientId is not used
 
         const addressData = {
           client: createdClient.id,
@@ -379,6 +395,11 @@ const AddClientForm = ({ onNext, onClose }) => {
       </div>
     </>
   );
+};
+
+AddClientForm.propTypes = {
+  onNext: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default AddClientForm;

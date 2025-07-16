@@ -45,7 +45,7 @@ import ExpensesDashboardDisplay from "./pages/expensesPages/ExpensesDashboardDis
 import ExpensesCategoryListDisplay from "./pages/expensesPages/ExpensesCategoryListDisplay";
 
 import InventoryListDisplay from "./pages/inventories/InventoryListDisplay";
-import InventoryCategoryListDisplay from "./pages/inventories/InventoryListDisplay";
+import InventoryCategoryListDisplay from "./pages/inventories/InventoryCategoryListDisplay";
 import DispenseInventoryListDisplay from "./pages/inventories/DispenseInventoryListDisplay";
 import VendorListDisplay from "./pages/orderPages/VendorListDisplay";
 import SubscriptionPanelDisplay from "./pages/subscriptionPages/SubscriptionPanelDisplay";

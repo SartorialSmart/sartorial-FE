@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../../contexts/AuthContext";
+import AuthService from "../../services/AuthService";
 import MessageModal from "../../components/modals/MessageModal";
 import loginBg from "../../assets/images/bg-2.jpg";
 import { useNavigate } from "react-router-dom";
 
 const ForgotPassword = () => {
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   // Initialize all state as false/empty to prevent leftover state
@@ -87,7 +86,7 @@ const ForgotPassword = () => {
       setSuccessMessage("");
       setShowModal(false);
 
-      await login(formData);
+      await AuthService.forgotPassword({ email: formData.email });
 
       setSuccessMessage("Reset password link sent successfully!");
       setShowModal(true);

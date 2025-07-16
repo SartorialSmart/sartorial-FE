@@ -1,31 +1,15 @@
-import React, { useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useState, useEffect } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { ChevronDown } from "lucide-react";
-
-const salesData = [
-  { month: "Jan", value: 400000 },
-  { month: "Feb", value: 300000 },
-  { month: "Mar", value: 600000 },
-  { month: "Apr", value: 450000 },
-  { month: "May", value: 500000 },
-  { month: "Jun", value: 480000 },
-  { month: "Jul", value: 520000 },
-  { month: "Aug", value: 700000 },
-  { month: "Sep", value: 550000 },
-  { month: "Oct", value: 350000 },
-  { month: "Nov", value: 450000 },
-  { month: "Dec", value: 400000 },
-];
-
-const expensesData = salesData.map((item) => ({
-  month: item.month,
-  value: item.value * 0.6,
-}));
-
-const ordersData = salesData.map((item) => ({
-  month: item.month,
-  value: Math.round(item.value / 2000),
-}));
+import ReportService from "../../services/ReportService";
+import PropTypes from "prop-types";
 
 const CustomBarChart = ({ data, color, title, legend }) => {
   const [activeIndex, setActiveIndex] = useState(null);
@@ -46,7 +30,7 @@ const CustomBarChart = ({ data, color, title, legend }) => {
         <BarChart data={data}>
           <XAxis dataKey="month" tick={{ fill: "#666" }} />
           <YAxis tick={{ fill: "#666" }} />
-          <Tooltip 
+          <Tooltip
             formatter={(value) => `₦${value.toLocaleString()}`}
             cursor={{ fill: "transparent" }}
           />
@@ -74,14 +58,71 @@ const CustomBarChart = ({ data, color, title, legend }) => {
   );
 };
 
+CustomBarChart.propTypes = {
+  data: PropTypes.array.isRequired,
+  color: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  legend: PropTypes.string.isRequired,
+};
+
 const MonthlyDataReport = () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [salesData, setSalesData] = useState([]);
+  const [expensesData, setExpensesData] = useState([]);
+  const [ordersData, setOrdersData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await ReportService.getMonthlyStatistics();
+        console.log("Monthly statistics data:", data);
+        // data is an array of { month, sales, expenses }
+        setSalesData(
+          data.map((item) => ({ month: item.month, value: item.sales }))
+        );
+        setExpensesData(
+          data.map((item) => ({ month: item.month, value: item.expenses }))
+        );
+        setOrdersData(data.map((item) => ({ month: item.month, value: 0 })));
+      } catch {
+        setError("Failed to load monthly statistics.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <h2 className="text-2xl font-bold mb-6">Monthly Data Report</h2>
-
-      <CustomBarChart data={salesData} color="#00C853" title="Sales Analysis" legend="Monthly Sales" />
-      <CustomBarChart data={expensesData} color="#F57C00" title="Expenses Analysis" legend="Monthly Expenses" />
-      <CustomBarChart data={ordersData} color="#9C27B0" title="Order Analysis" legend="Monthly Orders" />
+      {loading && <div className="text-center py-10">Loading...</div>}
+      {error && <div className="text-center text-red-500 py-10">{error}</div>}
+      {!loading && !error && (
+        <>
+          <CustomBarChart
+            data={salesData}
+            color="#00C853"
+            title="Sales Analysis"
+            legend="Monthly Sales"
+          />
+          <CustomBarChart
+            data={expensesData}
+            color="#F57C00"
+            title="Expenses Analysis"
+            legend="Monthly Expenses"
+          />
+          <CustomBarChart
+            data={ordersData}
+            color="#9C27B0"
+            title="Order Analysis"
+            legend="Monthly Orders"
+          />
+        </>
+      )}
     </div>
   );
 };

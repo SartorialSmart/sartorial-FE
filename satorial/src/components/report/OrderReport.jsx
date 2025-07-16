@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Mail,
   Search,
@@ -6,31 +7,87 @@ import {
   CheckSquare,
   User,
 } from "lucide-react";
-import { useState } from "react";
-
-const cards = [
-    { title: "All Order", value: "112", icon: <Mail />, bg: "bg-green-100" },
-    { title: "Delivered Orders", value: "112", icon: <Mail />, bg: "bg-purple-100", },
-    { title: "Completed Orders", value: "112", icon: <User />, bg: "bg-yellow-100" },
-    { title: "In Progress Orders", value: "112", icon: <User />, bg: "bg-blue-100" },
-    { title: "Awaiting Delivery", value: "112", icon: <User />, bg: "bg-blue-100" },
-    { title: "Not Started Orders", value: "112", icon: <User />, bg: "bg-blue-100" },
-  ];
-
-
+import ReportService from "../../services/ReportService";
+import OrderService from "../../services/OrderService";
 
 const OrderReport = () => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [summary, setSummary] = useState({});
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await ReportService.getOrderSummary();
+        setSummary(data || {});
+        const ordersData = await OrderService.getOrders();
+        setOrders(
+          Array.isArray(ordersData) ? ordersData : ordersData.orders || []
+        );
+      } catch {
+        setError("Failed to load order summary.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const cards = [
+    {
+      title: "Total Orders",
+      value: summary?.total_orders ?? "-",
+      icon: <Mail />,
+      bg: "bg-green-100",
+    },
+    {
+      title: "Assigned",
+      value: summary?.status_summary?.Assigned ?? "-",
+      icon: <Mail />,
+      bg: "bg-purple-100",
+    },
+    {
+      title: "In Progress",
+      value: summary?.status_summary?.["In Progress"] ?? "-",
+      icon: <User />,
+      bg: "bg-yellow-100",
+    },
+    {
+      title: "On Delivery",
+      value: summary?.status_summary?.["On Delivery"] ?? "-",
+      icon: <User />,
+      bg: "bg-blue-100",
+    },
+    {
+      title: "Completed",
+      value: summary?.status_summary?.Completed ?? "-",
+      icon: <User />,
+      bg: "bg-blue-100",
+    },
+    {
+      title: "Cancelled",
+      value: summary?.status_summary?.Cancelled ?? "-",
+      icon: <User />,
+      bg: "bg-blue-100",
+    },
+    {
+      title: "Pending",
+      value: summary?.status_summary?.Pending ?? "-",
+      icon: <User />,
+      bg: "bg-blue-100",
+    },
+  ];
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      {/* Header & Filters */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-[22px] font-semibold text-gray-900">
           Order Report
         </h2>
-
-        {/* Filter Buttons */}
         <div className="flex space-x-2">
           {[
             "All Time",
@@ -54,8 +111,6 @@ const OrderReport = () => {
           ))}
         </div>
       </div>
-
-      {/* Order Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card, index) => (
           <div
@@ -70,17 +125,16 @@ const OrderReport = () => {
           </div>
         ))}
       </div>
-
       <div className="flex justify-between items-center my-6">
-        {/* Order Filters */}
         <div className="flex space-x-2 mb-4 bg-white p-1 rounded-lg">
           {[
             "All",
-            "Delivered",
-            "Completed",
+            "Assigned",
             "In Progress",
-            "Awaiting Delivery",
-            "Not Started",
+            "On Delivery",
+            "Completed",
+            "Cancelled",
+            "Pending",
           ].map((filter) => (
             <button
               key={filter}
@@ -90,8 +144,6 @@ const OrderReport = () => {
             </button>
           ))}
         </div>
-
-        {/* Search & Export */}
         <div className="flex justify-end items-center mb-4 space-x-3 flex-end">
           <div className="relative w-[300px]">
             <input
@@ -106,48 +158,69 @@ const OrderReport = () => {
             Export
           </button>
         </div>
-
       </div>
-
-      {/* Order Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="w-full border-collapse">
-          {/* Table Header */}
-          <thead className="bg-gray-200 text-gray-700 text-left">
-            <tr>
-              {[
-                "",
-                "Client Name",
-                "Order Name",
-                "Amount",
-                "Order Date",
-                "",
-              ].map((header, index) => (
-                <th key={index} className="p-3 text-sm font-semibold">
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          {/* Table Body */}
-          <tbody>
-            {[...Array(6)].map((_, index) => (
-              <tr key={index} className="border-b text-gray-700">
-                <td className="p-3">
-                  <CheckSquare className="w-5 h-5 text-gray-500" />
-                </td>
-                <td className="p-3 text-sm">Kemi Johnson</td>
-                <td className="p-3 text-sm">Wedding Gown</td>
-                <td className="p-3 text-sm">500,000</td>
-                <td className="p-3 text-sm">14/04/2024</td>
-                <td className="p-3 text-right">
-                  <MoreVertical className="w-5 h-5 text-gray-500" />
-                </td>
+        {loading ? (
+          <div className="text-center py-10">Loading...</div>
+        ) : error ? (
+          <div className="text-center text-red-500 py-10">{error}</div>
+        ) : (
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-200 text-gray-700 text-left">
+              <tr>
+                <th className="p-3 text-sm font-semibold"></th>
+                <th className="p-3 text-sm font-semibold">Client Name</th>
+                <th className="p-3 text-sm font-semibold">Order Name</th>
+                <th className="p-3 text-sm font-semibold">Amount</th>
+                <th className="p-3 text-sm font-semibold">Order Date</th>
+                <th className="p-3 text-sm font-semibold"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orders.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-8 text-gray-400">
+                    No orders found.
+                  </td>
+                </tr>
+              ) : (
+                orders.map((order, index) => (
+                  <tr key={index} className="border-b text-gray-700">
+                    <td className="p-3">
+                      <CheckSquare className="w-5 h-5 text-gray-500" />
+                    </td>
+                    <td className="p-3 text-sm">
+                      {order.client_full_name ||
+                        order.client_name ||
+                        order.client ||
+                        "-"}
+                    </td>
+                    <td className="p-3 text-sm">
+                      {order.order_title ||
+                        order.order_name ||
+                        order.name ||
+                        "-"}
+                    </td>
+                    <td className="p-3 text-sm">
+                      ₦
+                      {Number(
+                        order.order_price || order.amount
+                      ).toLocaleString()}
+                    </td>
+                    <td className="p-3 text-sm">
+                      {order.ordered_at
+                        ? order.ordered_at.slice(0, 10)
+                        : order.order_date || order.date || "-"}
+                    </td>
+                    <td className="p-3 text-right">
+                      <MoreVertical className="w-5 h-5 text-gray-500" />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

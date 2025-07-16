@@ -1,8 +1,28 @@
 import { Search, Download, MoreVertical, CheckSquare } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import BillsService from "../../services/BillsService";
 
 const BillsReport = () => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [bills, setBills] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await BillsService.getBillListView();
+        setBills(Array.isArray(data) ? data : data.bills || []);
+      } catch {
+        setError("Failed to load bills.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -14,12 +34,21 @@ const BillsReport = () => {
 
         {/* Filter Buttons */}
         <div className="flex space-x-2">
-          {["All Time", "Today", "This Week", "This Month", "This Year", "Custom Date"].map((filter) => (
+          {[
+            "All Time",
+            "Today",
+            "This Week",
+            "This Month",
+            "This Year",
+            "Custom Date",
+          ].map((filter) => (
             <button
               key={filter}
               onClick={() => setSelectedFilter(filter)}
               className={`px-4 py-[6px] text-sm rounded-md border transition ${
-                selectedFilter === filter ? "bg-blue-600 text-white font-semibold" : "bg-gray-200 text-gray-700"
+                selectedFilter === filter
+                  ? "bg-blue-600 text-white font-semibold"
+                  : "bg-gray-200 text-gray-700"
               }`}
             >
               {filter}
@@ -46,39 +75,71 @@ const BillsReport = () => {
 
       {/* Bills Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="w-full border-collapse">
-          {/* Table Header */}
-          <thead className="bg-gray-200 text-gray-700 text-left">
-            <tr>
-              {["", "Date", "Vendor Name", "Vendor Category", "Quantity", "Amount", "Amount Paid", "Balance", ""].map((header, index) => (
-                <th key={index} className="p-3 text-sm font-semibold">
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          {/* Table Body */}
-          <tbody>
-            {[...Array(8)].map((_, index) => (
-              <tr key={index} className="border-b text-gray-700">
-                <td className="p-3">
-                  <CheckSquare className="w-5 h-5 text-gray-500" />
-                </td>
-                <td className="p-3 text-sm">14/04/2024</td>
-                <td className="p-3 text-sm">Jumia</td>
-                <td className="p-3 text-sm">Sewing Machines</td>
-                <td className="p-3 text-sm">10</td>
-                <td className="p-3 text-sm">1,500,000</td>
-                <td className="p-3 text-sm">1,000,000</td>
-                <td className="p-3 text-sm">500,000</td>
-                <td className="p-3 text-right">
-                  <MoreVertical className="w-5 h-5 text-gray-500" />
-                </td>
+        {loading ? (
+          <div className="text-center py-10">Loading...</div>
+        ) : error ? (
+          <div className="text-center text-red-500 py-10">{error}</div>
+        ) : (
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-200 text-gray-700 text-left">
+              <tr>
+                <th className="p-3 text-sm font-semibold"></th>
+                <th className="p-3 text-sm font-semibold">Date</th>
+                <th className="p-3 text-sm font-semibold">Vendor Name</th>
+                <th className="p-3 text-sm font-semibold">Vendor Category</th>
+                <th className="p-3 text-sm font-semibold">Quantity</th>
+                <th className="p-3 text-sm font-semibold">Amount</th>
+                <th className="p-3 text-sm font-semibold">Amount Paid</th>
+                <th className="p-3 text-sm font-semibold">Balance</th>
+                <th className="p-3 text-sm font-semibold"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {bills.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="text-center py-8 text-gray-400">
+                    No bills found.
+                  </td>
+                </tr>
+              ) : (
+                bills.map((bill, index) => (
+                  <tr key={index} className="border-b text-gray-700">
+                    <td className="p-3">
+                      <CheckSquare className="w-5 h-5 text-gray-500" />
+                    </td>
+                    <td className="p-3 text-sm">
+                      {bill.date || bill.created_at
+                        ? (bill.date || bill.created_at).slice(0, 10)
+                        : "-"}
+                    </td>
+                    <td className="p-3 text-sm">
+                      {bill.vendor_name || bill.vendor || "-"}
+                    </td>
+                    <td className="p-3 text-sm">
+                      {bill.vendor_category ||
+                        (bill.vendor_category_obj &&
+                          bill.vendor_category_obj.name) ||
+                        "-"}
+                    </td>
+                    <td className="p-3 text-sm">{bill.quantity ?? "-"}</td>
+                    <td className="p-3 text-sm">
+                      ₦{Number(bill.amount).toLocaleString()}
+                    </td>
+                    <td className="p-3 text-sm">
+                      ₦{Number(bill.amount_paid).toLocaleString()}
+                    </td>
+                    <td className="p-3 text-sm">
+                      ₦{Number(bill.balance).toLocaleString()}
+                    </td>
+                    <td className="p-3 text-right">
+                      <MoreVertical className="w-5 h-5 text-gray-500" />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

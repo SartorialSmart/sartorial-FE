@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { X, Upload } from "lucide-react";
 import ClientService from "../../../services/ClientService";
 import SuccessModal from "../../modals/SuccessModal";
+import PropTypes from "prop-types";
 
 // Add these constants at the top
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB in bytes
@@ -129,15 +130,24 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
             uploadedUrl: img.image,
           }))
         );
-        setModal({
-          show: true,
-          title: "Success!",
-          message: "Designs uploaded successfully",
-          isError: false,
-        });
+      } else if (uploadedImages && uploadedImages.image) {
+        // Single object response
+        setDesigns([
+          {
+            id: uploadedImages.id,
+            localUrl: uploadedImages.image,
+            uploadedUrl: uploadedImages.image,
+          },
+        ]);
       } else {
         throw new Error("Invalid response from server");
       }
+      setModal({
+        show: true,
+        title: "Success!",
+        message: "Designs uploaded successfully",
+        isError: false,
+      });
     } catch (error) {
       console.error("Error processing images:", error, error.response?.data);
       setModal({
@@ -319,6 +329,13 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
       )}
     </>
   );
+};
+
+AddClientDesignsForm.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  onBack: PropTypes.func.isRequired,
+  clientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    .isRequired,
 };
 
 export default AddClientDesignsForm;

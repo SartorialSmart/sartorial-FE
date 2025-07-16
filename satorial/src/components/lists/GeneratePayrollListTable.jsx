@@ -35,8 +35,8 @@ const GeneratePayrollTable = () => {
     setIsSalaryUpdating(true);
     try {
       await StaffService.updateSalary({
-        staff_id: selectedEmployee.id,
-        salary,
+        user_uuid: selectedEmployee.id,
+        new_salary: salary,
       });
       setEmployees((prev) =>
         prev.map((emp) =>
@@ -52,6 +52,16 @@ const GeneratePayrollTable = () => {
     } finally {
       setIsSalaryUpdating(false);
     }
+  };
+
+  const getEmployeeDisplayName = (employee) => {
+    return (
+      employee.full_name ||
+      `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
+      employee.name ||
+      employee.username ||
+      employee.email
+    );
   };
 
   return (
@@ -145,7 +155,9 @@ const GeneratePayrollTable = () => {
         <SuccessModal
           type="success"
           title="Payroll Generated"
-          message={`Payroll for ${selectedEmployee.name} has been generated successfully!`}
+          message={`Payroll for ${getEmployeeDisplayName(
+            selectedEmployee
+          )} has been generated successfully!`}
           buttonText="Close"
           onClose={() => setIsSuccessModalOpen(false)}
         />

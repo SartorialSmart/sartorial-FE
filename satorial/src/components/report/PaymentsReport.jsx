@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Mail,
   User,
@@ -6,27 +7,68 @@ import {
   MoreVertical,
   CheckSquare,
 } from "lucide-react";
-import { useState } from "react";
-
-const cards = [
-  { title: "Fully Paid", value: "₦3,420,000", icon: <Mail />, bg: "bg-green-100" },
-  { title: "Partially Paid", value: "₦3,420,000", icon: <Mail />, bg: "bg-purple-100", },
-  { title: "Payment Due", value: "₦3,420,000", icon: <User />, bg: "bg-yellow-100" },
-  { title: "Not Paid", value: "₦1,120,000", icon: <User />, bg: "bg-blue-100" },
-];
+import ReportService from "../../services/ReportService";
 
 const PaymentsReport = () => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [payments, setPayments] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await ReportService.getPaymentSummary();
+        setSummary(data || {});
+        setPayments(data.payments || []);
+      } catch {
+        setError("Failed to load payment summary.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const cards = [
+    {
+      title: "Fully Paid",
+      value: summary?.fully_paid ?? "-",
+      icon: <Mail />,
+      bg: "bg-green-100",
+    },
+    {
+      title: "Partially Paid",
+      value: summary?.partially_paid ?? "-",
+      icon: <Mail />,
+      bg: "bg-purple-100",
+    },
+    {
+      title: "Payment Due",
+      value: summary?.payment_due ?? "-",
+      icon: <User />,
+      bg: "bg-yellow-100",
+    },
+    {
+      title: "Total Payment",
+      value:
+        summary?.total_payment !== undefined
+          ? `₦${Number(summary.total_payment).toLocaleString()}`
+          : "-",
+      icon: <User />,
+      bg: "bg-blue-100",
+    },
+  ];
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      {/* Header & Filters */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-[22px] font-semibold text-gray-900">
           Payment Report
         </h2>
-
-        {/* Filter Buttons */}
         <div className="flex space-x-2 bg-white p-1 rounded-lg">
           {[
             "All Time",
@@ -50,7 +92,6 @@ const PaymentsReport = () => {
           ))}
         </div>
       </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {cards.map((card, index) => (
           <div
@@ -65,9 +106,7 @@ const PaymentsReport = () => {
           </div>
         ))}
       </div>
-
-      <div className="flex justify-between items-center mt-6 " >
-        {/* Payment Filters */}
+      <div className="flex justify-between items-center mt-6 ">
         <div className="flex space-x-2 mb-4 bg-white p-1 rounded-lg">
           {[
             "All",
@@ -84,8 +123,6 @@ const PaymentsReport = () => {
             </button>
           ))}
         </div>
-
-        {/* Search & Export */}
         <div className="flex justify-end items-center mb-4 space-x-3">
           <div className="relative w-[300px]">
             <input
@@ -101,46 +138,55 @@ const PaymentsReport = () => {
           </button>
         </div>
       </div>
-
-      {/* Payment Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="w-full border-collapse">
-          {/* Table Header */}
-          <thead className="bg-gray-200 text-gray-700 text-left">
-            <tr>
-              {[
-                "",
-                "Client Name",
-                "Order Name",
-                "Amount",
-                "Payment Date",
-                "",
-              ].map((header, index) => (
-                <th key={index} className="p-3 text-sm font-semibold">
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          {/* Table Body */}
-          <tbody>
-            {[...Array(6)].map((_, index) => (
-              <tr key={index} className="border-b text-gray-700">
-                <td className="p-3">
-                  <CheckSquare className="w-5 h-5 text-gray-500" />
-                </td>
-                <td className="p-3 text-sm">Kemi Johnson</td>
-                <td className="p-3 text-sm">Wedding Gown</td>
-                <td className="p-3 text-sm">500,000</td>
-                <td className="p-3 text-sm">14/04/2024</td>
-                <td className="p-3 text-right">
-                  <MoreVertical className="w-5 h-5 text-gray-500" />
-                </td>
+        {loading ? (
+          <div className="text-center py-10">Loading...</div>
+        ) : error ? (
+          <div className="text-center text-red-500 py-10">{error}</div>
+        ) : (
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-200 text-gray-700 text-left">
+              <tr>
+                {[
+                  "",
+                  "Client Name",
+                  "Order Name",
+                  "Amount",
+                  "Payment Date",
+                  "",
+                ].map((header, index) => (
+                  <th key={index} className="p-3 text-sm font-semibold">
+                    {header}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {payments.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-8 text-gray-400">
+                    No payments found.
+                  </td>
+                </tr>
+              ) : (
+                payments.map((payment, index) => (
+                  <tr key={index} className="border-b text-gray-700">
+                    <td className="p-3">
+                      <CheckSquare className="w-5 h-5 text-gray-500" />
+                    </td>
+                    <td className="p-3 text-sm">{payment.client_name}</td>
+                    <td className="p-3 text-sm">{payment.order_name}</td>
+                    <td className="p-3 text-sm">{payment.amount}</td>
+                    <td className="p-3 text-sm">{payment.payment_date}</td>
+                    <td className="p-3 text-right">
+                      <MoreVertical className="w-5 h-5 text-gray-500" />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

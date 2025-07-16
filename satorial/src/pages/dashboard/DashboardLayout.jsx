@@ -3,7 +3,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import {
   HelpCircle,
   Archive,
-  ShoppingCart,
+  // ShoppingCart,
   Users,
   Clock,
   DollarSign,
@@ -16,7 +16,7 @@ import IconButton from "../../components/buttons/IconButton";
 import PATTERN_1 from "../../assets/images/pattern-1.svg";
 import PATTERN_2 from "../../assets/images/pattern-2.svg";
 import PATTERN_3 from "../../assets/images/pattern-3.svg";
-import PATTERN_4 from "../../assets/images/pattern-4.svg";
+// import PATTERN_4 from "../../assets/images/pattern-4.svg";
 import PATTERN_5 from "../../assets/images/pattern-5.svg";
 import PATTERN_6 from "../../assets/images/pattern-6.svg";
 
@@ -45,14 +45,14 @@ const dashboardItems = [
     color: "bg-green-100",
     textColor: "text-green-800",
   },
-  {
-    title: "My Orders",
-    icon: <ShoppingCart size={20} />,
-    img: PATTERN_4,
-    button_link: "/my-orders",
-    color: "bg-yellow-100",
-    textColor: "text-yellow-800",
-  },
+  // {
+  //   title: "My Orders",
+  //   icon: <ShoppingCart size={20} />,
+  //   img: PATTERN_4,
+  //   button_link: "/my-orders",
+  //   color: "bg-yellow-100",
+  //   textColor: "text-yellow-800",
+  // },
   {
     title: "Report",
     icon: <Clock size={20} />,
