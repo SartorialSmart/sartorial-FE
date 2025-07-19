@@ -4,6 +4,7 @@ import InventoryService from "../../services/InventoryService";
 import AddDispenseInventoryFormModal from "../modals/formModals/AddDispenseInventoryFormModal";
 import { Menu, Transition } from "@headlessui/react";
 import { Fragment, useState as useReactState } from "react";
+import StaffService from "../../services/staffServices/StaffService";
 
 const DispenseInventoryList = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -12,6 +13,8 @@ const DispenseInventoryList = () => {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editModal, setEditModal] = useReactState({ open: false, item: null });
+  const [staffMap, setStaffMap] = useState({});
+  const [itemMap, setItemMap] = useState({});
 
   const fetchDispensed = async () => {
     setLoading(true);
@@ -28,7 +31,52 @@ const DispenseInventoryList = () => {
 
   useEffect(() => {
     fetchDispensed();
+    // Fetch all staff and inventory items for mapping
+    const fetchStaffAndItems = async () => {
+      try {
+        const staffData = await StaffService.listStaff();
+        const staffArr = Array.isArray(staffData.results)
+          ? staffData.results
+          : staffData;
+        const staffObj = {};
+        staffArr.forEach((s) => {
+          const name =
+            s.first_name && s.last_name
+              ? `${s.first_name} ${s.last_name}`
+              : s.email || s.username || s.name;
+          staffObj[s.id] = name;
+        });
+        setStaffMap(staffObj);
+      } catch {
+        setStaffMap({});
+      }
+      try {
+        const itemData = await InventoryService.listInventory();
+        const itemArr = Array.isArray(itemData) ? itemData : [];
+        const itemObj = {};
+        itemArr.forEach((i) => {
+          itemObj[i.id] = i.item_name || i.name || i.title || i.id;
+        });
+        setItemMap(itemObj);
+      } catch {
+        setItemMap({});
+      }
+    };
+    fetchStaffAndItems();
   }, []);
+
+  function formatDate(dateString) {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date)) return dateString;
+    return date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
 
   // Optionally filter by searchTerm here
   const filteredItems = dispensedItems.filter((item) => {
@@ -106,12 +154,16 @@ const DispenseInventoryList = () => {
                   <td className="p-3">
                     <input type="checkbox" />
                   </td>
-                  <td className="p-3">{item.date || item.created_at || "-"}</td>
                   <td className="p-3">
-                    {item.item_name || item.itemName || "-"}
+                    {formatDate(
+                      item.dispensed_at || item.date || item.created_at
+                    )}
                   </td>
                   <td className="p-3">
-                    {item.dispense_to || item.dispensedTo || "-"}
+                    {itemMap[item.item_name] || item.item_name || "-"}
+                  </td>
+                  <td className="p-3">
+                    {staffMap[item.dispense_to] || item.dispense_to || "-"}
                   </td>
                   <td className="p-3">
                     {item.quantity_dispensed || item.quantity || "-"}

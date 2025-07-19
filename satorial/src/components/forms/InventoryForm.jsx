@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import InventoryService from "../../services/InventoryService";
-import VendorService from "../../services/VendorService";
+import StaffService from "../../services/staffServices/StaffService";
 import PropTypes from "prop-types";
 
 const UNIT_OPTIONS = [
@@ -183,7 +183,7 @@ const DispenseInventoryForm = ({
   });
   const [errors, setErrors] = useState({});
   const [items, setItems] = useState([]);
-  const [vendors, setVendors] = useState([]);
+  const [staff, setStaff] = useState([]);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -194,22 +194,22 @@ const DispenseInventoryForm = ({
         setItems([]);
       }
     };
-    const fetchVendors = async () => {
+    const fetchStaff = async () => {
       try {
-        const data = await VendorService.getVendorsList();
+        const data = await StaffService.listStaff();
         if (Array.isArray(data.results)) {
-          setVendors(data.results);
+          setStaff(data.results);
         } else if (Array.isArray(data)) {
-          setVendors(data);
+          setStaff(data);
         } else {
-          setVendors([]);
+          setStaff([]);
         }
       } catch {
-        setVendors([]);
+        setStaff([]);
       }
     };
     fetchItems();
-    fetchVendors();
+    fetchStaff();
   }, []);
 
   const handleChange = (e) => {
@@ -263,11 +263,17 @@ const DispenseInventoryForm = ({
           className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
         >
           <option value="">Select</option>
-          {vendors.map((vendor) => (
-            <option key={vendor.id} value={vendor.id}>
-              {vendor.name || vendor.vendor_name || vendor.email}
-            </option>
-          ))}
+          {staff.map((person) => {
+            const displayName =
+              person.first_name && person.last_name
+                ? `${person.first_name} ${person.last_name}`
+                : person.email || person.username || person.name;
+            return (
+              <option key={person.id} value={displayName}>
+                {displayName}
+              </option>
+            );
+          })}
         </select>
         {errors.dispense_to && (
           <div className="text-red-500 text-xs mt-1">{errors.dispense_to}</div>

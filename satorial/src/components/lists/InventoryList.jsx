@@ -23,6 +23,7 @@ const InventoryList = () => {
   const [error, setError] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editModal, setEditModal] = useState({ open: false, item: null });
+  const [categoryMap, setCategoryMap] = useState({});
 
   const fetchInventory = async () => {
     setLoading(true);
@@ -39,6 +40,21 @@ const InventoryList = () => {
 
   useEffect(() => {
     fetchInventory();
+    // Fetch all categories for mapping
+    const fetchCategories = async () => {
+      try {
+        const data = await InventoryService.listInventoryCategory();
+        const arr = Array.isArray(data) ? data : [];
+        const obj = {};
+        arr.forEach((cat) => {
+          obj[cat.id] = cat.name || cat.category || cat.id;
+        });
+        setCategoryMap(obj);
+      } catch {
+        setCategoryMap({});
+      }
+    };
+    fetchCategories();
   }, []);
 
   // Optionally filter by selectedFilter here
@@ -148,7 +164,9 @@ const InventoryList = () => {
                   <td className="p-3">
                     {item.item_name || item.itemName || "-"}
                   </td>
-                  <td className="p-3">{item.category || "-"}</td>
+                  <td className="p-3">
+                    {categoryMap[item.category] || item.category || "-"}
+                  </td>
                   <td className="p-3">{item.quantity || "-"}</td>
                   <td className="p-3">
                     <Menu as="div" className="relative inline-block text-left">
