@@ -141,7 +141,12 @@ const DashboardLayout = () => {
               </div>
 
               {/* Card Content */}
-              <div className="relative z-10 flex flex-col h-full p-5">
+              <div
+                className="relative z-10 flex flex-col h-full p-5"
+                onClick={() => {
+                  window.location.href = item.button_link;
+                }}
+              >
                 {/* Icon */}
                 <div
                   className={`w-12 h-12 ${item.color} rounded-lg flex items-center justify-center mb-4`}
@@ -150,7 +155,7 @@ const DashboardLayout = () => {
                 </div>
 
                 {/* Title - Updated styling */}
-                <div className="flex">
+                <div className="flex mt-16">
                   <h3
                     className={`text-xl font-semibold rounded-lg py-2 px-4 ${item.color} ${item.textColor} whitespace-nowrap`}
                   >
@@ -162,13 +167,13 @@ const DashboardLayout = () => {
                 <div className="flex-grow"></div>
 
                 {/* Action Button */}
-                <a
+                {/* <a
                   href={item.button_link}
                   className={`mt-4 flex items-center justify-between px-4 py-3 rounded-lg ${item.color} ${item.textColor} hover:opacity-90 transition-opacity`}
                 >
                   <span className="font-medium">Open Dashboard</span>
                   <ChevronRight size={20} />
-                </a>
+                </a> */}
               </div>
             </div>
           ))}

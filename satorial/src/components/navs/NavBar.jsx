@@ -3,6 +3,7 @@ import { Bell } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import Avatar from "../avatar/Avatar";
 import LogoutButton from "../buttons/LogoutButton";
+import logo from "../../assets/images/Logo.png";
 
 const Navbar = () => {
   const { user } = useAuth();
@@ -11,8 +12,7 @@ const Navbar = () => {
   return (
     <nav className="flex justify-between items-center p-4 border-b shadow-sm bg-white">
       <div className="flex items-center space-x-2">
-        <div className="w-6 h-6 bg-blue-500 rounded-full"></div>
-        <span className="text-xl font-semibold text-blue-600">Sartorial</span>
+        <img src={logo} alt="logo" className="w-[120px] h-[60px]" />
       </div>
 
       <div className="flex items-center space-x-4">

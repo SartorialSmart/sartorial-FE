@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Menu } from "lucide-react";
-import LOGO from "../../../assets/images/logo.svg";
+import LOGO from "../../../assets/images/Logo.png";
 import PATTERN from "../../../assets/images/pattern-1.svg";
 
 const Sidebar = ({ isOpen, toggleSidebar, sidebarItems }) => {
@@ -11,7 +11,7 @@ const Sidebar = ({ isOpen, toggleSidebar, sidebarItems }) => {
       } md:w-64`}
     >
       <div className="flex items-center mb-6">
-        <img src={LOGO} alt="Sartorial Logo" className="h-6" />
+        <img src={LOGO} alt="Sartorial Logo" className="w-[120px] h-[60px]" />
         <button onClick={toggleSidebar} className="md:hidden p-2">
           <Menu className="w-6 h-6" />
         </button>
@@ -19,7 +19,11 @@ const Sidebar = ({ isOpen, toggleSidebar, sidebarItems }) => {
 
       <div className="relative bg-gray-200 rounded-lg overflow-hidden my-6">
         <Link to="/dashboard" className="block relative">
-          <img src={PATTERN} alt="Pattern" className="w-full h-10 object-cover" />
+          <img
+            src={PATTERN}
+            alt="Pattern"
+            className="w-full h-10 object-cover"
+          />
           <span className="absolute inset-0 flex items-center justify-center text-white font-semibold text-lg bg-black/40">
             Home
           </span>
