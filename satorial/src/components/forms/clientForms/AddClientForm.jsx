@@ -5,9 +5,12 @@ import SuccessModal from "../../modals/SuccessModal";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import PropTypes from "prop-types";
+import { useClient } from "../../../contexts/ClientContext";
 
 const AddClientForm = ({ onNext, onClose }) => {
   // const { user } = useAuth(); // user is not used
+
+  const { refreshClients } = useClient();
 
   const initialFormData = {
     first_name: localStorage.getItem("first_name") || "",
@@ -206,6 +209,8 @@ const AddClientForm = ({ onNext, onClose }) => {
 
         onNext(createdClient.id);
       }
+
+      refreshClients();
     } catch (err) {
       let message = "Failed to create client. Please try again.";
       if (err.response?.data) {

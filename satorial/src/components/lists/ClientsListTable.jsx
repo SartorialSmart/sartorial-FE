@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { MoreVertical, Trash, X } from "lucide-react";
 import ClientService from "../../services/ClientService";
+import { useClient } from "../../contexts/ClientContext";
 
 const ClientsList = () => {
-  const [clients, setClients] = useState([]);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [clientToDelete, setClientToDelete] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const { clients, setClients, needsRefresh, clearRefreshFlag } = useClient();
 
   const dropdownRefs = useRef([]);
 
@@ -18,12 +20,16 @@ const ClientsList = () => {
         const data = await ClientService.getClients();
         setClients(data);
         dropdownRefs.current = data.map(() => React.createRef());
+
+        if (needsRefresh) {
+          clearRefreshFlag();
+        }
       } catch (error) {
         console.error("Failed to fetch clients:", error);
       }
     };
     fetchClients();
-  }, []);
+  }, [setClients, needsRefresh, clearRefreshFlag]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -94,13 +100,22 @@ const ClientsList = () => {
                     : "No address available";
 
                 return (
-                  <tr key={index} className="border-t hover:bg-gray-50 transition">
+                  <tr
+                    key={index}
+                    className="border-t hover:bg-gray-50 transition"
+                  >
                     <td className="p-2 sm:p-3 text-xs sm:text-sm">
                       {client.first_name} {client.last_name}
                     </td>
-                    <td className="p-2 sm:p-3 text-xs sm:text-sm">{client.email}</td>
-                    <td className="p-2 sm:p-3 text-xs sm:text-sm">{client.phone_number}</td>
-                    <td className="p-2 sm:p-3 text-xs sm:text-sm">{firstAddress}</td>
+                    <td className="p-2 sm:p-3 text-xs sm:text-sm">
+                      {client.email}
+                    </td>
+                    <td className="p-2 sm:p-3 text-xs sm:text-sm">
+                      {client.phone_number}
+                    </td>
+                    <td className="p-2 sm:p-3 text-xs sm:text-sm">
+                      {firstAddress}
+                    </td>
                     <td className="p-2 sm:p-3 w-8 text-gray-600 relative">
                       <div
                         className="border border-gray-400 rounded-md p-1 cursor-pointer hover:text-gray-800 text-gray-500 transition inline-block"
@@ -131,7 +146,10 @@ const ClientsList = () => {
               })
             ) : (
               <tr>
-                <td colSpan={5} className="p-3 text-center text-xs text-gray-500">
+                <td
+                  colSpan={5}
+                  className="p-3 text-center text-xs text-gray-500"
+                >
                   No clients found.
                 </td>
               </tr>
@@ -144,12 +162,16 @@ const ClientsList = () => {
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center p-4">
           <div className="bg-white rounded-lg w-full max-w-sm p-6">
-            <button onClick={() => setShowDeleteModal(false)} className="absolute top-4 right-4">
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              className="absolute top-4 right-4"
+            >
               <X size={20} />
             </button>
             <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
             <p className="text-gray-600 mb-4">
-              Are you sure you want to delete this client? This action cannot be undone.
+              Are you sure you want to delete this client? This action cannot be
+              undone.
             </p>
             <div className="flex justify-between">
               <button

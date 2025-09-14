@@ -130,7 +130,7 @@ const DashboardLayout = () => {
           {dashboardItems.map((item, index) => (
             <div
               key={index}
-              className="relative rounded-xl shadow-sm overflow-hidden flex flex-col border border-gray-200 hover:shadow-md transition-shadow duration-300"
+              className="relative rounded-xl shadow-sm overflow-hidden flex flex-col border border-gray-200 hover:shadow-md transition-shadow duration-300 cursor-pointer"
             >
               {/* Card Background with Overlay */}
               <div

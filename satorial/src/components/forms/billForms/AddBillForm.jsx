@@ -1,35 +1,42 @@
 import { useState, useEffect } from "react";
 import BillsService from "../../../services/BillsService";
 import VendorCategoryService from "../../../services/VendorCategoryService";
+import VendorService from "../../../services/VendorService"; // Import VendorService
 
 const AddBillForm = ({ onClose }) => {
   const [formData, setFormData] = useState({
-    vendorName: "",
-    vendorCategory: "",
-    itemName: "",
+    vendor_name: "",
+    vendor_category: "",
+    item_name: "",
     quantity: "",
     amount: "",
-    amountPaid: "",
+    amount_paid: "",
     balance: "0",
   });
 
   const [vendorCategories, setVendorCategories] = useState([]); // Store categories
+  const [vendors, setVendors] = useState([]); // Store vendors list
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch vendor categories on component mount
+  // Fetch vendor categories and vendors on component mount
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
-        const data = await VendorCategoryService.getCategoriesList();
-        setVendorCategories(data);
+        // Fetch categories
+        const categoriesData = await VendorCategoryService.getCategoriesList();
+        setVendorCategories(categoriesData);
+
+        // Fetch vendors
+        const vendorsData = await VendorService.getVendorsList();
+        setVendors(vendorsData);
       } catch (err) {
-        console.error("Failed to fetch categories:", err);
-        setError("Failed to load vendor categories.");
+        console.error("Failed to fetch data:", err);
+        setError("Failed to load required data.");
       }
     };
 
-    fetchCategories();
+    fetchData();
   }, []);
 
   const handleChange = (e) => {
@@ -55,9 +62,9 @@ const AddBillForm = ({ onClose }) => {
 
     try {
       const billData = {
-        vendor_name: formData.vendorName,
-        vendor_category: formData.vendorCategory, // Now contains category ID
-        item_name: formData.itemName,
+        vendor_name: formData.vendor_name,
+        vendor_category: formData.vendor_category, // Now contains category ID
+        item_name: formData.item_name,
         quantity: parseInt(formData.quantity, 10),
         amount: parseFloat(formData.amount),
         amount_paid: parseFloat(formData.amountPaid),
@@ -80,7 +87,12 @@ const AddBillForm = ({ onClose }) => {
       <div className="bg-white rounded-lg w-[600px] p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Add Bill</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✖</button>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            ✖
+          </button>
         </div>
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
@@ -89,19 +101,26 @@ const AddBillForm = ({ onClose }) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-gray-600">Vendor Name</label>
-              <input
-                type="text"
+              <select
                 name="vendorName"
-                value={formData.vendorName}
+                value={formData.vendor_name}
                 onChange={handleChange}
-                placeholder="Enter name"
                 className="w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
                 required
-              />
+              >
+                <option value="">Select vendor</option>
+                {vendors.map((vendor) => (
+                  <option key={vendor.id} value={vendor.vendor_name}>
+                    {vendor.vendor_name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
-              <label className="block text-sm text-gray-600">Vendor Category</label>
+              <label className="block text-sm text-gray-600">
+                Vendor Category
+              </label>
               <select
                 name="vendorCategory"
                 value={formData.vendorCategory}

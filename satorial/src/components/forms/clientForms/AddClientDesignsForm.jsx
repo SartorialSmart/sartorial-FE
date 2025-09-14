@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Upload } from "lucide-react";
 import ClientService from "../../../services/ClientService";
+import { useClient } from "../../../contexts/ClientContext";
 import SuccessModal from "../../modals/SuccessModal";
 import PropTypes from "prop-types";
 
@@ -17,6 +18,8 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
     message: "",
     isError: false,
   });
+
+  const { refreshClients } = useClient();
 
   const compressImage = async (file) => {
     return new Promise((resolve) => {
@@ -142,6 +145,7 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
       } else {
         throw new Error("Invalid response from server");
       }
+
       setModal({
         show: true,
         title: "Success!",
@@ -177,6 +181,7 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
       });
       return;
     }
+    refreshClients();
     setModal({
       show: true,
       title: "Saved!",
@@ -189,6 +194,7 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
     setModal({ ...modal, show: false });
     // If it was a success message, close the form too
     if (!modal.isError) {
+      refreshClients();
       onClose(); // Close the entire form
     }
   };
