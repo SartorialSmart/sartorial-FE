@@ -1,14 +1,32 @@
 import Toolbar_1 from "../../components/toolbars/Toolbar_1";
 import ClientSideABrLayout from "../../components/navs/ClientSideBarLayout";
 import OrderListTable from "../../components/lists/OrderListTable";
+import { useState } from "react";
 
 const ClientOrderListDisplay = () => {
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+
   return (
     <ClientSideABrLayout>
       <div className="bg-gray-100 p-6 rounded-sm ">
-        <Toolbar_1 />
-        <OrderListTable />
+        <Toolbar_1
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          filterBy={statusFilter}
+          onFilterChange={setStatusFilter}
+          filterOptions={[
+            { value: "All", label: "All statuses" },
+            { value: "Pending", label: "Pending" },
+            { value: "In Progress", label: "In Progress" },
+            { value: "Completed", label: "Completed" },
+          ]}
+        />
+        <OrderListTable
+          searchTerm={searchQuery}
+          statusFilter={statusFilter}
+          dateFilter={"All Time"}
+        />
       </div>
     </ClientSideABrLayout>
   );

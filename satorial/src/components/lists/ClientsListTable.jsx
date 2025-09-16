@@ -1,9 +1,10 @@
+import React from "react";
 import { useState, useEffect, useRef } from "react";
 import { MoreVertical, Trash, X } from "lucide-react";
 import ClientService from "../../services/ClientService";
 import { useClient } from "../../contexts/ClientContext";
 
-const ClientsList = () => {
+const ClientsList = ({ searchQuery = "", filterBy = "all" }) => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -12,14 +13,13 @@ const ClientsList = () => {
 
   const { clients, setClients, needsRefresh, clearRefreshFlag } = useClient();
 
-  const dropdownRefs = useRef([]);
+  const dropdownRefs = useRef({});
 
   useEffect(() => {
     const fetchClients = async () => {
       try {
         const data = await ClientService.getClients();
         setClients(data);
-        dropdownRefs.current = data.map(() => React.createRef());
 
         if (needsRefresh) {
           clearRefreshFlag();
@@ -36,6 +36,7 @@ const ClientsList = () => {
       if (
         activeDropdown !== null &&
         dropdownRefs.current[activeDropdown] &&
+        dropdownRefs.current[activeDropdown].current &&
         !dropdownRefs.current[activeDropdown].current.contains(event.target)
       ) {
         setActiveDropdown(null);
@@ -77,6 +78,37 @@ const ClientsList = () => {
     }
   };
 
+  const normalizedQuery = (searchQuery || "").toString().trim().toLowerCase();
+  const filteredClients = (clients || []).filter((client) => {
+    const hasAddress = Array.isArray(client.addresses) && client.addresses.length > 0;
+    const matchesFilter =
+      filterBy === "all" ||
+      (filterBy === "withAddress" && hasAddress) ||
+      (filterBy === "withoutAddress" && !hasAddress);
+
+    if (!matchesFilter) return false;
+
+    if (!normalizedQuery) return true;
+
+    const addressStr = hasAddress
+      ? `${client.addresses[0].house_number || ""} ${client.addresses[0].street || ""} ${client.addresses[0].city || ""}`
+          .toLowerCase()
+      : "";
+
+    const haystack = [
+      client.first_name,
+      client.last_name,
+      client.email,
+      client.phone_number,
+      addressStr,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(normalizedQuery);
+  });
+
   return (
     <div className="p-4 sm:p-6 bg-gray-100">
       <h2 className="text-xl font-semibold mb-4">Clients List</h2>
@@ -92,11 +124,11 @@ const ClientsList = () => {
             </tr>
           </thead>
           <tbody>
-            {clients.length > 0 ? (
-              clients.map((client, index) => {
+            {filteredClients.length > 0 ? (
+              filteredClients.map((client, index) => {
                 const firstAddress =
-                  client.addresses.length > 0
-                    ? `${client.addresses[0].house_number}, ${client.addresses[0].street}, ${client.addresses[0].city}`
+                  Array.isArray(client.addresses) && client.addresses.length > 0
+                    ? `${client.addresses[0].house_number ?? ""}, ${client.addresses[0].street ?? ""}, ${client.addresses[0].city ?? ""}`
                     : "No address available";
 
                 return (
@@ -124,7 +156,10 @@ const ClientsList = () => {
                         <MoreVertical size={16} />
                       </div>
                       {activeDropdown === index && (
-                        <div className="absolute -top-4 right-0 mt-1 w-24 bg-white shadow-lg border rounded-md text-sm z-50">
+                        <div
+                          className="absolute -top-4 right-0 mt-1 w-24 bg-white shadow-lg border rounded-md text-sm z-50"
+                          ref={(el) => (dropdownRefs.current[index] = { current: el })}
+                        >
                           <a
                             href={`/client-data/${client.id}`}
                             className="block px-3 py-2 hover:bg-gray-100 cursor-pointer"

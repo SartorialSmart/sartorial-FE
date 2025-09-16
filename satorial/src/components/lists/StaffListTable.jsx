@@ -6,7 +6,7 @@ import StaffService from "../../services/staffServices/StaffService";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
 
-const StaffListTable = () => {
+const StaffListTable = ({ searchTerm = "" }) => {
   const navigate = useNavigate(); // ✅ Initialize navigate
   const columns = [
     { label: "Name", key: "full_name" },
@@ -49,7 +49,7 @@ const StaffListTable = () => {
   }, []);
 
   const handleSelectAll = (e) => {
-    setSelectedStaff(e.target.checked ? staffList.map((s) => s.email) : []);
+    setSelectedStaff(e.target.checked ? searchedStaffList.map((s) => s.email) : []);
   };
 
   const handleSelect = (email) => {
@@ -134,8 +134,24 @@ const StaffListTable = () => {
     anchorRef: PropTypes.object.isRequired,
   };
 
-  // Filter out exited staff
+  // Filter out exited staff, then apply search term
   const filteredStaffList = staffList.filter((staff) => !staff.is_exited);
+  const normalizedQuery = (searchTerm || "").toString().trim().toLowerCase();
+  const searchedStaffList = filteredStaffList.filter((staff) => {
+    if (!normalizedQuery) return true;
+    const fullName = `${staff.first_name || ""} ${staff.last_name || ""}`
+      .trim()
+      .toLowerCase();
+    const email = (staff.email || "").toLowerCase();
+    const phone = (staff.phone_number || "").toLowerCase();
+    const role = (staff.role || "").toLowerCase();
+    return (
+      fullName.includes(normalizedQuery) ||
+      email.includes(normalizedQuery) ||
+      phone.includes(normalizedQuery) ||
+      role.includes(normalizedQuery)
+    );
+  });
 
   if (loading) {
     return (
@@ -161,8 +177,8 @@ const StaffListTable = () => {
                   className="w-4 h-4"
                   onChange={handleSelectAll}
                   checked={
-                    filteredStaffList.length > 0 &&
-                    selectedStaff.length === filteredStaffList.length
+                    searchedStaffList.length > 0 &&
+                    selectedStaff.length === searchedStaffList.length
                   }
                 />
               </th>
@@ -176,8 +192,8 @@ const StaffListTable = () => {
           </thead>
 
           <tbody>
-            {filteredStaffList.length > 0 ? (
-              filteredStaffList.map((staff, index) => (
+            {searchedStaffList.length > 0 ? (
+              searchedStaffList.map((staff, index) => (
                 <tr
                   key={index}
                   className="border-t hover:bg-gray-50 transition"

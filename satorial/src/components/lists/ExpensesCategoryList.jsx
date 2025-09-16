@@ -3,7 +3,7 @@ import { MoreVertical, Search, Plus } from "lucide-react";
 import AddExpensesCategoryFormModal from "../modals/formModals/AddExpensesCategoryFormModal";
 import ExpensescategoryService from "../../services/expensesServices/ExpensesCategoryService";
 
-const ExpensesCategoryList = () => {
+const ExpensesCategoryList = ({ searchTerm = "", setSearchTerm }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenseCategories, setExpenseCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,24 +32,52 @@ const ExpensesCategoryList = () => {
     console.log("Deleting category with id:", id);
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setDropdownIndex(null);
+    };
+
+    if (dropdownIndex !== null) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [dropdownIndex]);
+
   useEffect(() => {
     fetchExpenseCategories();
   }, []);
+
+  // Filter categories based on search term
+  const normalized = (searchTerm || "").toString().trim().toLowerCase();
+  const filteredCategories = (expenseCategories || []).filter((row) => {
+    if (!normalized) return true;
+    const name = (row.name || "").toString().toLowerCase();
+    const expenseCount = (row.expense_count ?? "").toString().toLowerCase();
+    return name.includes(normalized) || expenseCount.includes(normalized);
+  });
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-gray-700">Expense Categories</h2>
+        <h2 className="text-xl font-semibold text-gray-700">
+          Expense Categories
+        </h2>
 
         <div className="flex items-center gap-4">
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+            <Search
+              className="absolute left-3 top-2.5 text-gray-400"
+              size={18}
+            />
             <input
               type="text"
-              placeholder="Search here..."
+              placeholder="Search categories..."
               className="pl-10 pr-4 py-2 border rounded-md w-60 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm && setSearchTerm(e.target.value)}
             />
           </div>
 
@@ -72,55 +100,86 @@ const ExpensesCategoryList = () => {
             Loading categories...
           </div>
         ) : (
-          <table className="w-full table-auto border-collapse">
-            <thead className="bg-gray-100">
-              <tr className="text-left text-gray-600">
-                <th className="p-4">
-                  <input type="checkbox" />
-                </th>
-                {["Category", "No of Expense", "Actions"].map((header, idx) => (
-                  <th key={idx} className="p-4 font-medium text-sm text-gray-700">
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {expenseCategories.map((expense, index) => (
-                <tr key={expense.id || index} className="border-t hover:bg-gray-50">
-                  <td className="p-4">
+          <>
+            <table className="w-full table-auto border-collapse">
+              <thead className="bg-gray-100">
+                <tr className="text-left text-gray-600">
+                  <th className="p-4">
                     <input type="checkbox" />
-                  </td>
-                  <td className="p-4">{expense.name}</td>
-                  <td className="p-4">{expense.expense_count || 0}</td>
-                  <td className="p-4 relative">
-                    <button
-                      onClick={() => handleDropdownToggle(index)}
-                      className="p-2 rounded-full hover:bg-gray-200"
-                    >
-                      <MoreVertical size={18} />
-                    </button>
-                    {dropdownIndex === index && (
-                      <div className="absolute bg-white shadow-lg rounded-md mt-2 w-40 z-30">
-                        <button
-                          onClick={() => handleEdit(expense.id)}
-                          className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-all"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(expense.id)}
-                          className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 transition-all"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </td>
+                  </th>
+                  {["Category", "No of Expense", "Actions"].map(
+                    (header, idx) => (
+                      <th
+                        key={idx}
+                        className="p-4 font-medium text-sm text-gray-700"
+                      >
+                        {header}
+                      </th>
+                    )
+                  )}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredCategories.length > 0 ? (
+                  filteredCategories.map((expense, index) => (
+                    <tr
+                      key={expense.id || index}
+                      className="border-t hover:bg-gray-50"
+                    >
+                      <td className="p-4">
+                        <input type="checkbox" />
+                      </td>
+                      <td className="p-4">{expense.name}</td>
+                      <td className="p-4">{expense.expense_count || 0}</td>
+                      <td className="p-4 relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDropdownToggle(index);
+                          }}
+                          className="p-2 rounded-full hover:bg-gray-200"
+                        >
+                          <MoreVertical size={18} />
+                        </button>
+                        {dropdownIndex === index && (
+                          <div className="absolute bg-white shadow-lg rounded-md mt-2 w-40 z-30 right-0">
+                            <button
+                              onClick={() => handleEdit(expense.id)}
+                              className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-all"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(expense.id)}
+                              className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 transition-all"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="p-8 text-center text-gray-500">
+                      {normalized
+                        ? `No categories found matching "${searchTerm}"`
+                        : "No expense categories found"}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {/* Results summary */}
+            {normalized && (
+              <div className="p-4 bg-gray-50 border-t text-sm text-gray-600">
+                Showing {filteredCategories.length} of{" "}
+                {expenseCategories.length} categories
+              </div>
+            )}
+          </>
         )}
       </div>
 

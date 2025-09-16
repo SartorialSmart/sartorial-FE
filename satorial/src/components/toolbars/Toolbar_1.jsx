@@ -1,9 +1,15 @@
 import { useState } from "react";
-import { Upload, ChevronDown, Search } from "lucide-react";
+import { Upload, Search } from "lucide-react";
 import AddButton from "../buttons/AddButton";
 import ClientFormModal from "../modals/formModals/ClientFormModal";
 
-const Toolbar_1 = () => {
+const Toolbar_1 = ({
+  searchQuery = "",
+  onSearchChange = () => {},
+  filterBy = "all",
+  onFilterChange = () => {},
+  filterOptions,
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -32,17 +38,35 @@ const Toolbar_1 = () => {
       </div>
 
 
-      <div className="flex justify-between items-center gap-4">
-        <button className="flex items-center gap-2 px-4 py-2 border rounded-lg bg-white border-gray-300">
-          Filter by <ChevronDown size={16} />
-        </button>
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+        <div className="flex items-center gap-2">
+          <label htmlFor="client-filter" className="text-sm text-gray-600">Filter:</label>
+          <select
+            id="client-filter"
+            className="px-3 py-2 border rounded-lg bg-white border-gray-300 text-sm"
+            value={filterBy}
+            onChange={(e) => onFilterChange(e.target.value)}
+          >
+            {(filterOptions ?? [
+              { value: "all", label: "All" },
+              { value: "withAddress", label: "With address" },
+              { value: "withoutAddress", label: "Without address" },
+            ]).map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <div className="flex items-center px-4 py-2 border rounded-lg bg-white border-gray-300 w-64">
+        <div className="flex items-center px-4 py-2 border rounded-lg bg-white border-gray-300 w-full sm:w-64">
           <Search size={16} className="text-gray-400" />
           <input
             type="text"
             placeholder="Search here..."
             className="ml-2 outline-none w-full bg-transparent"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
       </div>

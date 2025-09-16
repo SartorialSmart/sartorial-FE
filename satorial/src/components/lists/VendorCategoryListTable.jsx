@@ -7,7 +7,7 @@ const columns = [
   { key: "bill_count", label: "No of Bill" },
 ];
 
-const VendorCategoryListTable = () => {
+const VendorCategoryListTable = ({ searchTerm = "" }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,6 +26,14 @@ const VendorCategoryListTable = () => {
 
     fetchCategories();
   }, []);
+
+  const normalized = (searchTerm || "").toString().trim().toLowerCase();
+  const filteredCategories = (categories || []).filter((row) => {
+    if (!normalized) return true;
+    const name = (row.name || "").toString().toLowerCase();
+    const billCount = (row.bill_count ?? "").toString().toLowerCase();
+    return name.includes(normalized) || billCount.includes(normalized);
+  });
 
   return (
     <div className="p-4 sm:p-6 bg-gray-100">
@@ -63,8 +71,14 @@ const VendorCategoryListTable = () => {
                   No vendor categories found.
                 </td>
               </tr>
+            ) : filteredCategories.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length + 2} className="p-4 text-center text-gray-500">
+                  No categories match your search.
+                </td>
+              </tr>
             ) : (
-              categories.map((row, rowIndex) => (
+              filteredCategories.map((row, rowIndex) => (
                 <tr key={rowIndex} className="border-t hover:bg-gray-50 transition">
                   <td className="p-3 sm:p-4 w-12">
                     <input type="checkbox" className="w-4 h-4" />

@@ -3,7 +3,10 @@ import { Calendar, Plus, ChevronDown } from "lucide-react";
 import VendorCategoryFormModal from "../modals/formModals/VendorCategoryFormModal";
 import AddButton from "../buttons/AddButton";
 
-const ToolbarWithDateFilter_5 = () => {
+const ToolbarWithDateFilter_5 = ({
+  searchQuery = "",
+  onSearchChange = () => {},
+}) => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -28,6 +31,8 @@ const ToolbarWithDateFilter_5 = () => {
             type="text"
             placeholder="Search here..."
             className="border border-gray-300 rounded-md py-2 px-4 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
       </div>

@@ -3,7 +3,10 @@ import { ChevronDown } from "lucide-react";
 import ExitStaffFormModal from "../modals/formModals/ExitStaffFormModal";
 import AddButton from "../buttons/AddButton";
 
-const ToolbarWithDateFilter_7 = () => {
+const ToolbarWithDateFilter_7 = ({
+  searchQuery = "",
+  onSearchChange = () => {},
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -25,11 +28,17 @@ const ToolbarWithDateFilter_7 = () => {
             type="text"
             placeholder="Search here..."
             className="border border-gray-300 rounded-md py-2 px-4 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
       </div>
 
-      <ExitStaffFormModal className="-z-50" isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <ExitStaffFormModal
+        className="-z-50"
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 };

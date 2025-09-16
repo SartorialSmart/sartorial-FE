@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import ExitStaffService from "../../services/staffServices/ExitStaffSrvice";
 
-const ExitedStaffsListTable = () => {
+const ExitedStaffsListTable = ({ searchTerm = "" }) => {
   const columns = [
     { label: "Name", key: "full_name" },
     { label: "Exit Date", key: "exit_date" },
@@ -19,10 +19,12 @@ const ExitedStaffsListTable = () => {
       setLoading(true);
       try {
         const data = await ExitStaffService.listExitedStaff();
-        
+        const searchedData = data.filter((staff) =>
+          staff.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
         // Ensure that data is available and contains the expected fields
-        if (data && Array.isArray(data)) {
-          setExitedStaff(data);
+        if (searchedData && Array.isArray(searchedData)) {
+          setExitedStaff(searchedData);
         } else {
           setError("Unexpected data format.");
         }
@@ -34,7 +36,7 @@ const ExitedStaffsListTable = () => {
     };
 
     fetchExitedStaff();
-  }, []);
+  }, [searchTerm]);
 
   const handleSelectAll = (e) => {
     setSelectedStaff(e.target.checked ? exitedStaff.map((s) => s.id) : []);
@@ -79,32 +81,36 @@ const ExitedStaffsListTable = () => {
                   Loading...
                 </td>
               </tr>
-            ) : (
-              exitedStaff.length > 0 ? (
-                exitedStaff.map((staff, index) => (
-                  <tr key={index} className="border-t hover:bg-gray-50 transition">
-                    <td className="p-3 sm:p-4 w-12">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4"
-                        checked={selectedStaff.includes(staff.id)}
-                        onChange={() => handleSelect(staff.id)}
-                      />
-                    </td>
-                    {columns.map((col, colIndex) => (
-                      <td key={colIndex} className="p-3 sm:p-4 text-sm sm:text-base">
-                        {staff[col.key]}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={columns.length + 1} className="p-3 text-center">
-                    No exited staff available.
+            ) : exitedStaff.length > 0 ? (
+              exitedStaff.map((staff, index) => (
+                <tr
+                  key={index}
+                  className="border-t hover:bg-gray-50 transition"
+                >
+                  <td className="p-3 sm:p-4 w-12">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4"
+                      checked={selectedStaff.includes(staff.id)}
+                      onChange={() => handleSelect(staff.id)}
+                    />
                   </td>
+                  {columns.map((col, colIndex) => (
+                    <td
+                      key={colIndex}
+                      className="p-3 sm:p-4 text-sm sm:text-base"
+                    >
+                      {staff[col.key]}
+                    </td>
+                  ))}
                 </tr>
-              )
+              ))
+            ) : (
+              <tr>
+                <td colSpan={columns.length + 1} className="p-3 text-center">
+                  No exited staff available.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
