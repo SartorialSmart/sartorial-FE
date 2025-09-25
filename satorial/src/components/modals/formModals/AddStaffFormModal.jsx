@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import AddStaffForm from "../../forms/staffForms/AddStaffForm";
 import { motion, AnimatePresence } from "framer-motion";
 
-const AddStaffFormModal = ({ isOpen, onClose }) => {
+const AddStaffFormModal = ({ isOpen, onClose, onStaffCreated }) => {
   const [step, setStep] = useState(1);
 
   return (
@@ -29,7 +29,7 @@ const AddStaffFormModal = ({ isOpen, onClose }) => {
 
 
             <div className="flex-1 overflow-y-auto p-6">
-              {step === 1 && <AddStaffForm onNext={() => setStep(2)} onClose={onClose} />}
+              {step === 1 && <AddStaffForm onNext={() => setStep(2)} onClose={onClose} onStaffCreated={onStaffCreated} />}
             </div>
           </motion.div>
         </motion.div>

@@ -4,7 +4,7 @@ import StaffService from "../../../services/staffServices/StaffService";
 import { toast } from "react-toastify";
 import PropTypes from "prop-types";
 
-const AddStaffForm = ({ onClose }) => {
+const AddStaffForm = ({ onClose, onStaffCreated }) => {
   const initialFormData = {
     firstName: "",
     lastName: "",
@@ -22,6 +22,7 @@ const AddStaffForm = ({ onClose }) => {
   const [formData, setFormData] = useState(initialFormData);
   const [showPassword, setShowPassword] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleAvatarChange = (e) => {
@@ -65,6 +66,7 @@ const AddStaffForm = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     try {
       const staffData = {
@@ -89,6 +91,12 @@ const AddStaffForm = ({ onClose }) => {
       toast.success("Staff created successfully!");
       setFormData(initialFormData);
       setAvatarPreview(null);
+
+      // Call the refresh function if provided
+      if (onStaffCreated) {
+        onStaffCreated();
+      }
+
       onClose();
     } catch (error) {
       console.error("Staff creation error:", error.response?.data || error);
@@ -101,6 +109,8 @@ const AddStaffForm = ({ onClose }) => {
       } else {
         toast.error("Failed to create staff. Please check your input.");
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -366,9 +376,14 @@ const AddStaffForm = ({ onClose }) => {
           <div className="col-span-2 flex justify-end">
             <button
               type="submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition"
+              disabled={isSubmitting}
+              className={`px-6 py-2 rounded-md transition ${
+                isSubmitting
+                  ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
             >
-              Save
+              {isSubmitting ? "Creating..." : "Save"}
             </button>
           </div>
         </form>
@@ -379,6 +394,7 @@ const AddStaffForm = ({ onClose }) => {
 
 AddStaffForm.propTypes = {
   onClose: PropTypes.func.isRequired,
+  onStaffCreated: PropTypes.func,
 };
 
 export default AddStaffForm;

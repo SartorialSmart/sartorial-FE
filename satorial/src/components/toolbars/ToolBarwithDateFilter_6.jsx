@@ -6,6 +6,7 @@ import AddButton from "../buttons/AddButton";
 const ToolbarWithDateFilter_6 = ({
   searchQuery = "",
   onSearchChange = () => {},
+  onStaffCreated = () => {},
 }) => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,6 +40,7 @@ const ToolbarWithDateFilter_6 = ({
       <AddStaffFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onStaffCreated={onStaffCreated}
       />
     </div>
   );

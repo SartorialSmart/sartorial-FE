@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from "react";
 import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 import { MoreVertical } from "lucide-react";
 import { Spin } from "antd";
@@ -6,7 +6,7 @@ import StaffService from "../../services/staffServices/StaffService";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
 
-const StaffListTable = ({ searchTerm = "" }) => {
+const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   const navigate = useNavigate(); // ✅ Initialize navigate
   const columns = [
     { label: "Name", key: "full_name" },
@@ -28,25 +28,30 @@ const StaffListTable = ({ searchTerm = "" }) => {
   // For each row, create a ref for the MoreVertical icon
   const rowRefs = useRef({});
 
-  useEffect(() => {
-    const fetchStaffList = async () => {
-      setLoading(true);
-      try {
-        const data = await StaffService.listStaff();
-        if (Array.isArray(data.results)) {
-          setStaffList(data.results);
-        } else {
-          throw new Error("Invalid data format");
-        }
-      } catch {
-        setError("Failed to load staff list");
-      } finally {
-        setLoading(false);
+  const fetchStaffList = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await StaffService.listStaff();
+      if (Array.isArray(data.results)) {
+        setStaffList(data.results);
+      } else {
+        throw new Error("Invalid data format");
       }
-    };
-
-    fetchStaffList();
+    } catch {
+      setError("Failed to load staff list");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchStaffList();
+  }, [fetchStaffList]);
+
+  // Expose refresh function to parent components
+  useImperativeHandle(ref, () => ({
+    refresh: fetchStaffList
+  }));
 
   const handleSelectAll = (e) => {
     setSelectedStaff(e.target.checked ? searchedStaffList.map((s) => s.email) : []);
@@ -294,6 +299,8 @@ const StaffListTable = ({ searchTerm = "" }) => {
       )}
     </div>
   );
-};
+});
+
+StaffListTable.displayName = 'StaffListTable';
 
 export default StaffListTable;

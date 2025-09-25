@@ -1,10 +1,11 @@
 import StaffSideABrLayout from "../../components/navs/StaffSideBarLayout";
 import StaffListTable from "../../components/lists/StaffListTable";
 import ToolbarWithDateFilter_6 from "../../components/toolbars/ToolBarwithDateFilter_6";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const StaffListDisplay = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const staffListTableRef = useRef(null);
 
   return (
     <StaffSideABrLayout>
@@ -12,9 +13,13 @@ const StaffListDisplay = () => {
         <ToolbarWithDateFilter_6
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onStaffCreated={() => staffListTableRef.current?.refresh()}
         />
 
-        <StaffListTable searchTerm={searchQuery} />
+        <StaffListTable
+          ref={staffListTableRef}
+          searchTerm={searchQuery}
+        />
       </div>
     </StaffSideABrLayout>
   );
