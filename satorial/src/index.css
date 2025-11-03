@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+*{
+    font-family: "Roboto", serif;
+    font-optical-sizing: auto;
+    font-weight: 200;
+    font-style: normal;
+    font-size:normal;
+    font-variation-settings:
+      "wdth" 100;
+  }
+  
+  .dashed-line {
+    border-left: 2px dashed;
+  }
+
+/* Custom DatePicker Styles */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__input-container {
+  width: 100%;
+}
+
+.react-datepicker {
+  font-family: inherit;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.react-datepicker__header {
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.react-datepicker__day--selected {
+  background-color: #2563eb !important;
+}

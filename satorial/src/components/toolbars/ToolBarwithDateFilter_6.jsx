@@ -1,0 +1,49 @@
+import { useState } from "react";
+import { Calendar, Plus, ChevronDown } from "lucide-react";
+import AddStaffFormModal from "../modals/formModals/AddStaffFormModal";
+import AddButton from "../buttons/AddButton";
+
+const ToolbarWithDateFilter_6 = ({
+  searchQuery = "",
+  onSearchChange = () => {},
+  onStaffCreated = () => {},
+}) => {
+  const [selectedFilter, setSelectedFilter] = useState("All Time");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const filters = ["All Time", "Today", "This Week", "This Month", "This Year"];
+
+  return (
+    <div className="flex items-center justify-between py-4 px-6 rounded-lg shadow-sm">
+      <div>
+        <h2 className="text-2xl font-semibold mb-8">Dashboard</h2>
+        <button className="flex items-center gap-2 px-4 py-2 border rounded-lg bg-white border-gray-300">
+          Status <ChevronDown size={16} />
+        </button>
+      </div>
+
+      <div className="">
+        <div className="flex items-center space-x-2 mb-6">
+          <AddButton text="Add Staff" onClick={() => setIsModalOpen(true)} />
+        </div>
+
+        <div className="flex items-start space-x-3">
+          <input
+            type="text"
+            placeholder="Search here..."
+            className="border border-gray-300 rounded-md py-2 px-4 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+        </div>
+      </div>
+      <AddStaffFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onStaffCreated={onStaffCreated}
+      />
+    </div>
+  );
+};
+
+export default ToolbarWithDateFilter_6;

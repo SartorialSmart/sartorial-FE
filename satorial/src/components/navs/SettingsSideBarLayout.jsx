@@ -1,0 +1,33 @@
+import { useState } from "react";
+import Header from "./NavLayout/Header";
+import Sidebar from "./NavLayout/SideBar";
+import { LogOut, Settings } from "lucide-react";
+
+const SettingsSideBarLayout = ({ children }) => {
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
+
+  const sidebarItems = [
+    { icon: <Settings size={18} />, label: "Settings", path: "/settings" },
+    { icon: <LogOut size={18} />, label: "Log out", path: "" },
+  ];
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      <Sidebar
+        isOpen={isSidebarOpen}
+        toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+        sidebarItems={sidebarItems}
+      />
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 ${
+          isSidebarOpen ? "ml-64" : "ml-20"
+        }`}
+      >
+        <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
+        <main className="p-4 mt-16 md:mt-0 rounded-sm">{children}</main>
+      </div>
+    </div>
+  );
+};
+
+export default SettingsSideBarLayout;
