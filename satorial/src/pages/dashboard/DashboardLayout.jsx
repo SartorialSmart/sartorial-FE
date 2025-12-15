@@ -7,7 +7,7 @@ import {
   Users,
   Clock,
   DollarSign,
-  Box
+  Box,
   Calendar,
   Settings,
   TrendingUp,
