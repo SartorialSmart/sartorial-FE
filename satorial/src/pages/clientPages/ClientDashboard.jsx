@@ -1,6 +1,6 @@
 import ClientSideABrLayout from "../../components/navs/ClientSideBarLayout";
 import DashboardOverview from "../../components/overview/ClientDashboardOverview";
-import OrderListTable from "../../components/lists/OrderListTable";
+import ClientsList from "../../components/lists/ClientsListTable";
 
 
 
@@ -9,7 +9,7 @@ const ClientDashboard = () => {
     <ClientSideABrLayout>
       <div className="bg-gray-100 p-6 rounded-sm min-h-screen ">
         <DashboardOverview />
-        <OrderListTable />
+        <ClientsList />
       </div>
     </ClientSideABrLayout>
   );

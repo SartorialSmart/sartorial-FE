@@ -75,6 +75,7 @@ const protectedRoutes = [
   { path: "/client/allocations-list", element: <AllocationsListDisplay /> },
   { path: "/chat", element: <ChatDisplay /> },
   { path: "/client-data/:clientId", element: <ClientDataDisplay /> },
+  { path: "/edit-client/:clientId", element: <ClientDataDisplay /> },
 
   { path: "/order/order-dashboard", element: <OrderDashboardDisplay /> },
   { path: "/order/orders-list", element: <OrderListDisplay /> },

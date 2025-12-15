@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Upload } from "lucide-react";
+import { X, Upload, Image as ImageIcon } from "lucide-react";
 import ClientService from "../../../services/ClientService";
 import { useClient } from "../../../contexts/ClientContext";
 import SuccessModal from "../../modals/SuccessModal";
@@ -172,22 +172,25 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
   };
 
   const handleSave = () => {
-    if (designs.length === 0) {
-      setModal({
-        show: true,
-        title: "No Designs",
-        message: "Please upload at least one design before saving",
-        isError: true,
-      });
-      return;
-    }
+    // Save is allowed regardless of whether designs were uploaded
     refreshClients();
+    
+    const message = designs.length > 0 
+      ? "Client profile with designs has been saved successfully"
+      : "Client profile has been saved successfully";
+    
     setModal({
       show: true,
-      title: "Saved!",
-      message: "Client designs have been saved successfully",
+      title: "Success!",
+      message: message,
       isError: false,
     });
+  };
+
+  const handleSkip = () => {
+    // Allow skipping design upload entirely
+    refreshClients();
+    onClose();
   };
 
   const closeModal = () => {
@@ -223,7 +226,12 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
             <X size={20} />
           </button>
 
-          <h2 className="text-2xl font-semibold mb-4">Add Client Designs</h2>
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold mb-2">Add Client Designs</h2>
+            <p className="text-gray-600 text-sm">
+              Upload design images for this client (optional)
+            </p>
+          </div>
 
           <div className="mb-6">
             <h3 className="text-lg font-semibold mb-3">Uploaded Designs</h3>
@@ -258,14 +266,15 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Upload size={48} className="mx-auto mb-4 opacity-50" />
-                <p>No designs uploaded yet</p>
+              <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <ImageIcon size={48} className="mx-auto mb-3 opacity-50" />
+                <p className="font-medium mb-1">No designs uploaded yet</p>
+                <p className="text-sm">You can add designs later if needed</p>
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-3 border rounded-lg p-2">
+          <div className="flex items-center gap-3 border rounded-lg p-2 bg-gray-50">
             <input
               type="file"
               multiple
@@ -304,7 +313,7 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
             </div>
           )}
 
-          <div className="flex justify-between mt-6">
+          <div className="flex justify-between mt-6 gap-3">
             <button
               onClick={onBack}
               className="border border-gray-400 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
@@ -312,13 +321,22 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
             >
               Back: Measurements
             </button>
-            <button
-              onClick={handleSave}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition"
-              disabled={loading}
-            >
-              Save
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleSkip}
+                className="border border-gray-400 text-gray-600 px-6 py-2 rounded-lg hover:bg-gray-100 transition"
+                disabled={loading}
+              >
+                Skip & Finish
+              </button>
+              <button
+                onClick={handleSave}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition"
+                disabled={loading}
+              >
+                {designs.length > 0 ? "Save & Finish" : "Finish"}
+              </button>
+            </div>
           </div>
         </div>
       </div>

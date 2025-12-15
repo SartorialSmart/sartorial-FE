@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { Trash2, X } from "lucide-react";
+import {
+  Trash2,
+  X,
+  Upload,
+  Image as ImageIcon,
+  ZoomIn,
+  Plus,
+  Check,
+} from "lucide-react";
 import ClientService from "../../../services/ClientService";
 
 const ClientDesignsInfo = ({ clientId }) => {
@@ -10,6 +18,7 @@ const ClientDesignsInfo = ({ clientId }) => {
   const [dragging, setDragging] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     const fetchDesigns = async () => {
@@ -42,7 +51,7 @@ const ClientDesignsInfo = ({ clientId }) => {
       const newFiles = Array.from(files).map((file) => ({
         file,
         preview: URL.createObjectURL(file),
-        description: "", // Initialize with empty description
+        description: "",
       }));
       setNewDesigns((prev) => [...prev, ...newFiles]);
       setShowConfirmation(true);
@@ -99,6 +108,8 @@ const ClientDesignsInfo = ({ clientId }) => {
 
       setNewDesigns([]);
       setShowConfirmation(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error("Error saving designs:", error);
     }
@@ -107,7 +118,7 @@ const ClientDesignsInfo = ({ clientId }) => {
 
   const handleDelete = async (imageId) => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this image?"
+      "Are you sure you want to delete this design?"
     );
     if (!confirmDelete) return;
 
@@ -137,151 +148,250 @@ const ClientDesignsInfo = ({ clientId }) => {
   };
 
   return (
-    <div className="p-6 bg-white h-auto rounded-xl">
-      {/* Existing Designs Display Section */}
-      {designs.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-          {designs.map((design, index) => (
-            <div
-              key={design.id}
-              className="relative bg-white p-4 rounded-lg shadow"
-            >
-              <img
-                src={
-                  design.preview || design.image.replace("image/upload/", "")
-                }
-                alt={`Design ${index + 1}`}
-                className="w-full h-40 object-cover rounded-md cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() =>
-                  openImageModal(
-                    design.preview || design.image.replace("image/upload/", ""),
-                    design.description
-                  )
-                }
-              />
-
-              <div className="mt-2 text-center">
-                {design.description && (
-                  <p className="text-sm font-medium text-gray-900 mt-1">
-                    {design.description}
-                  </p>
-                )}
-              </div>
-
-              <button
-                className="absolute top-2 right-2 bg-red-500 p-2 rounded-full text-white hover:bg-red-600"
-                onClick={() => handleDelete(design.id)}
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          ))}
+    <div className="space-y-6">
+      {/* Success Message */}
+      {saveSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3 animate-fade-in">
+          <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+            <Check size={16} className="text-white" />
+          </div>
+          <p className="text-green-800 font-medium">
+            Designs uploaded successfully!
+          </p>
         </div>
       )}
 
-      {/* New Designs with Description Input */}
-      {newDesigns.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            New Designs to Upload
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {newDesigns.map((design, index) => (
-              <div
-                key={index}
-                className="relative bg-gray-50 p-4 rounded-lg border"
-              >
-                <img
-                  src={design.preview}
-                  alt={`New Design ${index + 1}`}
-                  className="w-full h-40 object-cover rounded-md cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() =>
-                    openImageModal(design.preview, design.description)
-                  }
-                />
+      {/* Existing Designs Gallery */}
+      {designs.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-pink-600 to-pink-700 px-6 py-4">
+            <h3 className="text-xl font-semibold text-white flex items-center">
+              <ImageIcon size={20} className="mr-2" />
+              Design Gallery
+              <span className="ml-3 px-3 py-1 bg-white/20 rounded-full text-sm backdrop-blur-sm">
+                {designs.length} {designs.length === 1 ? "Design" : "Designs"}
+              </span>
+            </h3>
+          </div>
 
-                <div className="mt-2">
-                  <p className="text-sm font-medium text-gray-900 text-center mb-2">
-                    {design.description || `New Design ${index + 1}`}
-                  </p>
-                  <textarea
-                    value={design.description}
-                    onChange={(e) =>
-                      handleDescriptionChange(index, e.target.value)
-                    }
-                    placeholder="Enter description for this design..."
-                    className="w-full p-2 text-sm border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    rows={3}
-                  />
-                </div>
-
-                <button
-                  className="absolute top-2 right-2 bg-red-500 p-2 rounded-full text-white hover:bg-red-600"
-                  onClick={() => removeNewDesign(index)}
+          <div className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {designs.map((design, index) => (
+                <div
+                  key={design.id}
+                  className="group relative bg-gray-50 rounded-xl overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-300"
                 >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
+                  <div className="relative aspect-square overflow-hidden bg-gray-100">
+                    <img
+                      src={
+                        design.preview ||
+                        design.image.replace("image/upload/", "")
+                      }
+                      alt={`Design ${index + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
+                      <button
+                        onClick={() =>
+                          openImageModal(
+                            design.preview ||
+                              design.image.replace("image/upload/", ""),
+                            design.description
+                          )
+                        }
+                        className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100 bg-white text-gray-900 p-3 rounded-full hover:bg-gray-100"
+                      >
+                        <ZoomIn size={20} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {design.description && (
+                    <div className="p-3 bg-white">
+                      <p className="text-sm text-gray-700 line-clamp-2">
+                        {design.description}
+                      </p>
+                    </div>
+                  )}
+
+                  <button
+                    className="absolute top-3 right-3 bg-red-500 p-2 rounded-full text-white hover:bg-red-600 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100"
+                    onClick={() => handleDelete(design.id)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Confirmation Section */}
+      {/* New Designs Preview */}
+      {newDesigns.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
+            <h3 className="text-xl font-semibold text-white flex items-center">
+              <Plus size={20} className="mr-2" />
+              New Designs to Upload
+              <span className="ml-3 px-3 py-1 bg-white/20 rounded-full text-sm backdrop-blur-sm">
+                {newDesigns.length}
+              </span>
+            </h3>
+          </div>
+
+          <div className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {newDesigns.map((design, index) => (
+                <div
+                  key={index}
+                  className="group relative bg-purple-50 rounded-xl overflow-hidden border-2 border-purple-200 hover:shadow-lg transition-all duration-300"
+                >
+                  <div className="relative aspect-square overflow-hidden bg-gray-100">
+                    <img
+                      src={design.preview}
+                      alt={`New Design ${index + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
+                      <button
+                        onClick={() =>
+                          openImageModal(design.preview, design.description)
+                        }
+                        className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100 bg-white text-gray-900 p-3 rounded-full hover:bg-gray-100"
+                      >
+                        <ZoomIn size={20} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-white">
+                    <textarea
+                      value={design.description}
+                      onChange={(e) =>
+                        handleDescriptionChange(index, e.target.value)
+                      }
+                      placeholder="Add a description..."
+                      className="w-full p-2 text-sm border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      rows={2}
+                    />
+                  </div>
+
+                  <button
+                    className="absolute top-3 right-3 bg-red-500 p-2 rounded-full text-white hover:bg-red-600 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100"
+                    onClick={() => removeNewDesign(index)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Banner */}
       {showConfirmation && (
-        <div className="mt-4 p-4 bg-gray-50 border border-blue-500 rounded-lg shadow">
-          <p className="text-gray-800">
-            You've selected {newDesigns.length} new design
-            {newDesigns.length > 1 ? "s" : ""}. Add descriptions above and
-            choose what to do next:
-          </p>
-          <div className="mt-2 flex space-x-4">
-            <button
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-              onClick={() => setShowConfirmation(false)}
-            >
-              Add More
-            </button>
-            <button
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-              onClick={handleSave}
-              disabled={isSaving}
-            >
-              {isSaving ? "Saving..." : "Save All Designs"}
-            </button>
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-300 rounded-xl p-6 shadow-md">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                Ready to upload {newDesigns.length} new design
+                {newDesigns.length > 1 ? "s" : ""}?
+              </h4>
+              <p className="text-gray-700 mb-4">
+                Add descriptions to your designs above, then choose what to do
+                next.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  className="px-6 py-2.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all font-medium flex items-center shadow-md"
+                  onClick={() => setShowConfirmation(false)}
+                >
+                  <Plus size={18} className="mr-2" />
+                  Add More
+                </button>
+                <button
+                  className="px-6 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all font-medium flex items-center shadow-md disabled:opacity-50"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={18} className="mr-2" />
+                      Save All Designs
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* Upload Section */}
       <div
-        className={`mt-6 p-4 bg-white rounded-lg shadow-md flex flex-col items-center border-2 border-dashed ${
-          dragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
+        className={`bg-white rounded-xl shadow-sm border-2 border-dashed overflow-hidden transition-all duration-300 ${
+          dragging
+            ? "border-pink-500 bg-pink-50 shadow-lg"
+            : "border-gray-300 hover:border-gray-400"
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <p className="text-gray-700 font-medium">Upload New Designs</p>
-        <label className="w-full p-6 text-center rounded-lg cursor-pointer hover:bg-gray-50">
-          {dragging ? "Drop files here" : "Click or drag files to upload"}
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleFileUpload}
-            className="hidden"
-            disabled={isSaving}
-          />
-        </label>
+        <div className="p-12">
+          <label className="flex flex-col items-center cursor-pointer">
+            <div
+              className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 transition-all ${
+                dragging
+                  ? "bg-pink-200 text-pink-700"
+                  : "bg-gray-100 text-gray-400"
+              }`}
+            >
+              <Upload size={32} />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              {dragging ? "Drop your files here" : "Upload New Designs"}
+            </h3>
+            <p className="text-gray-600 mb-4 text-center">
+              Drag and drop your design images here, or click to browse
+            </p>
+            <div className="px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-all font-medium">
+              Choose Files
+            </div>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+              disabled={isSaving}
+            />
+            <p className="text-sm text-gray-500 mt-4">
+              Supports: JPG, PNG, GIF, WebP
+            </p>
+          </label>
+        </div>
       </div>
 
       {/* Image Modal */}
       {showModal && selectedImage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="relative bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-auto">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+          onClick={closeImageModal}
+        >
+          <div
+            className="relative bg-white rounded-2xl max-w-5xl max-h-[90vh] overflow-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
-              className="absolute top-4 right-4 bg-red-500 p-2 rounded-full text-white hover:bg-red-600 z-10"
+              className="absolute top-4 right-4 bg-red-500 p-3 rounded-full text-white hover:bg-red-600 z-10 shadow-lg transition-all hover:scale-110"
               onClick={closeImageModal}
             >
               <X size={20} />
@@ -290,11 +400,11 @@ const ClientDesignsInfo = ({ clientId }) => {
               <img
                 src={selectedImage.src}
                 alt="Design preview"
-                className="w-full h-auto max-h-[70vh] object-contain rounded-md"
+                className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
               />
               {selectedImage.description && (
-                <div className="mt-4 text-center">
-                  <p className="text-lg font-medium text-gray-900">
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <p className="text-lg text-gray-900">
                     {selectedImage.description}
                   </p>
                 </div>
