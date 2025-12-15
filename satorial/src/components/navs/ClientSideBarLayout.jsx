@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Header from "./NavLayout/Header";
 import Sidebar from "./NavLayout/SideBar";
-import Breadcrumbs from "./NavLayout/BreadCrumbs";
+import Breadcrumbs from "./NavLayout/Breadcrumbs";
 import { 
   LayoutGrid, 
   Users, 
