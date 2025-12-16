@@ -1,196 +1,89 @@
+// components/settings/SettingsProfile.jsx
+
 import { useState } from "react";
+import { motion } from "framer-motion";
+import OrganizationProfile from "./OrganizationProfile";
+import DepartmentsManagement from "./DepartmentsManagement";
 import InvoiceContent from "./InvoiceContent";
 import FabricsContent from "./FabricsContent";
 
 const SettingsProfile = () => {
   const [activeTab, setActiveTab] = useState("Profile");
 
-  const colors = [
-    "bg-red-500",
-    "bg-green-600",
-    "bg-purple-600",
-    "bg-blue-600",
-    "bg-orange-600",
-    "bg-yellow-400",
-    "bg-black",
+  const tabs = [
+    { id: "Profile", label: "Organization Profile" },
+    { id: "Departments", label: "Departments" },
+    { id: "Invoice", label: "Invoice Settings" },
+    { id: "Fabrics", label: "Fabrics Catalog" },
   ];
 
-  const ProfileContent = () => (
-    <div className="space-y-8">
-      {/* Personal Details */}
-      <div>
-        <h2 className="text-lg font-medium mb-4">Personal Details</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input
-            className="input-style"
-            type="text"
-            placeholder="Name"
-            defaultValue="Kemi"
-          />
-          <input
-            className="input-style"
-            type="email"
-            placeholder="Email Address"
-            defaultValue="kemi@gmail.com"
-          />
-          <input
-            className="input-style"
-            type="tel"
-            placeholder="Phone Number"
-            defaultValue="08022356987"
-          />
-          <div className="relative">
-            <input
-              className="input-style pr-32"
-              type="password"
-              defaultValue="**********"
-            />
-            <span className="absolute top-2 right-3 text-blue-500 text-sm cursor-pointer">
-              Change Password
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Address */}
-      <div>
-        <h2 className="text-lg font-medium mb-4">Address</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input className="input-style" type="text" placeholder="Address" />
-          <input className="input-style" type="text" placeholder="City" />
-          <input className="input-style" type="text" placeholder="State" />
-          <input className="input-style" type="text" placeholder="Country" />
-        </div>
-      </div>
-
-      {/* Theme */}
-      <div>
-        <h2 className="text-lg font-medium mb-4">Theme</h2>
-        <div className="mb-4 flex items-center gap-4">
-          <span className="text-sm font-medium">Company Logo</span>
-          <input type="file" className="border rounded-md text-sm p-2" />
-        </div>
-        <div>
-          <p className="text-sm font-medium mb-2">Choose your brand color</p>
-          <div className="flex space-x-3">
-            {colors.map((color, i) => (
-              <div
-                key={i}
-                className={`${color} w-10 h-8 rounded-md border cursor-pointer`}
-              />
-            ))}
-            <div className="w-10 h-8 border rounded-md flex items-center justify-center cursor-pointer">
-              <input
-                type="color"
-                className="opacity-0 absolute w-10 h-8 cursor-pointer"
-              />
-              <svg
-                className="w-4 h-4 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path d="M19 11a7 7 0 11-14 0 7 7 0 0114 0z" />
-                <path d="M12 19v4m0-4a4 4 0 004-4H8a4 4 0 004 4z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Socials */}
-      <div>
-        <h2 className="text-lg font-medium mb-4">Socials</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center border rounded-md px-3 py-2 bg-gray-100">
-            <span className="text-gray-400 mr-2">📸</span>
-            <input
-              className="bg-transparent w-full outline-none"
-              placeholder="@username"
-            />
-          </div>
-          <div className="flex items-center border rounded-md px-3 py-2 bg-gray-100">
-            <span className="text-gray-400 mr-2">🐦</span>
-            <input
-              className="bg-transparent w-full outline-none"
-              placeholder="@username"
-            />
-          </div>
-          <div className="flex items-center border rounded-md px-3 py-2 bg-gray-100">
-            <span className="text-gray-400 mr-2">🌐</span>
-            <input
-              className="bg-transparent w-full outline-none"
-              placeholder="https://your linkhere"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const RolesContent = () => (
-    <div>
-      <h2 className="text-lg font-medium mb-4">Roles and Tasks</h2>
-      {/* Add roles/tasks content */}
-    </div>
-  );
-
-  const DepartmentsContent = () => (
-    <div>
-      <h2 className="text-lg font-medium mb-4">Departments</h2>
-      {/* Add departments content */}
-    </div>
-  );
-
-  const SocialMediaContent = () => (
-    <div>
-      <h2 className="text-lg font-medium mb-4">Social Media</h2>
-      {/* Add social media content */}
-    </div>
-  );
+  const renderContent = () => {
+    switch (activeTab) {
+      case "Profile":
+        return <OrganizationProfile />;
+      case "Departments":
+        return <DepartmentsManagement />;
+      case "Invoice":
+        return <InvoiceContent />;
+      case "Fabrics":
+        return <FabricsContent />;
+      default:
+        return <OrganizationProfile />;
+    }
+  };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Settings</h1>
-        <div className="mt-4 flex space-x-2">
-          {[
-            "Profile",
-            "Invoice",
-            "Roles/Tasks",
-            "Departments",
-            "Fabrics",
-            "Social Media",
-          ].map((tab, index) => (
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+        <p className="text-gray-600 mt-2">
+          Manage your organization&apos;s settings and preferences
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 p-2">
+        <div className="flex gap-2 overflow-x-auto">
+          {tabs.map((tab) => (
             <button
-              key={index}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-full text-sm font-medium ${
-                tab === activeTab
-                  ? "bg-blue-500 text-white"
-                  : "bg-white text-gray-700"
-              } shadow-sm hover:bg-blue-50 transition-colors`}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative px-6 py-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap
+                ${
+                  activeTab === tab.id
+                    ? "text-blue-600"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }
+              `}
             >
-              {tab}
+              {tab.label}
+              {activeTab === tab.id && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                />
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        {activeTab === "Profile" && <ProfileContent />}
-        {activeTab === "Invoice" && <InvoiceContent />}
-        {activeTab === "Roles/Tasks" && <RolesContent />}
-        {activeTab === "Departments" && <DepartmentsContent />}
-        {activeTab === "Fabrics" && <FabricsContent />}
-        {activeTab === "Social Media" && <SocialMediaContent />}
-      </div>
+      {/* Content */}
+      <motion.div
+        key={activeTab}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.2 }}
+        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      >
+        {renderContent()}
+      </motion.div>
     </div>
   );
 };
-
-// Tailwind input base style (in your global CSS or Tailwind config)
-// const inputBase = `border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full`;
 
 export default SettingsProfile;

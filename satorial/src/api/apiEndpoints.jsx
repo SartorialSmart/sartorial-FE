@@ -131,6 +131,15 @@ export const API = {
       UPDATE: (slug) => `/users/staff/${slug}/`,
       DELETE: (slug) => `/users/staff/${slug}/`,
     },
+
+    PERFORMANCE: {
+      LIST: "/orders/staff/performance/",
+
+      DETAIL: (staffId) => `/orders/staff/performance/${staffId}/`,
+
+      DEPARTMENT: "/orders/department/performance/",
+    },
+
     SALARY: {
       UPDATE: "/users/update-salary/",
     },
@@ -187,6 +196,59 @@ export const API = {
       CREATE_WITH_ID: (id) => `/inventories/inventory/${id}/`,
       UPDATE_WITH_ID: (id) => `/inventories/inventory/${id}/`,
       DELETE_WITH_ID: (id) => `/inventories/inventory/${id}/`,
+    },
+  },
+
+  SETTINGS: {
+    // Organization Profile
+    PROFILE: {
+      GET: "/settings/profile/",
+      UPDATE: "/settings/profile/",
+    },
+
+    // Departments
+    DEPARTMENTS: {
+      LIST: "/settings/departments/",
+      CREATE: "/settings/departments/",
+      DETAIL: (deptId) => `/settings/departments/${deptId}/`,
+      UPDATE: (deptId) => `/settings/departments/${deptId}/`,
+      DELETE: (deptId) => `/settings/departments/${deptId}/`,
+      STATISTICS: "/settings/departments/statistics/",
+    },
+
+    // Roles
+    ROLES: {
+      LIST: "/settings/roles/",
+      CREATE: "/settings/roles/",
+      DETAIL: (roleId) => `/settings/roles/${roleId}/`,
+      UPDATE: (roleId) => `/settings/roles/${roleId}/`,
+      DELETE: (roleId) => `/settings/roles/${roleId}/`,
+    },
+
+    // Tasks
+    TASKS: {
+      LIST: "/settings/tasks/",
+      CREATE: "/settings/tasks/",
+      DETAIL: (taskId) => `/settings/tasks/${taskId}/`,
+      UPDATE: (taskId) => `/settings/tasks/${taskId}/`,
+      DELETE: (taskId) => `/settings/tasks/${taskId}/`,
+      STATISTICS: "/settings/tasks/statistics/",
+    },
+
+    // Fabrics
+    FABRICS: {
+      LIST: "/settings/fabrics/",
+      CREATE: "/settings/fabrics/",
+      DETAIL: (fabricId) => `/settings/fabrics/${fabricId}/`,
+      UPDATE: (fabricId) => `/settings/fabrics/${fabricId}/`,
+      DELETE: (fabricId) => `/settings/fabrics/${fabricId}/`,
+      STATISTICS: "/settings/fabrics/statistics/",
+    },
+
+    // Invoice Settings
+    INVOICE: {
+      GET: "/settings/invoice/",
+      UPDATE: "/settings/invoice/",
     },
   },
 };

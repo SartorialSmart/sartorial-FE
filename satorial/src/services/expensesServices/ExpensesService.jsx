@@ -15,15 +15,21 @@ const ExpensesService = {
   },
 
   getExpenseById: async (expenseId) => {
-    return await axiosInstance.get(
+    const response = await axiosInstance.get(
       API.EXPENSE_MANAGEMENT.EXPENSES.DETAIL(expenseId)
     );
+    return response.data;
   },
 
   updateExpense: async (expenseId, payload) => {
     return await axiosInstance.put(
       API.EXPENSE_MANAGEMENT.EXPENSES.UPDATE(expenseId),
-      payload
+      payload,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
     );
   },
 
@@ -33,12 +39,13 @@ const ExpensesService = {
     );
   },
 
-  getExpenseList: async () => {
+  getExpenseList: async (params) => {
     try {
       const response = await axiosInstance.get(
-        API.EXPENSE_MANAGEMENT.EXPENSES.EXPENSE_LIST
+        API.EXPENSE_MANAGEMENT.EXPENSES.EXPENSE_LIST,
+        { params }
       );
-      return response.data; // Return the data from the response
+      return response.data;
     } catch (error) {
       console.error("Error fetching expenses:", error);
       throw error;
@@ -46,7 +53,26 @@ const ExpensesService = {
   },
 
   getExpenseSummary: async () => {
-    return await axiosInstance.get(API.EXPENSE_MANAGEMENT.EXPENSES.SUMMARY);
+    const response = await axiosInstance.get(
+      API.EXPENSE_MANAGEMENT.EXPENSES.SUMMARY
+    );
+    return response.data;
+  },
+
+  exportExpenses: async (params) => {
+    try {
+      const response = await axiosInstance.get(
+        API.EXPENSE_MANAGEMENT.EXPENSES.EXPENSE_LIST,
+        {
+          params: { ...params, export: true },
+          responseType: "blob",
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error exporting expenses:", error);
+      throw error;
+    }
   },
 };
 
