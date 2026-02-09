@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 
 const FilterByForm = ({ options, onFilterChange }) => {
   const [selectedOption, setSelectedOption] = useState(options[0].value);
@@ -23,6 +24,16 @@ const FilterByForm = ({ options, onFilterChange }) => {
       </select>
     </div>
   );
+};
+
+FilterByForm.propTypes = {
+  options: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  onFilterChange: PropTypes.func.isRequired,
 };
 
 export default FilterByForm;

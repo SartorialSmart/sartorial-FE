@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import AssignOrderModal from "../allocationModals/AssignOrderModal";
 import OrderService from "../../services/OrderService";
 import DEFAULT_AVATAR from "../../assets/images/default_avatar.svg";
@@ -394,6 +395,19 @@ const AllocationListTable = ({ searchTerm }) => {
       />
     </div>
   );
+};
+
+StatusBadge.propTypes = {
+  status: PropTypes.string.isRequired,
+};
+
+TimelineInfo.propTypes = {
+  startDate: PropTypes.string.isRequired,
+  endDate: PropTypes.string.isRequired,
+};
+
+AllocationListTable.propTypes = {
+  searchTerm: PropTypes.string,
 };
 
 export default AllocationListTable;

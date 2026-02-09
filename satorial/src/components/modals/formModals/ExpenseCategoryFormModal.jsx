@@ -3,6 +3,7 @@ import { X, AlertCircle, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ExpensescategoryService from "../../../services/expensesServices/ExpensesCategoryService";
 import SuccessModal from "../../modals/SuccessModal";
+import PropTypes from "prop-types";
 
 const ExpenseCategoryFormModal = ({ isOpen, onClose, onSuccess, categoryToEdit = null }) => {
   const isEditMode = !!categoryToEdit;
@@ -240,6 +241,17 @@ const ExpenseCategoryFormModal = ({ isOpen, onClose, onSuccess, categoryToEdit =
       )}
     </>
   );
+};
+
+ExpenseCategoryFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func,
+  categoryToEdit: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    name: PropTypes.string,
+    description: PropTypes.string,
+  }),
 };
 
 export default ExpenseCategoryFormModal;

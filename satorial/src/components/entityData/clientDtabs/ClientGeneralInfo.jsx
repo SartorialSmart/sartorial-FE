@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Edit2, Save, X, Upload, User, Mail, Phone, Calendar, MapPin, Check } from "lucide-react";
+import PropTypes from "prop-types";
 import InputField from "../../miniComponents/InputField";
 import ClientService from "../../../services/ClientService";
 import DEFAULT_AVATAR from "../../../assets/images/default_avatar.svg";
@@ -337,6 +338,10 @@ const ClientGeneralInfo = ({ clientId }) => {
       </div>
     </div>
   );
+};
+
+ClientGeneralInfo.propTypes = {
+  clientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 export default ClientGeneralInfo;

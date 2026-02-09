@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
+import PropTypes from "prop-types";
 import { useAuth } from "../../../contexts/AuthContext";
 import AddOrderCategoryForm from "./AddOrderCategoryForm";
 import OrderCategoryService from "../../../services/OrderCategoryService";
@@ -443,6 +444,10 @@ const AddOrderForm = ({ onClose }) => {
       )}
     </div>
   );
+};
+
+AddOrderForm.propTypes = {
+  onClose: PropTypes.func,
 };
 
 export default AddOrderForm;

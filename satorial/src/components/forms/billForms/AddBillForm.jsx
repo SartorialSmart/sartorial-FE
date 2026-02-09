@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { 
-  X, DollarSign, Package, Hash, User, Tag, Calculator, 
-  AlertCircle, Loader2, CheckCircle, TrendingUp 
+import {
+  X, DollarSign, Package, Hash, User, Tag, Calculator,
+  AlertCircle, Loader2, CheckCircle, TrendingUp
 } from "lucide-react";
+import PropTypes from "prop-types";
 import BillsService from "../../../services/BillsService";
 import VendorCategoryService from "../../../services/VendorCategoryService";
 import VendorService from "../../../services/VendorService";
@@ -462,6 +463,11 @@ const AddBillForm = ({ onClose, onSuccess }) => {
       `}</style>
     </div>
   );
+};
+
+AddBillForm.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func,
 };
 
 export default AddBillForm;

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import { Bell, Search, ChevronDown, User, Settings, LogOut } from "lucide-react";
 import DFAULT_AVATAR from "../../../assets/images/default_avatar.svg";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -128,6 +129,10 @@ const Header = ({ toggleSidebar }) => {
       </div>
     </div>
   );
+};
+
+Header.propTypes = {
+  toggleSidebar: PropTypes.func
 };
 
 export default Header;

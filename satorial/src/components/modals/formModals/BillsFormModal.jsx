@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import AddBillForm from "../../forms/billForms/AddBillForm";
 import { motion, AnimatePresence } from "framer-motion";
+import PropTypes from "prop-types";
 
 const BillsFormModal = ({ isOpen, onClose }) => {
   return (
@@ -35,6 +36,11 @@ const BillsFormModal = ({ isOpen, onClose }) => {
       )}
     </AnimatePresence>
   );
+};
+
+BillsFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default BillsFormModal;

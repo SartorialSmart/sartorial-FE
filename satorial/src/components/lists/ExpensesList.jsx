@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import {
   MoreVertical,
   Search,
@@ -828,5 +829,7 @@ const ExpensesList = () => {
     </div>
   );
 };
+
+ExpensesList.propTypes = {};
 
 export default ExpensesList;

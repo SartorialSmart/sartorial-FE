@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import AddBillPaymentForm from "../../forms/billForms/AddBillPaymentForm";
 import { motion, AnimatePresence } from "framer-motion";
+import PropTypes from "prop-types";
 
 const AddBillPaymentFormModal = ({ isOpen, onClose, bill, onSuccess }) => {
   return (
@@ -38,6 +39,13 @@ const AddBillPaymentFormModal = ({ isOpen, onClose, bill, onSuccess }) => {
       )}
     </AnimatePresence>
   );
+};
+
+AddBillPaymentFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  bill: PropTypes.object,
+  onSuccess: PropTypes.func,
 };
 
 export default AddBillPaymentFormModal;

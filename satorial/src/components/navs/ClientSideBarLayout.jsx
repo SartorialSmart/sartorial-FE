@@ -1,13 +1,14 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import Header from "./NavLayout/Header";
 import Sidebar from "./NavLayout/SideBar";
 import Breadcrumbs from "./NavLayout/Breadcrumbs";
-import { 
-  LayoutGrid, 
-  Users, 
-  ShoppingBag, 
-  Settings, 
-  MessageCircle, 
+import {
+  LayoutGrid,
+  Users,
+  ShoppingBag,
+  Settings,
+  MessageCircle,
   HelpCircle,
   UserCog,
   BarChart3
@@ -54,6 +55,10 @@ const ClientSideABrLayout = ({ children }) => {
       </div>
     </div>
   );
+};
+
+ClientSideABrLayout.propTypes = {
+  children: PropTypes.node
 };
 
 export default ClientSideABrLayout;

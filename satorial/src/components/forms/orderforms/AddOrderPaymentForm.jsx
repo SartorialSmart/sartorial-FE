@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import PaymentService from "../../../services/PaymentService";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
 
@@ -205,6 +206,19 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
       </div>
     </div>
   );
+};
+
+AddPaymentForm.propTypes = {
+  order: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    order_price: PropTypes.number,
+    initial_deposit: PropTypes.number,
+    balance_amount: PropTypes.number,
+    balance: PropTypes.number,
+    total_paid: PropTypes.number,
+  }).isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
 };
 
 export default AddPaymentForm;

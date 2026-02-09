@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
+import PropTypes from "prop-types";
 
 const ClientContext = createContext();
 
@@ -36,4 +37,8 @@ export const ClientProvider = ({ children }) => {
       {children}
     </ClientContext.Provider>
   );
+};
+
+ClientProvider.propTypes = {
+  children: PropTypes.node
 };

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import PropTypes from "prop-types";
 import ClientService from "@/services/ClientService";
 import M_1 from "../../../assets/images/measurement/mes-1.svg";
 import M_2 from "../../../assets/images/measurement/mes-2.svg";
@@ -188,6 +189,13 @@ const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId }) => {
       </div>
     </div>
   );
+};
+
+AddClientMeasurementForm.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  onBack: PropTypes.func.isRequired,
+  onNext: PropTypes.func.isRequired,
+  clientId: PropTypes.number.isRequired,
 };
 
 export default AddClientMeasurementForm;

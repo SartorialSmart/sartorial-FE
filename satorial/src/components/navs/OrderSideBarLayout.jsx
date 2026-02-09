@@ -1,14 +1,15 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import Header from "./NavLayout/Header";
 import Sidebar from "./NavLayout/SideBar";
 import Navigation from "./NavLayout/Navigation";
-import { 
-  LayoutGrid, 
-  ClipboardList, 
-  CreditCard, 
-  FileText, 
-  Store, 
-  HelpCircle 
+import {
+  LayoutGrid,
+  ClipboardList,
+  CreditCard,
+  FileText,
+  Store,
+  HelpCircle
 } from "lucide-react";
 
 const OrderSideABrLayout = ({ children }) => {
@@ -39,6 +40,10 @@ const OrderSideABrLayout = ({ children }) => {
       </div>
     </div>
   );
+};
+
+OrderSideABrLayout.propTypes = {
+  children: PropTypes.node
 };
 
 export default OrderSideABrLayout;

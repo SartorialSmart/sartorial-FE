@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import PropTypes from "prop-types";
 
 const FAQContent = ({ onClose }) => {
   return (
@@ -31,6 +32,10 @@ const FAQContent = ({ onClose }) => {
       </div>
     </div>
   );
+};
+
+FAQContent.propTypes = {
+  onClose: PropTypes.func.isRequired,
 };
 
 export default FAQContent;

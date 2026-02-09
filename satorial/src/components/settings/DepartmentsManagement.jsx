@@ -1,6 +1,7 @@
 // components/settings/DepartmentsManagement.jsx
 
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { Plus, Edit, Trash2, Users, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { message } from "antd";

@@ -1,15 +1,16 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import Header from "./NavLayout/Header";
 import Sidebar from "./NavLayout/SideBar";
-import { 
-  LayoutGrid, 
-  Clock, 
-  TrendingUp, 
-  CreditCard, 
-  ShoppingBag, 
-  FileText, 
-  BarChart, 
-  HelpCircle 
+import {
+  LayoutGrid,
+  Clock,
+  TrendingUp,
+  CreditCard,
+  ShoppingBag,
+  FileText,
+  BarChart,
+  HelpCircle
 } from "lucide-react";
 
 const InventorySideBarLayout = ({ children }) => {
@@ -35,6 +36,10 @@ const InventorySideBarLayout = ({ children }) => {
       </div>
     </div>
   );
+};
+
+InventorySideBarLayout.propTypes = {
+  children: PropTypes.node
 };
 
 export default InventorySideBarLayout;

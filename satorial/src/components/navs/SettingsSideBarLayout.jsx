@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import Header from "./NavLayout/Header";
 import Sidebar from "./NavLayout/SideBar";
 import { LogOut, Settings } from "lucide-react";
@@ -28,6 +29,10 @@ const SettingsSideBarLayout = ({ children }) => {
       </div>
     </div>
   );
+};
+
+SettingsSideBarLayout.propTypes = {
+  children: PropTypes.node
 };
 
 export default SettingsSideBarLayout;

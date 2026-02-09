@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 
 const MessageModal = ({ type, message, duration = 5000, onClose }) => {
   const [progress, setProgress] = useState(100);
@@ -45,6 +46,13 @@ const MessageModal = ({ type, message, duration = 5000, onClose }) => {
       </div>
     </div>
   );
+};
+
+MessageModal.propTypes = {
+  type: PropTypes.string,
+  message: PropTypes.string,
+  duration: PropTypes.number,
+  onClose: PropTypes.func,
 };
 
 export default MessageModal;

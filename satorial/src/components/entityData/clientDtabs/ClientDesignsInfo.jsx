@@ -8,6 +8,7 @@ import {
   Plus,
   Check,
 } from "lucide-react";
+import PropTypes from "prop-types";
 import ClientService from "../../../services/ClientService";
 
 const ClientDesignsInfo = ({ clientId }) => {
@@ -415,6 +416,10 @@ const ClientDesignsInfo = ({ clientId }) => {
       )}
     </div>
   );
+};
+
+ClientDesignsInfo.propTypes = {
+  clientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 export default ClientDesignsInfo;

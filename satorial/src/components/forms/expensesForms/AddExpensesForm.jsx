@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Upload, X, FileText, Image, AlertCircle, Loader2 } from "lucide-react";
+import PropTypes from "prop-types";
 import ExpensesService from "../../../services/expensesServices/ExpensesService";
 import ExpensescategoryService from "../../../services/expensesServices/ExpensesCategoryService";
 import VendorService from "../../../services/VendorService";
@@ -455,6 +456,11 @@ const AddExpensesForm = ({ onClose, onSuccess }) => {
       )}
     </>
   );
+};
+
+AddExpensesForm.propTypes = {
+  onClose: PropTypes.func,
+  onSuccess: PropTypes.func,
 };
 
 export default AddExpensesForm;

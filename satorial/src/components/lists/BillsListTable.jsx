@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import PropTypes from "prop-types";
 import { MoreVertical } from "lucide-react";
 import BillsService from "../../services/BillsService";
 import EditBillsFormModal from "../modals/formModals/EditBillsFormModal";
@@ -216,6 +217,30 @@ const BillRow = ({ bill, selectedBills, handleSelect, toggleDropdown, dropdownOp
       </td>
     </tr>
   );
+};
+
+BillRow.propTypes = {
+  bill: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    vendor_category: PropTypes.shape({
+      name: PropTypes.string,
+    }).isRequired,
+    created_at: PropTypes.string,
+    quantity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    amount_paid: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    balance: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  }).isRequired,
+  selectedBills: PropTypes.arrayOf(PropTypes.number).isRequired,
+  handleSelect: PropTypes.func.isRequired,
+  toggleDropdown: PropTypes.func.isRequired,
+  dropdownOpen: PropTypes.number,
+  handleEditBill: PropTypes.func.isRequired,
+  handleUpdatePayment: PropTypes.func.isRequired,
+  columns: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    key: PropTypes.string,
+  })).isRequired,
 };
 
 export default BillsList;

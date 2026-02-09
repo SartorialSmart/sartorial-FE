@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import ExitStaffService from "../../services/staffServices/ExitStaffSrvice";
 
 const ExitedStaffsListTable = ({ searchTerm = "" }) => {
@@ -117,6 +118,10 @@ const ExitedStaffsListTable = ({ searchTerm = "" }) => {
       </div>
     </div>
   );
+};
+
+ExitedStaffsListTable.propTypes = {
+  searchTerm: PropTypes.string,
 };
 
 export default ExitedStaffsListTable;

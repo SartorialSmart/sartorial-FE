@@ -1,6 +1,7 @@
 // components/settings/OrganizationProfile.jsx
 
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import {
   Building2,
   Mail,

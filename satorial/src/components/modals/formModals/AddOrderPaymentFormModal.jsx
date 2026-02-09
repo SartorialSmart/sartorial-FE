@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import AddPaymentForm from "../../forms/orderforms/AddOrderPaymentForm";
+import PropTypes from "prop-types";
 
 const AddPaymentModal = ({ isOpen, onClose, order, onSave }) => {
   return (
@@ -36,6 +37,13 @@ const AddPaymentModal = ({ isOpen, onClose, order, onSave }) => {
       )}
     </AnimatePresence>
   );
+};
+
+AddPaymentModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  order: PropTypes.object,
+  onSave: PropTypes.func,
 };
 
 export default AddPaymentModal;

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Edit2, Save, X, Ruler, Check } from "lucide-react";
+import PropTypes from "prop-types";
 import ClientService from "../../../services/ClientService";
 
 // Import measurement images
@@ -244,6 +245,10 @@ const ClientMeasurementInfo = ({ clientId }) => {
       </div>
     </div>
   );
+};
+
+ClientMeasurementInfo.propTypes = {
+  clientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 export default ClientMeasurementInfo;

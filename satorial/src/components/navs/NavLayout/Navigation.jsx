@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, Bell, Search, ChevronDown } from "lucide-react";
 import LOGO from "../../../assets/images/logo.svg";
@@ -149,6 +150,10 @@ const Navigation = ({ sidebarItems }) => {
       </div>
     </div>
   );
+};
+
+Navigation.propTypes = {
+  sidebarItems: PropTypes.array
 };
 
 export default Navigation;

@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import PropTypes from "prop-types";
 import { Menu, ChevronLeft, Home } from "lucide-react";
 import LOGO from "../../../assets/images/Logo.png";
 import PATTERN from "../../../assets/images/pattern-1.svg";
@@ -91,6 +92,12 @@ const Sidebar = ({ isOpen, toggleSidebar, sidebarItems }) => {
       </div>
     </div>
   );
+};
+
+Sidebar.propTypes = {
+  isOpen: PropTypes.bool,
+  toggleSidebar: PropTypes.func,
+  sidebarItems: PropTypes.array
 };
 
 export default Sidebar;

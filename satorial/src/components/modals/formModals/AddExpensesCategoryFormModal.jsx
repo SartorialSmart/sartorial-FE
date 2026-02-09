@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AddExpensesCategoryForm from "../../forms/expensesForms/AddExpensesCategoryForm";
+import PropTypes from "prop-types";
 
 const AddExpensesCategoryFormModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1);
@@ -36,6 +37,11 @@ const AddExpensesCategoryFormModal = ({ isOpen, onClose }) => {
       )}
     </AnimatePresence>
   );
+};
+
+AddExpensesCategoryFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default AddExpensesCategoryFormModal;

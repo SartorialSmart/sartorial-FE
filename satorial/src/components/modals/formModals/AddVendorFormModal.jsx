@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AddVendorForm from "../../forms/vendorForms/AddVendorForm";
+import PropTypes from "prop-types";
 
 const AddVendorFormModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1);
@@ -36,6 +37,11 @@ const AddVendorFormModal = ({ isOpen, onClose }) => {
       )}
     </AnimatePresence>
   );
+};
+
+AddVendorFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default AddVendorFormModal;

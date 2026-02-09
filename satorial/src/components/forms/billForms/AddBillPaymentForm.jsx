@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import { BillPaymentService } from "../../../services/BillPaymentService";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
 
@@ -124,6 +125,16 @@ const AddBillPaymentForm = ({ bill, onClose, onSuccess }) => {
       </form>
     </div>
   );
+};
+
+AddBillPaymentForm.propTypes = {
+  bill: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    amount: PropTypes.number,
+    amount_paid: PropTypes.number,
+  }).isRequired,
+  onClose: PropTypes.func,
+  onSuccess: PropTypes.func,
 };
 
 export default AddBillPaymentForm;

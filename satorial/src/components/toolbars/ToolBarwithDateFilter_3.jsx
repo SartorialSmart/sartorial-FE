@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Calendar, ChevronDown } from "lucide-react";
+import PropTypes from "prop-types";
 import BillsFormModal from "../modals/formModals/BillsFormModal";
 import AddButton from "../buttons/AddButton";
 

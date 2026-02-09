@@ -1,5 +1,6 @@
 import { X, Clock, Check, Truck, Package, UserCheck, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 
 // Enhanced statuses with icons and colors
 const statuses = [
@@ -105,6 +106,18 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
     );
   };
 
+  StatusIcon.propTypes = {
+    status: PropTypes.shape({
+      icon: PropTypes.elementType,
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      label: PropTypes.string,
+      description: PropTypes.string,
+      color: PropTypes.string,
+    }),
+    index: PropTypes.number,
+    isCurrent: PropTypes.bool,
+  };
+
   const currentStatusColor = getCurrentStatusColor();
 
   return (
@@ -175,29 +188,29 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
                 
                 <div className="space-y-8">
                   {statuses.map((status, index) => {
+                    /* eslint-disable react/prop-types */
                     const isCompleted = index <= currentIndex;
                     const isCurrent = index === currentIndex;
                     const colors = getStatusColor(status, index);
-                    const IconComponent = status.icon;
-                    
+
                     return (
-                      <div 
-                        key={status.id} 
+                      <div
+                        key={status.id}
                         className={`relative flex items-start gap-4 p-4 rounded-xl transition-all duration-500 ${
-                          isCompleted 
-                            ? `${colors.lightBg} border ${colors.border} border-opacity-30` 
+                          isCompleted
+                            ? `${colors.lightBg} border ${colors.border} border-opacity-30`
                             : 'bg-gray-50 opacity-70'
                         } ${isCurrent ? 'scale-[1.02] shadow-md' : ''}`}
                       >
                         {/* Status Icon */}
                         <div className="relative z-10 flex-shrink-0">
                           <StatusIcon status={status} index={index} isCurrent={isCurrent} />
-                          
+
                           {/* Connecting Line */}
                           {index < statuses.length - 1 && (
-                            <div 
+                            <div
                               className={`absolute left-1/2 -bottom-8 w-0.5 h-8 transform -translate-x-1/2 transition-all duration-700 ${
-                                index < currentIndex 
+                                index < currentIndex
                                   ? colors.bg
                                   : 'bg-gray-200'
                               }`}
@@ -222,7 +235,7 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
                           }`}>
                             {status.description}
                           </p>
-                          
+
                           {/* Time stamp */}
                           {isCompleted && (
                             <p className="text-xs text-gray-400 mt-2">
@@ -232,6 +245,7 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
                         </div>
                       </div>
                     );
+                    /* eslint-enable react/prop-types */
                   })}
                 </div>
               </div>
@@ -277,6 +291,12 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
       `}</style>
     </div>
   );
+};
+
+TrackOrderStatus.propTypes = {
+  currentStatus: PropTypes.string,
+  onClose: PropTypes.func.isRequired,
+  orderId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 export default TrackOrderStatus;

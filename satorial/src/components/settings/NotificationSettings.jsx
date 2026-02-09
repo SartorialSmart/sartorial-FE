@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { Bell, Mail, MessageSquare, Clock, Save } from "lucide-react";
 import { motion } from "framer-motion";
 import { message } from "antd";
@@ -257,6 +258,13 @@ const NotificationSettings = () => {
       </div>
     </form>
   );
+};
+
+Toggle.propTypes = {
+  enabled: PropTypes.bool,
+  onToggle: PropTypes.func,
+  label: PropTypes.string,
+  description: PropTypes.string
 };
 
 export default NotificationSettings;

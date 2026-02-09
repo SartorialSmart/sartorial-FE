@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import PropTypes from 'prop-types';
 import AuthService from '../services/AuthService';
 import { Loader2 } from 'lucide-react';
 
@@ -37,6 +38,10 @@ const LoadingProvider = ({ children }) => {
       )}
     </LoadingContext.Provider>
   );
+};
+
+LoadingProvider.propTypes = {
+  children: PropTypes.node
 };
 
 // Auth Provider Component
@@ -128,6 +133,10 @@ const AuthProviderComponent = ({ children }) => {
   );
 };
 
+AuthProviderComponent.propTypes = {
+  children: PropTypes.node
+};
+
 // Combined Provider
 export const AuthProvider = ({ children }) => {
   return (
@@ -137,4 +146,8 @@ export const AuthProvider = ({ children }) => {
       </AuthProviderComponent>
     </LoadingProvider>
   );
+};
+
+AuthProvider.propTypes = {
+  children: PropTypes.node
 };

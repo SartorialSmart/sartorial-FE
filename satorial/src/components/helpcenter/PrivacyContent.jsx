@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import PropTypes from "prop-types";
 
 const PrivacyContent = ({ onClose }) => {
   return (
@@ -27,6 +28,10 @@ const PrivacyContent = ({ onClose }) => {
       </div>
     </div>
   );
+};
+
+PrivacyContent.propTypes = {
+  onClose: PropTypes.func.isRequired,
 };
 
 export default PrivacyContent;

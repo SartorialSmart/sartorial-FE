@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 import OrderService from "../../../services/OrderService";
 import {
   Download,
@@ -932,6 +933,15 @@ Thank you for your business! 🙏`;
       `}</style>
     </>
   );
+};
+
+OrderInvoice.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  order: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+    PropTypes.object,
+  ]).isRequired,
 };
 
 export default OrderInvoice;

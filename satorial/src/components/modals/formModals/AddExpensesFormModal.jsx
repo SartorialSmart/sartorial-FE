@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AddExpensesForm from "../../forms/expensesForms/AddExpensesForm";
+import PropTypes from "prop-types";
 
 const AddExpensesFormModal = ({ isOpen, onClose, onSuccess }) => {
   return (
@@ -43,6 +44,12 @@ const AddExpensesFormModal = ({ isOpen, onClose, onSuccess }) => {
       )}
     </AnimatePresence>
   );
+};
+
+AddExpensesFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func,
 };
 
 export default AddExpensesFormModal;

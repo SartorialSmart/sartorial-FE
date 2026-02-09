@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X } from "lucide-react";
+import PropTypes from "prop-types";
 import VendorCategoryService from "../../../services/VendorCategoryService";
 import SuccessModal from "../../modals/SuccessModal";
 
@@ -102,6 +103,10 @@ const AddVendorCategoryForm = ({ onClose }) => {
       )}
     </div>
   );
+};
+
+AddVendorCategoryForm.propTypes = {
+  onClose: PropTypes.func.isRequired,
 };
 
 export default AddVendorCategoryForm;

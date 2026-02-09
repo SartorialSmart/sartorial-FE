@@ -7,6 +7,7 @@ import VendorService from "../../../services/VendorService";
 import StaffService from "../../../services/staffServices/StaffService";
 import { useAuth } from "../../../contexts/AuthContext";
 import SuccessModal from "../../modals/SuccessModal";
+import PropTypes from "prop-types";
 
 const ExpenseFormModal = ({ isOpen, onClose, onSuccess, expenseToEdit = null }) => {
   const { user } = useAuth();
@@ -665,6 +666,23 @@ const ExpenseFormModal = ({ isOpen, onClose, onSuccess, expenseToEdit = null }) 
       )}
     </>
   );
+};
+
+ExpenseFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func,
+  expenseToEdit: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    category: PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+    amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    created_by: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    paid_to: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    receipt_url: PropTypes.string,
+    description: PropTypes.string,
+  }),
 };
 
 export default ExpenseFormModal;
