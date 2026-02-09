@@ -3,44 +3,44 @@ import { useState, useEffect } from "react";
 
 // Enhanced statuses with icons and colors
 const statuses = [
-  { 
-    id: 1, 
-    label: "Pending", 
+  {
+    id: 1,
+    label: "Pending",
     description: "Order has been created and is awaiting assignment",
     icon: Clock,
     color: "yellow"
   },
-  { 
-    id: 2, 
-    label: "Assigned", 
+  {
+    id: 2,
+    label: "Assigned",
     description: "Order has been assigned to staff",
     icon: UserCheck,
     color: "blue"
   },
-  { 
-    id: 3, 
-    label: "In Progress", 
+  {
+    id: 3,
+    label: "In Progress",
     description: "Order is currently being worked on",
     icon: Package,
     color: "indigo"
   },
-  { 
-    id: 4, 
-    label: "On Delivery", 
-    description: "Order is on its way for delivery",
-    icon: Truck,
-    color: "purple"
-  },
-  { 
-    id: 5, 
-    label: "Completed", 
-    description: "Order has been successfully delivered",
+  {
+    id: 4,
+    label: "Completed",
+    description: "Order production has been completed",
     icon: Check,
     color: "green"
   },
-  { 
-    id: 6, 
-    label: "Cancelled", 
+  {
+    id: 5,
+    label: "On Delivery",
+    description: "Order has been sent for delivery to the client",
+    icon: Truck,
+    color: "purple"
+  },
+  {
+    id: 6,
+    label: "Cancelled",
     description: "Order has been cancelled",
     icon: AlertCircle,
     color: "red"

@@ -1,40 +1,18 @@
-import axiosInstance from "../../../utils/axiosConfig";
+import { apiGet, apiPost } from "../../../utils/serviceHelper";
 import { API } from "../../api/apiEndpoints";
 
 const PayRollService = {
 
-    // Create a new payroll
-createPayroll: async (payload) => {
-  try {
-    const response = await axiosInstance.post(API.STAFF_MANAGEMENT.PAYROLL.ADD, payload);
-    return response.data;
-  } catch (error) {
-    console.error("Error creating payroll:", error);
-    throw error;
-  }
-},
+  // Create a new payroll
+  createPayroll: (payload) =>
+    apiPost(API.STAFF_MANAGEMENT.PAYROLL.ADD, payload),
 
   // List all payrolls
-  listPayrolls: async () => {
-    try {
-      const response = await axiosInstance.get(API.STAFF_MANAGEMENT.PAYROLL.LIST);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching payroll list:", error);
-      throw error;
-    }
-  },
+  listPayrolls: () => apiGet(API.STAFF_MANAGEMENT.PAYROLL.LIST),
 
   // Get details of a specific payroll
-  getPayrollDetail: async (payrollId) => {
-    try {
-      const response = await axiosInstance.get(API.STAFF_MANAGEMENT.PAYROLL.DETAIL(payrollId));
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching payroll details:", error);
-      throw error;
-    }
-  },
+  getPayrollDetail: (payrollId) =>
+    apiGet(API.STAFF_MANAGEMENT.PAYROLL.DETAIL(payrollId)),
 };
 
 export default PayRollService;

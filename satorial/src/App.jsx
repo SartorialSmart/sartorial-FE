@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import ProtectedRoute from "../utils/ProtectedRoutes";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 import OrganizationRegister from "./pages/Auth/OrganizationRegister";
 import Login from "./pages/Auth/Login";
 import DashboardLayout from "./pages/dashboard/DashboardLayout";
@@ -131,6 +132,7 @@ const protectedRoutes = [
 
 const App = () => {
   return (
+    <ErrorBoundary>
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
@@ -161,6 +163,7 @@ const App = () => {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
+    </ErrorBoundary>
   );
 };
 

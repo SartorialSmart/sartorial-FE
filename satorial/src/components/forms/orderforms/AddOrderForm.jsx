@@ -6,6 +6,7 @@ import OrderCategoryService from "../../../services/OrderCategoryService";
 import ClientService from "../../../services/ClientService";
 import OrderService from "../../../services/OrderService";
 import SuccessModal from "../../modals/SuccessModal";
+import { extractErrorMessage } from "../../../../utils/errorUtils";
 
 const AddOrderForm = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -167,10 +168,7 @@ const AddOrderForm = ({ onClose }) => {
       }
     } catch (error) {
       setErrorTitle("Error");
-      setErrorMessage(
-        error.response?.data?.message ||
-          "Failed to create order. Please try again."
-      );
+      setErrorMessage(extractErrorMessage(error, "Failed to create order. Please try again."));
       setIsErrorModalOpen(true);
     } finally {
       setLoading(false);

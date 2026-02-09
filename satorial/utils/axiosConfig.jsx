@@ -52,6 +52,17 @@ axiosInstance.interceptors.response.use(
       }
     }
 
+    // Global error toasts for 500s and network failures
+    if (error.response?.status >= 500) {
+      import("antd").then(({ message: antdMessage }) => {
+        antdMessage.error("Server error. Please try again later.");
+      });
+    } else if (!error.response && error.code !== "ERR_CANCELED") {
+      import("antd").then(({ message: antdMessage }) => {
+        antdMessage.error("Network error. Please check your connection.");
+      });
+    }
+
     return Promise.reject(error);
   }
 );

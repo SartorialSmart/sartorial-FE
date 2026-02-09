@@ -6,6 +6,7 @@ import OrganizationProfile from "./OrganizationProfile";
 import DepartmentsManagement from "./DepartmentsManagement";
 import InvoiceContent from "./InvoiceContent";
 import FabricsContent from "./FabricsContent";
+import NotificationSettings from "./NotificationSettings";
 
 const SettingsProfile = () => {
   const [activeTab, setActiveTab] = useState("Profile");
@@ -15,6 +16,7 @@ const SettingsProfile = () => {
     { id: "Departments", label: "Departments" },
     { id: "Invoice", label: "Invoice Settings" },
     { id: "Fabrics", label: "Fabrics Catalog" },
+    { id: "Notifications", label: "Notifications" },
   ];
 
   const renderContent = () => {
@@ -27,6 +29,8 @@ const SettingsProfile = () => {
         return <InvoiceContent />;
       case "Fabrics":
         return <FabricsContent />;
+      case "Notifications":
+        return <NotificationSettings />;
       default:
         return <OrganizationProfile />;
     }

@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import OrderService from "../../../services/OrderService";
 import PaymentService from "../../../services/PaymentService";
+import SettingsService from "../../../services/settings";
 import AddPaymentModal from "../../modals/formModals/AddOrderPaymentFormModal";
 import TrackOrderStatusModal from "../../modals/formModals/TrackOrderStatusModal";
 
@@ -19,14 +20,15 @@ const OrderDetail = () => {
   const [showTrackOrderModal, setShowTrackOrderModal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
+  const [orgProfile, setOrgProfile] = useState(null);
 
-  // Define all possible statuses in order
+  // Define all possible statuses in order (Completed before On Delivery)
   const STATUS_FLOW = [
     { key: 'Pending', label: 'Pending', icon: Clock, color: 'text-yellow-600', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' },
     { key: 'Assigned', label: 'Assigned', icon: UserCheck, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
     { key: 'In Progress', label: 'In Progress', icon: Package, color: 'text-orange-600', bgColor: 'bg-orange-50', borderColor: 'border-orange-200' },
-    { key: 'On Delivery', label: 'On Delivery', icon: Truck, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
     { key: 'Completed', label: 'Completed', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
+    { key: 'On Delivery', label: 'On Delivery', icon: Truck, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
     { key: 'Cancelled', label: 'Cancelled', icon: XCircle, color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
   ];
 
@@ -43,7 +45,17 @@ const OrderDetail = () => {
       }
     };
 
+    const fetchOrgProfile = async () => {
+      try {
+        const profile = await SettingsService.Profile.getProfile();
+        setOrgProfile(profile);
+      } catch (err) {
+        console.error("Error fetching org profile:", err);
+      }
+    };
+
     fetchOrderDetails();
+    fetchOrgProfile();
   }, [orderId]);
 
   const handleSavePayment = async (paymentData) => {
@@ -130,12 +142,28 @@ const OrderDetail = () => {
         return formatDate(date.toISOString());
       };
 
+      // Build business header from org profile
+      const businessName = orgProfile?.business_name || order.business_name || order.vendor_name || "Your Business";
+      const businessAddress = orgProfile ? [orgProfile.address_line1, orgProfile.address_line2, orgProfile.city, orgProfile.state, orgProfile.country].filter(Boolean).join(", ") : "";
+      const businessPhone = orgProfile?.business_phone || "";
+      const businessEmail = orgProfile?.business_email || "";
+      const businessLogo = orgProfile?.logo_url || "";
+
       // Build the invoice HTML
       invoiceContainer.innerHTML = `
         <div style="font-family: Arial, sans-serif; color: #333;">
-          <div style="margin-bottom: 30px;">
-            <h1 style="font-size: 32px; font-weight: bold; margin: 0 0 10px 0;">Invoice</h1>
-            <p style="font-size: 18px; color: #666; margin: 0;">${invoiceNumber}</p>
+          <div style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #2563eb; padding-bottom: 20px;">
+            <div>
+              ${businessLogo ? `<img src="${businessLogo}" style="max-height: 60px; max-width: 200px; margin-bottom: 10px;" crossorigin="anonymous" />` : ""}
+              <h2 style="font-size: 20px; font-weight: bold; margin: 0; color: #1e40af;">${businessName}</h2>
+              ${businessAddress ? `<p style="font-size: 12px; color: #666; margin: 4px 0 0 0;">${businessAddress}</p>` : ""}
+              ${businessPhone ? `<p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Tel: ${businessPhone}</p>` : ""}
+              ${businessEmail ? `<p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">${businessEmail}</p>` : ""}
+            </div>
+            <div style="text-align: right;">
+              <h1 style="font-size: 32px; font-weight: bold; margin: 0 0 10px 0;">Invoice</h1>
+              <p style="font-size: 18px; color: #666; margin: 0;">${invoiceNumber}</p>
+            </div>
           </div>
 
           <div style="background-color: #f5f5f5; padding: 24px; border-radius: 8px; margin-bottom: 30px;">
@@ -153,7 +181,7 @@ const OrderDetail = () => {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
               <div>
                 <p style="color: #666; font-size: 14px; margin: 0 0 5px 0;">From</p>
-                <p style="font-weight: 600; margin: 0;">${order.business_name || order.vendor_name || "Your Business"}</p>
+                <p style="font-weight: 600; margin: 0;">${businessName}</p>
               </div>
               <div>
                 <p style="color: #666; font-size: 14px; margin: 0 0 5px 0;">To</p>
@@ -290,12 +318,28 @@ const OrderDetail = () => {
         ? `RCPT-${String(payment.id).padStart(4, "0")}`
         : "RCPT-0000";
 
+      // Build business header from org profile
+      const rcptBusinessName = orgProfile?.business_name || order.business_name || order.vendor_name || "Your Business";
+      const rcptBusinessAddress = orgProfile ? [orgProfile.address_line1, orgProfile.address_line2, orgProfile.city, orgProfile.state, orgProfile.country].filter(Boolean).join(", ") : "";
+      const rcptBusinessPhone = orgProfile?.business_phone || "";
+      const rcptBusinessEmail = orgProfile?.business_email || "";
+      const rcptBusinessLogo = orgProfile?.logo_url || "";
+
       // Build receipt HTML
       receiptContainer.innerHTML = `
         <div style="font-family: Arial, sans-serif; color: #333;">
-          <div style="margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 20px;">
-            <h1 style="font-size: 32px; font-weight: bold; margin: 0 0 10px 0; color: #1e40af;">Payment Receipt</h1>
-            <p style="font-size: 18px; color: #666; margin: 0;">${receiptNumber}</p>
+          <div style="margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              ${rcptBusinessLogo ? `<img src="${rcptBusinessLogo}" style="max-height: 60px; max-width: 200px; margin-bottom: 10px;" crossorigin="anonymous" />` : ""}
+              <h2 style="font-size: 18px; font-weight: bold; margin: 0; color: #1e40af;">${rcptBusinessName}</h2>
+              ${rcptBusinessAddress ? `<p style="font-size: 11px; color: #666; margin: 4px 0 0 0;">${rcptBusinessAddress}</p>` : ""}
+              ${rcptBusinessPhone ? `<p style="font-size: 11px; color: #666; margin: 2px 0 0 0;">Tel: ${rcptBusinessPhone}</p>` : ""}
+              ${rcptBusinessEmail ? `<p style="font-size: 11px; color: #666; margin: 2px 0 0 0;">${rcptBusinessEmail}</p>` : ""}
+            </div>
+            <div style="text-align: right;">
+              <h1 style="font-size: 32px; font-weight: bold; margin: 0 0 10px 0; color: #1e40af;">Payment Receipt</h1>
+              <p style="font-size: 18px; color: #666; margin: 0;">${receiptNumber}</p>
+            </div>
           </div>
 
           <div style="background-color: #f8fafc; padding: 24px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #2563eb;">
@@ -315,9 +359,7 @@ const OrderDetail = () => {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
               <div>
                 <p style="color: #64748b; font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase; font-weight: 600;">From</p>
-                <p style="font-weight: 600; margin: 0; color: #1e293b;">${
-                  order.business_name || order.vendor_name || "Your Business"
-                }</p>
+                <p style="font-weight: 600; margin: 0; color: #1e293b;">${rcptBusinessName}</p>
               </div>
               <div>
                 <p style="color: #64748b; font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase; font-weight: 600;">To</p>
@@ -715,8 +757,8 @@ const OrderDetail = () => {
                   {order.order_status === 'Pending' && 'Order has been created and is awaiting assignment to a staff member.'}
                   {order.order_status === 'Assigned' && 'Order has been assigned to staff and work will begin soon.'}
                   {order.order_status === 'In Progress' && 'Order is currently being worked on by our team.'}
-                  {order.order_status === 'On Delivery' && 'Order is out for delivery to the client.'}
-                  {order.order_status === 'Completed' && 'Order has been successfully completed and delivered.'}
+                  {order.order_status === 'Completed' && 'Order production has been completed.'}
+                  {order.order_status === 'On Delivery' && 'Order has been sent for delivery to the client.'}
                   {order.order_status === 'Cancelled' && 'This order has been cancelled and will not be processed further.'}
                 </p>
               </div>
@@ -829,7 +871,7 @@ const OrderDetail = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-gray-700 mb-2 block">Total Price</label>
                   <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200 font-bold text-blue-900 text-center">
@@ -843,16 +885,44 @@ const OrderDetail = () => {
                   </div>
                 </div>
                 <div>
+                  <label className="text-xs font-semibold text-gray-700 mb-2 block">Total Paid</label>
+                  <div className="p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border-2 border-green-200 text-green-900 font-semibold text-center">
+                    {formatCurrency(order.total_paid || 0)}
+                  </div>
+                </div>
+                <div>
                   <label className="text-xs font-semibold text-gray-700 mb-2 block">Balance</label>
                   <div className={`p-3 rounded-xl border-2 font-bold text-center ${
-                    order.balance_amount > 0 
-                      ? 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300 text-amber-800' 
+                    order.balance_amount > 0
+                      ? 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300 text-amber-800'
                       : 'bg-gradient-to-br from-green-50 to-green-100 border-green-300 text-green-800'
                   }`}>
                     {formatCurrency(order.balance_amount)}
                   </div>
                 </div>
               </div>
+
+              {/* Initial Deposit Receipt Button */}
+              {order.initial_deposit > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => generatePaymentReceipt({
+                      id: `DEP-${order.id}`,
+                      paid_at: order.ordered_at || order.created_at,
+                      amount_paid: order.initial_deposit,
+                      payment_type: "Initial Deposit",
+                      payment_method: null,
+                      payment_reference: null,
+                      notes: "Initial deposit payment"
+                    })}
+                    disabled={isGeneratingInvoice}
+                    className="text-sm px-4 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    <FileText size={14} />
+                    Download Initial Deposit Receipt
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

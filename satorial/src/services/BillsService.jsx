@@ -1,95 +1,19 @@
-import axiosInstance from "../../utils/axiosConfig";
+import { apiGet, apiPost, apiPut } from "../../utils/serviceHelper";
 import { API } from "../api/apiEndpoints";
 
 const BillsService = {
-  createBill: async (billData) => {
-    try {
-      const response = await axiosInstance.post(
-        API.ORDER_MANAGEMENT.BILLS.CREATE,
-        billData
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        "❌ Error creating bill:",
-        error.response?.data || error.message
-      );
-      throw new Error(
-        error.response?.data?.message ||
-          "Failed to create bill. Please try again."
-      );
-    }
-  },
+  createBill: (billData) =>
+    apiPost(API.ORDER_MANAGEMENT.BILLS.CREATE, billData),
 
-  updateBillDetails: async (billId, updatedBillData) => {
-    try {
-      const response = await axiosInstance.put(
-        API.ORDER_MANAGEMENT.BILLS.UPDATE(billId),
-        updatedBillData
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        `❌ Error updating bill (ID: ${billId}):`,
-        error.response?.data || error.message
-      );
-      throw new Error(
-        error.response?.data?.message || `Failed to update bill ID: ${billId}.`
-      );
-    }
-  },
+  updateBillDetails: (billId, updatedBillData) =>
+    apiPut(API.ORDER_MANAGEMENT.BILLS.UPDATE(billId), updatedBillData),
 
-  getBillsList: async () => {
-    try {
-      const response = await axiosInstance.get(API.ORDER_MANAGEMENT.BILLS.LIST);
-      return response.data;
-    } catch (error) {
-      console.error(
-        "❌ Error fetching bills list:",
-        error.response?.data || error.message
-      );
-      throw new Error(
-        error.response?.data?.message ||
-          "Failed to fetch bills list. Please try again."
-      );
-    }
-  },
+  getBillsList: () => apiGet(API.ORDER_MANAGEMENT.BILLS.LIST),
 
-  getBillDetails: async (billId) => {
-    try {
-      const response = await axiosInstance.get(
-        API.ORDER_MANAGEMENT.BILLS.DETAIL(billId)
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        `❌ Error fetching bill details (ID: ${billId}):`,
-        error.response?.data || error.message
-      );
-      throw new Error(
-        error.response?.data?.message ||
-          `Failed to fetch details for bill ID: ${billId}.`
-      );
-    }
-  },
+  getBillDetails: (billId) =>
+    apiGet(API.ORDER_MANAGEMENT.BILLS.DETAIL(billId)),
 
-  getBillListView: async () => {
-    try {
-      const response = await axiosInstance.get(
-        API.ORDER_MANAGEMENT.BILLS.BILL_LIST
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        "❌ Error fetching bill list view:",
-        error.response?.data || error.message
-      );
-      throw new Error(
-        error.response?.data?.message ||
-          "Failed to fetch bill list view. Please try again."
-      );
-    }
-  },
+  getBillListView: () => apiGet(API.ORDER_MANAGEMENT.BILLS.BILL_LIST),
 };
 
 export default BillsService;

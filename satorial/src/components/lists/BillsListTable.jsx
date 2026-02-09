@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { MoreVertical } from "lucide-react";
 import BillsService from "../../services/BillsService";
 import EditBillsFormModal from "../modals/formModals/EditBillsFormModal";
+import AddBillPaymentFormModal from "../modals/formModals/AddBillPaymentFormModal";
 
 const BillsList = () => {
   const columns = useMemo(
@@ -23,6 +24,8 @@ const BillsList = () => {
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedBillId, setSelectedBillId] = useState(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedBillForPayment, setSelectedBillForPayment] = useState(null);
 
   const dropdownRefs = useRef(new Map());
 
@@ -83,6 +86,26 @@ const BillsList = () => {
     setSelectedBillId(null);
   };
 
+  const handleUpdatePayment = (bill) => {
+    setSelectedBillForPayment(bill);
+    setPaymentModalOpen(true);
+    setDropdownOpen(null);
+  };
+
+  const handleClosePaymentModal = () => {
+    setPaymentModalOpen(false);
+    setSelectedBillForPayment(null);
+  };
+
+  const handlePaymentSuccess = async () => {
+    try {
+      const data = await BillsService.getBillsList();
+      setBills(data);
+    } catch (err) {
+      console.error("Failed to refresh bills:", err);
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6 bg-gray-100">
       <h2 className="text-2xl font-semibold mb-4">Bills List</h2>
@@ -120,7 +143,8 @@ const BillsList = () => {
                 toggleDropdown={toggleDropdown}
                 dropdownOpen={dropdownOpen}
                 handleEditBill={handleEditBill}
-                columns={columns} // Pass columns as a prop
+                handleUpdatePayment={handleUpdatePayment}
+                columns={columns}
               />
             ))}
           </tbody>
@@ -130,11 +154,19 @@ const BillsList = () => {
       </div>
 
       {editModalOpen && <EditBillsFormModal isOpen={editModalOpen} onClose={handleCloseEditModal} billId={selectedBillId} />}
+      {paymentModalOpen && selectedBillForPayment && (
+        <AddBillPaymentFormModal
+          isOpen={paymentModalOpen}
+          onClose={handleClosePaymentModal}
+          bill={selectedBillForPayment}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
     </div>
   );
 };
 
-const BillRow = ({ bill, selectedBills, handleSelect, toggleDropdown, dropdownOpen, handleEditBill, columns }) => {
+const BillRow = ({ bill, selectedBills, handleSelect, toggleDropdown, dropdownOpen, handleEditBill, handleUpdatePayment, columns }) => {
   return (
     <tr className="border-t hover:bg-gray-50 transition relative">
       <td className="p-3 sm:p-4 w-12">
@@ -175,7 +207,7 @@ const BillRow = ({ bill, selectedBills, handleSelect, toggleDropdown, dropdownOp
             </button>
             <button
               className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-              onClick={() => console.log(`Update Payment for Bill ID: ${bill.id}`)}
+              onClick={() => handleUpdatePayment(bill)}
             >
               Update Payment
             </button>

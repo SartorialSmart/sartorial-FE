@@ -11,6 +11,7 @@ import {
   MapPin,
   Loader2,
 } from "lucide-react";
+import { extractErrorMessage } from "../../../../utils/errorUtils";
 
 const AddVendorForm = () => {
   const [formData, setFormData] = useState({
@@ -171,10 +172,9 @@ const AddVendorForm = () => {
       });
       setErrors({});
     } catch (error) {
-      console.error("Error creating vendor:", error);
       setErrors((prev) => ({
         ...prev,
-        form: "Failed to create vendor. Please try again.",
+        form: extractErrorMessage(error, "Failed to create vendor. Please try again."),
       }));
     } finally {
       setIsSubmitting(false);

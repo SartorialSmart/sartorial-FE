@@ -1,71 +1,126 @@
 import { useState } from "react";
+import { BillPaymentService } from "../../../services/BillPaymentService";
+import { extractErrorMessage } from "../../../../utils/errorUtils";
 
-const AddBillPaymentForm = ({ bill }) => {
+const AddBillPaymentForm = ({ bill, onClose, onSuccess }) => {
   const [amountPaid, setAmountPaid] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const balance = (bill.amount || 0) - (bill.amount_paid || 0);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Payment Submitted:", amountPaid);
-    // Call API to submit payment
+
+    if (!amountPaid || Number(amountPaid) <= 0) {
+      setError("Please enter a valid payment amount.");
+      return;
+    }
+
+    if (Number(amountPaid) > balance) {
+      setError("Payment amount cannot exceed the balance.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await BillPaymentService.createBillPayment({
+        bill: bill.id,
+        amount_paid: Number(amountPaid),
+      });
+
+      if (onSuccess) onSuccess();
+      if (onClose) onClose();
+    } catch (err) {
+      setError(extractErrorMessage(err, "Failed to process payment. Please try again."));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-lg">
-      <h2 className="text-xl font-semibold mb-4">Update Payment</h2>
+      <h2 className="text-xl font-semibold mb-4">Update Bill Payment</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Amount Field */}
+        {/* Bill Amount */}
         <div>
-          <label className="block text-gray-600 text-sm mb-1">Amount</label>
+          <label className="block text-gray-600 text-sm mb-1">Bill Amount</label>
           <input
             type="text"
-            value={`₦${bill.amount.toLocaleString()}`}
+            value={`₦${Number(bill.amount || 0).toLocaleString()}`}
             readOnly
             className="w-full p-3 border border-gray-300 rounded-md bg-gray-100"
           />
         </div>
 
-        {/* Amount Paid Field */}
+        {/* Already Paid */}
         <div>
-          <label className="block text-gray-600 text-sm mb-1">Amount Paid</label>
+          <label className="block text-gray-600 text-sm mb-1">Already Paid</label>
           <input
             type="text"
-            value={`₦${bill.amount_paid.toLocaleString()}`}
+            value={`₦${Number(bill.amount_paid || 0).toLocaleString()}`}
             readOnly
             className="w-full p-3 border border-gray-300 rounded-md bg-gray-100"
           />
         </div>
 
-        {/* Balance Field */}
+        {/* Balance */}
         <div>
           <label className="block text-gray-600 text-sm mb-1">Balance</label>
           <input
             type="text"
-            value={`₦${(bill.amount - bill.amount_paid).toLocaleString()}`}
+            value={`₦${balance.toLocaleString()}`}
             readOnly
             className="w-full p-3 border border-gray-300 rounded-md bg-gray-100"
           />
         </div>
 
-        {/* Amount Paid Input */}
+        {/* New Payment Amount */}
         <div>
-          <label className="block text-gray-600 text-sm mb-1">Amount Paid</label>
-          <input
-            type="number"
-            placeholder="Type"
-            value={amountPaid}
-            onChange={(e) => setAmountPaid(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md"
-          />
+          <label className="block text-gray-600 text-sm mb-1">
+            Payment Amount <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₦</span>
+            <input
+              type="number"
+              placeholder="Enter amount"
+              value={amountPaid}
+              onChange={(e) => {
+                setAmountPaid(e.target.value);
+                if (error) setError(null);
+              }}
+              className="w-full p-3 pl-8 border border-gray-300 rounded-md"
+            />
+          </div>
         </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition"
-        >
-          Save
-        </button>
+        {/* Error */}
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+
+        {/* Buttons */}
+        <div className="flex gap-3">
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition"
+              disabled={loading}
+            >
+              Cancel
+            </button>
+          )}
+          <button
+            type="submit"
+            className="flex-1 bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition disabled:bg-gray-400"
+            disabled={loading}
+          >
+            {loading ? "Saving..." : "Save Payment"}
+          </button>
+        </div>
       </form>
     </div>
   );

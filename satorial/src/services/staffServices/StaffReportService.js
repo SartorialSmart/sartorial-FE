@@ -1,6 +1,7 @@
 // services/staffServices/StaffReportService.js
 
 import axiosInstance from "../../../utils/axiosConfig";
+import { apiGet } from "../../../utils/serviceHelper";
 import { API } from "../../api/apiEndpoints";
 
 const StaffReportService = {
@@ -13,17 +14,8 @@ const StaffReportService = {
    * @param {string} params.department - Filter by department (optional)
    * @returns {Promise} Staff performance data
    */
-  getAllStaffPerformance: async (params = {}) => {
-    try {
-      const response = await axiosInstance.get(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, {
-        params,
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching staff performance:", error);
-      throw error;
-    }
-  },
+  getAllStaffPerformance: (params = {}) =>
+    apiGet(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, { params }),
 
   /**
    * Get detailed performance report for a specific staff member
@@ -33,18 +25,8 @@ const StaffReportService = {
    * @param {string} params.end_date - Filter by end date (YYYY-MM-DD) (optional)
    * @returns {Promise} Detailed staff performance data with order history
    */
-  getStaffPerformanceDetail: async (staffId, params = {}) => {
-    try {
-      const response = await axiosInstance.get(
-        API.STAFF_MANAGEMENT.PERFORMANCE.DETAIL(staffId),
-        { params }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching staff performance detail:", error);
-      throw error;
-    }
-  },
+  getStaffPerformanceDetail: (staffId, params = {}) =>
+    apiGet(API.STAFF_MANAGEMENT.PERFORMANCE.DETAIL(staffId), { params }),
 
   /**
    * Get performance report by department
@@ -54,18 +36,8 @@ const StaffReportService = {
    * @param {string} params.end_date - Filter by end date (YYYY-MM-DD) (optional)
    * @returns {Promise} Department performance data
    */
-  getDepartmentPerformance: async (params = {}) => {
-    try {
-      const response = await axiosInstance.get(
-        API.STAFF_MANAGEMENT.PERFORMANCE.DEPARTMENT,
-        { params }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching department performance:", error);
-      throw error;
-    }
-  },
+  getDepartmentPerformance: (params = {}) =>
+    apiGet(API.STAFF_MANAGEMENT.PERFORMANCE.DEPARTMENT, { params }),
 
   /**
    * Get staff performance for a specific date range
@@ -74,25 +46,17 @@ const StaffReportService = {
    * @param {string} staffId - Staff ID (optional)
    * @returns {Promise} Staff performance data
    */
-  getStaffPerformanceByDateRange: async (startDate, endDate, staffId = null) => {
-    try {
-      const params = {
-        start_date: startDate,
-        end_date: endDate,
-      };
+  getStaffPerformanceByDateRange: (startDate, endDate, staffId = null) => {
+    const params = {
+      start_date: startDate,
+      end_date: endDate,
+    };
 
-      if (staffId) {
-        params.staff_id = staffId;
-      }
-
-      const response = await axiosInstance.get(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, {
-        params,
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching staff performance by date range:", error);
-      throw error;
+    if (staffId) {
+      params.staff_id = staffId;
     }
+
+    return apiGet(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, { params });
   },
 
   /**
@@ -103,40 +67,21 @@ const StaffReportService = {
    * @param {string} dateRange.end_date - End date (YYYY-MM-DD)
    * @returns {Promise} Staff performance data filtered by department
    */
-  getStaffPerformanceByDepartment: async (department, dateRange = {}) => {
-    try {
-      const params = {
-        department,
-        ...dateRange,
-      };
-
-      const response = await axiosInstance.get(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, {
-        params,
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching staff performance by department:", error);
-      throw error;
-    }
-  },
+  getStaffPerformanceByDepartment: (department, dateRange = {}) =>
+    apiGet(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, {
+      params: { department, ...dateRange },
+    }),
 
   /**
    * Export staff performance report
    * @param {Object} params - Query parameters for filtering
    * @returns {Promise} Blob data for download
    */
-  exportStaffPerformance: async (params = {}) => {
-    try {
-      const response = await axiosInstance.get(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, {
-        params: { ...params, export: true },
-        responseType: "blob",
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error exporting staff performance:", error);
-      throw error;
-    }
-  },
+  exportStaffPerformance: (params = {}) =>
+    apiGet(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, {
+      params: { ...params, export: true },
+      responseType: "blob",
+    }),
 
   /**
    * Get top performing staff
@@ -145,24 +90,19 @@ const StaffReportService = {
    * @returns {Promise} Top performing staff data
    */
   getTopPerformers: async (limit = 10, params = {}) => {
-    try {
-      const response = await axiosInstance.get(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, {
-        params: { ...params, limit },
-      });
+    const data = await apiGet(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, {
+      params: { ...params, limit },
+    });
 
-      // Sort by completion rate
-      const sortedData = response.data.data.sort(
-        (a, b) => b.completion_rate - a.completion_rate
-      );
+    // Sort by completion rate
+    const sortedData = data.data.sort(
+      (a, b) => b.completion_rate - a.completion_rate
+    );
 
-      return {
-        ...response.data,
-        data: sortedData.slice(0, limit),
-      };
-    } catch (error) {
-      console.error("Error fetching top performers:", error);
-      throw error;
-    }
+    return {
+      ...data,
+      data: sortedData.slice(0, limit),
+    };
   },
 
   /**
@@ -172,24 +112,19 @@ const StaffReportService = {
    * @returns {Promise} Staff with high reassignment rates
    */
   getHighReassignmentStaff: async (limit = 10, params = {}) => {
-    try {
-      const response = await axiosInstance.get(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, {
-        params,
-      });
+    const data = await apiGet(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, {
+      params,
+    });
 
-      // Sort by reassignment rate (descending)
-      const sortedData = response.data.data.sort(
-        (a, b) => b.reassignment_rate - a.reassignment_rate
-      );
+    // Sort by reassignment rate (descending)
+    const sortedData = data.data.sort(
+      (a, b) => b.reassignment_rate - a.reassignment_rate
+    );
 
-      return {
-        ...response.data,
-        data: sortedData.slice(0, limit),
-      };
-    } catch (error) {
-      console.error("Error fetching high reassignment staff:", error);
-      throw error;
-    }
+    return {
+      ...data,
+      data: sortedData.slice(0, limit),
+    };
   },
 
   /**
@@ -198,32 +133,27 @@ const StaffReportService = {
    * @returns {Promise} Staff workload data
    */
   getStaffWorkload: async (staffId = null) => {
-    try {
-      const params = staffId ? { staff_id: staffId } : {};
+    const params = staffId ? { staff_id: staffId } : {};
 
-      const response = await axiosInstance.get(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, {
-        params,
-      });
+    const data = await apiGet(API.STAFF_MANAGEMENT.PERFORMANCE.LIST, {
+      params,
+    });
 
-      // Extract workload metrics
-      const workloadData = response.data.data.map((staff) => ({
-        staff_id: staff.staff_id,
-        staff_name: staff.staff_name,
-        active_orders: staff.active_orders,
-        in_progress_orders: staff.in_progress_orders,
-        pending_orders: staff.pending_orders,
-        assigned_orders: staff.assigned_orders,
-        total_workload: staff.active_orders,
-      }));
+    // Extract workload metrics
+    const workloadData = data.data.map((staff) => ({
+      staff_id: staff.staff_id,
+      staff_name: staff.staff_name,
+      active_orders: staff.active_orders,
+      in_progress_orders: staff.in_progress_orders,
+      pending_orders: staff.pending_orders,
+      assigned_orders: staff.assigned_orders,
+      total_workload: staff.active_orders,
+    }));
 
-      return {
-        success: true,
-        data: workloadData,
-      };
-    } catch (error) {
-      console.error("Error fetching staff workload:", error);
-      throw error;
-    }
+    return {
+      success: true,
+      data: workloadData,
+    };
   },
 
   /**
@@ -233,25 +163,20 @@ const StaffReportService = {
    * @returns {Promise} Comparison data
    */
   compareStaffPerformance: async (staffIds, params = {}) => {
-    try {
-      const promises = staffIds.map((staffId) =>
-        axiosInstance.get(API.STAFF_MANAGEMENT.PERFORMANCE.DETAIL(staffId), {
-          params,
-        })
-      );
+    const promises = staffIds.map((staffId) =>
+      axiosInstance.get(API.STAFF_MANAGEMENT.PERFORMANCE.DETAIL(staffId), {
+        params,
+      })
+    );
 
-      const responses = await Promise.all(promises);
-      const comparisonData = responses.map((response) => response.data.data);
+    const responses = await Promise.all(promises);
+    const comparisonData = responses.map((response) => response.data.data);
 
-      return {
-        success: true,
-        count: comparisonData.length,
-        data: comparisonData,
-      };
-    } catch (error) {
-      console.error("Error comparing staff performance:", error);
-      throw error;
-    }
+    return {
+      success: true,
+      count: comparisonData.length,
+      data: comparisonData,
+    };
   },
 
   /**
@@ -261,31 +186,26 @@ const StaffReportService = {
    * @returns {Promise} Performance trends data
    */
   getPerformanceTrends: async (staffId, dateRanges) => {
-    try {
-      const promises = dateRanges.map((range) =>
-        axiosInstance.get(API.STAFF_MANAGEMENT.PERFORMANCE.DETAIL(staffId), {
-          params: {
-            start_date: range.start_date,
-            end_date: range.end_date,
-          },
-        })
-      );
+    const promises = dateRanges.map((range) =>
+      axiosInstance.get(API.STAFF_MANAGEMENT.PERFORMANCE.DETAIL(staffId), {
+        params: {
+          start_date: range.start_date,
+          end_date: range.end_date,
+        },
+      })
+    );
 
-      const responses = await Promise.all(promises);
-      const trendsData = responses.map((response, index) => ({
-        period: dateRanges[index],
-        metrics: response.data.data,
-      }));
+    const responses = await Promise.all(promises);
+    const trendsData = responses.map((response, index) => ({
+      period: dateRanges[index],
+      metrics: response.data.data,
+    }));
 
-      return {
-        success: true,
-        staff_id: staffId,
-        trends: trendsData,
-      };
-    } catch (error) {
-      console.error("Error fetching performance trends:", error);
-      throw error;
-    }
+    return {
+      success: true,
+      staff_id: staffId,
+      trends: trendsData,
+    };
   },
 
   /**
@@ -295,25 +215,20 @@ const StaffReportService = {
    * @returns {Promise} Downloads the file
    */
   downloadPerformanceReport: async (params = {}, filename = null) => {
-    try {
-      const blob = await StaffReportService.exportStaffPerformance(params);
+    const blob = await StaffReportService.exportStaffPerformance(params);
 
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download =
-        filename ||
-        `staff_performance_report_${new Date().toISOString().split("T")[0]}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download =
+      filename ||
+      `staff_performance_report_${new Date().toISOString().split("T")[0]}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
 
-      return { success: true };
-    } catch (error) {
-      console.error("Error downloading performance report:", error);
-      throw error;
-    }
+    return { success: true };
   },
 };
 

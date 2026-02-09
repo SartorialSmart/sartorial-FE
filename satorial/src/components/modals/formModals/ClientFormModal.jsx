@@ -37,12 +37,12 @@ const ClientFormModal = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-center p-4 z-40"
+      className="fixed inset-0 bg-black/50 flex justify-center items-center p-4 z-40 overflow-y-auto"
       role="dialog"
       aria-modal="true"
     >
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6 relative">
-        <button onClick={handleClose} className="absolute top-4 right-4">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6 relative my-auto max-h-[90vh] overflow-y-auto">
+        <button onClick={handleClose} className="absolute top-4 right-4 z-10">
           <X size={20} />
         </button>
 
