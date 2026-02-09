@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import Header from "./NavLayout/Header";
 import Sidebar from "./NavLayout/SideBar";
 import {
@@ -71,6 +72,10 @@ const ReportSideABrLayout = ({ children }) => {
       </div>
     </div>
   );
+};
+
+ReportSideABrLayout.propTypes = {
+  children: PropTypes.node
 };
 
 export default ReportSideABrLayout;

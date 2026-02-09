@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import { Bell } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import Avatar from "../avatar/Avatar";

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Calendar, Filter, Plus } from "lucide-react";
+import PropTypes from "prop-types";
 import AddButton from "../buttons/AddButton";
 import AddOrderFormModal from "../modals/formModals/AddOrderFormModal";
 
@@ -173,6 +174,11 @@ const ToolbarWithDateFilter_1 = ({ onFilterChange, onDateFilterChange }) => {
       {isModalOpen && <AddOrderFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />}
     </div>
   );
+};
+
+ToolbarWithDateFilter_1.propTypes = {
+  onFilterChange: PropTypes.func,
+  onDateFilterChange: PropTypes.func,
 };
 
 export default ToolbarWithDateFilter_1;

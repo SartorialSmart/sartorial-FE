@@ -1,5 +1,6 @@
 import { Component } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import PropTypes from "prop-types";
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -56,5 +57,9 @@ class ErrorBoundary extends Component {
     return this.props.children;
   }
 }
+
+ErrorBoundary.propTypes = {
+  children: PropTypes.node.isRequired,
+};
 
 export default ErrorBoundary;

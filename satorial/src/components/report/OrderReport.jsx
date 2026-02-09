@@ -7,6 +7,7 @@ import {
   CheckSquare,
   User,
 } from "lucide-react";
+import PropTypes from "prop-types";
 import ReportService from "../../services/ReportService";
 import OrderService from "../../services/OrderService";
 

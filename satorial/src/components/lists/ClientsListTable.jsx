@@ -1,5 +1,6 @@
 import React from "react";
 import { useState, useEffect, useRef, useMemo } from "react";
+import PropTypes from "prop-types";
 import { 
   MoreVertical, 
   Trash, 
@@ -822,5 +823,7 @@ const ClientsList = () => {
     </div>
   );
 };
+
+ClientsList.propTypes = {};
 
 export default ClientsList;

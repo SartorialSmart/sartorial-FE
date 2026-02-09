@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Upload, Search } from "lucide-react";
+import PropTypes from "prop-types";
 import AddButton from "../buttons/AddButton";
 import ClientFormModal from "../modals/formModals/ClientFormModal";
 
@@ -74,6 +75,19 @@ const Toolbar_1 = ({
       <ClientFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
+};
+
+Toolbar_1.propTypes = {
+  searchQuery: PropTypes.string,
+  onSearchChange: PropTypes.func,
+  filterBy: PropTypes.string,
+  onFilterChange: PropTypes.func,
+  filterOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.string,
+      label: PropTypes.string,
+    })
+  ),
 };
 
 export default Toolbar_1;

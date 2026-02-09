@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import EditVendorForm from "../../forms/vendorForms/EditVendorForm";
+import PropTypes from "prop-types";
 
 const EditVendorFormModal = ({ isOpen, onClose, vendor, onSuccess }) => {
   return (
@@ -38,6 +39,13 @@ const EditVendorFormModal = ({ isOpen, onClose, vendor, onSuccess }) => {
       )}
     </AnimatePresence>
   );
+};
+
+EditVendorFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  vendor: PropTypes.object,
+  onSuccess: PropTypes.func,
 };
 
 export default EditVendorFormModal;

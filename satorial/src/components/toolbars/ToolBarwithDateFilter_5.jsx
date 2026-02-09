@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Calendar, Plus, ChevronDown } from "lucide-react";
+import PropTypes from "prop-types";
 import VendorCategoryFormModal from "../modals/formModals/VendorCategoryFormModal";
 import AddButton from "../buttons/AddButton";
 
@@ -42,6 +43,11 @@ const ToolbarWithDateFilter_5 = ({
       />
     </div>
   );
+};
+
+ToolbarWithDateFilter_5.propTypes = {
+  searchQuery: PropTypes.string,
+  onSearchChange: PropTypes.func,
 };
 
 export default ToolbarWithDateFilter_5;

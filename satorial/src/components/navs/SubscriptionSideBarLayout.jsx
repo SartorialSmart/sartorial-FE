@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import Header from "./NavLayout/Header";
 import Sidebar from "./NavLayout/SideBar";
 import { LayoutGrid, Users, ShoppingBag, Settings, MessageCircle, HelpCircle, Bell } from "lucide-react";
@@ -28,6 +29,10 @@ const SubscriptionSideBarLayout = ({ children }) => {
       </div>
     </div>
   );
+};
+
+SubscriptionSideBarLayout.propTypes = {
+  children: PropTypes.node
 };
 
 export default SubscriptionSideBarLayout;

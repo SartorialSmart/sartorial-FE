@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import VendorService from "../../../services/VendorService";
 import VendorCategoryService from "../../../services/VendorCategoryService";
 import SuccessModal from "../../modals/SuccessModal";
@@ -603,6 +604,25 @@ const EditVendorForm = ({ vendor, onClose, onSuccess }) => {
       )}
     </div>
   );
+};
+
+EditVendorForm.propTypes = {
+  vendor: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    vendor_type: PropTypes.string,
+    vendor_name: PropTypes.string,
+    vendor_email: PropTypes.string,
+    vendor_phone: PropTypes.string,
+    vendor_address: PropTypes.string,
+    vendor_city: PropTypes.string,
+    vendor_state: PropTypes.string,
+    vendor_country: PropTypes.string,
+    vendor_postal_code: PropTypes.string,
+    vendor_category: PropTypes.number,
+    is_active: PropTypes.bool,
+  }).isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func,
 };
 
 export default EditVendorForm;

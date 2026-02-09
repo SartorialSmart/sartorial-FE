@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import PropTypes from "prop-types";
 import { FileText, Download, MoreVertical, Loader2, Receipt } from "lucide-react";
 import PaymentService from "../../services/PaymentService";
 import OrderService from "../../services/OrderService";
@@ -660,6 +661,15 @@ const PaymentsListTable = ({ searchTerm, dateFilter, customDateRange }) => {
       )}
     </div>
   );
+};
+
+PaymentsListTable.propTypes = {
+  searchTerm: PropTypes.string,
+  dateFilter: PropTypes.string,
+  customDateRange: PropTypes.shape({
+    start: PropTypes.string,
+    end: PropTypes.string,
+  }),
 };
 
 export default PaymentsListTable;

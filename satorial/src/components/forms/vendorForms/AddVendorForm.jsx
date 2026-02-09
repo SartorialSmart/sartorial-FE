@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import VendorService from "../../../services/VendorService";
 import VendorCategoryService from "../../../services/VendorCategoryService";
 import SuccessModal from "../../modals/SuccessModal";

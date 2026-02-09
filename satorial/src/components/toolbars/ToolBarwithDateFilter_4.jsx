@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Calendar, ChevronDown, X, Download } from "lucide-react";
+import PropTypes from "prop-types";
 
 const ToolbarWithDateFilter_4 = ({
   onSearchChange,
@@ -239,6 +240,12 @@ const ToolbarWithDateFilter_4 = ({
       )}
     </div>
   );
+};
+
+ToolbarWithDateFilter_4.propTypes = {
+  onSearchChange: PropTypes.func,
+  onDateFilterChange: PropTypes.func,
+  onCustomDateRangeChange: PropTypes.func,
 };
 
 export default ToolbarWithDateFilter_4;

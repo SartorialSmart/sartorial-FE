@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import TrackOrderStatus from "../../entityData/orderData.jsx/TrackOrderStatus";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
+import PropTypes from "prop-types";
 
 const TrackOrderStatusModal = ({ isOpen, onClose, currentStatus, orderId }) => {
   // Prevent body scroll when modal is open
@@ -68,6 +69,13 @@ const TrackOrderStatusModal = ({ isOpen, onClose, currentStatus, orderId }) => {
       )}
     </AnimatePresence>
   );
+};
+
+TrackOrderStatusModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  currentStatus: PropTypes.string,
+  orderId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default TrackOrderStatusModal;

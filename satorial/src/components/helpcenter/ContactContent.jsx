@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import PropTypes from "prop-types";
 import officeSvg from "../../assets/images/social/office.svg";
 import mailSvg from "../../assets/images/social/mail.svg";
 import chatSvg from "../../assets/images/social/chat.svg";
@@ -79,6 +80,10 @@ const ContactContent = ({ onClose }) => {
       </div>
     </div>
   );
+};
+
+ContactContent.propTypes = {
+  onClose: PropTypes.func.isRequired,
 };
 
 export default ContactContent;

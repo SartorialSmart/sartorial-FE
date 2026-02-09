@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Calendar, Plus, ChevronDown, X } from "lucide-react";
+import PropTypes from "prop-types";
 import AddOrderFormModal from "../modals/formModals/AddOrderFormModal";
 import AddButton from "../buttons/AddButton";
 
@@ -280,6 +281,13 @@ const ToolbarWithDateFilter_2 = ({
       />
     </div>
   );
+};
+
+ToolbarWithDateFilter_2.propTypes = {
+  onSearchChange: PropTypes.func,
+  onDateFilterChange: PropTypes.func,
+  onStatusFilterChange: PropTypes.func,
+  onCustomDateRangeChange: PropTypes.func,
 };
 
 export default ToolbarWithDateFilter_2;

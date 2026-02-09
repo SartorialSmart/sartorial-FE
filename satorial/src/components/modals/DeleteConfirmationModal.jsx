@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle, X, Loader2 } from "lucide-react";
 
@@ -72,6 +73,15 @@ const DeleteConfirmationModal = ({
       )}
     </AnimatePresence>
   );
+};
+
+DeleteConfirmationModal.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func,
+  onConfirm: PropTypes.func,
+  title: PropTypes.string,
+  message: PropTypes.string,
+  isLoading: PropTypes.bool,
 };
 
 export default DeleteConfirmationModal;

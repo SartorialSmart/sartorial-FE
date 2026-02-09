@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import PropTypes from "prop-types";
 import OrderCategoryService from "../../../services/OrderCategoryService";
 import SuccessModal from "../../modals/SuccessModal";
 
@@ -101,6 +102,12 @@ const AddOrderCategoryForm = ({ isOpen, onClose, onCategoryAdded }) => {
       </div>
     </>
   );
+};
+
+AddOrderCategoryForm.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onCategoryAdded: PropTypes.func.isRequired,
 };
 
 export default AddOrderCategoryForm;

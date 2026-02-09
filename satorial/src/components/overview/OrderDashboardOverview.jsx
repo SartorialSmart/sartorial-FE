@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { User, Mail, CheckCircle, Hourglass, ClipboardList, XCircle, TrendingUp, AlertCircle } from "lucide-react";
+import PropTypes from "prop-types";
 import ClientFormModal from "../modals/formModals/ClientFormModal";
 import OrderService from "@/services/OrderService";
 
@@ -291,6 +292,14 @@ const OrderDashboardOverview = ({ dateFilter, customDateRange }) => {
       <ClientFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
+};
+
+OrderDashboardOverview.propTypes = {
+  dateFilter: PropTypes.string,
+  customDateRange: PropTypes.shape({
+    start: PropTypes.string,
+    end: PropTypes.string,
+  }),
 };
 
 export default OrderDashboardOverview;

@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import EditBillForm from "../../forms/billForms/EditBillFrom";
 import { motion, AnimatePresence } from "framer-motion";
+import PropTypes from "prop-types";
 
 const EditBillsFormModal = ({ isOpen, onClose, billId }) => {  // ✅ billId added here
   return (
@@ -34,6 +35,12 @@ const EditBillsFormModal = ({ isOpen, onClose, billId }) => {  // ✅ billId add
       )}
     </AnimatePresence>
   );
+};
+
+EditBillsFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  billId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default EditBillsFormModal;

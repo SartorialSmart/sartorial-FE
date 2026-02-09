@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import {
   MoreVertical,
   Search,
@@ -54,6 +55,12 @@ const VendorsList = () => {
         {children}
       </span>
     );
+  };
+
+  CustomBadge.propTypes = {
+    variant: PropTypes.string,
+    children: PropTypes.node,
+    className: PropTypes.string,
   };
 
   useEffect(() => {
@@ -607,5 +614,7 @@ const VendorsList = () => {
     </div>
   );
 };
+
+VendorsList.propTypes = {};
 
 export default VendorsList;

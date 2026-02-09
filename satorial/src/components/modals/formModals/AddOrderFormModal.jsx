@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import AddOrderForm from "../../forms/orderforms/AddOrderForm";
 import { motion, AnimatePresence } from "framer-motion";
+import PropTypes from "prop-types";
 
 const AddOrderFormModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1);
@@ -36,6 +37,11 @@ const AddOrderFormModal = ({ isOpen, onClose }) => {
       )}
     </AnimatePresence>
   );
+};
+
+AddOrderFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default AddOrderFormModal;

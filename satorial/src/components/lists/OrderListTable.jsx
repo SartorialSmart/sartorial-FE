@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { 
-  MoreVertical, Search, Filter, Download, Eye, Edit, Truck, FileText, 
-  Calendar, User, ChevronDown, X, Check, Loader2, SlidersHorizontal, 
+import PropTypes from "prop-types";
+import {
+  MoreVertical, Search, Filter, Download, Eye, Edit, Truck, FileText,
+  Calendar, User, ChevronDown, X, Check, Loader2, SlidersHorizontal,
   Plus, Users, CreditCard, Package, AlertCircle, BarChart3, RefreshCw,
   ShoppingBag, Clock, CheckCircle, XCircle, TrendingUp, Bell, UserCheck
 } from "lucide-react";
@@ -1108,5 +1109,7 @@ const OrderListTable = () => {
     </div>
   );
 };
+
+OrderListTable.propTypes = {};
 
 export default OrderListTable;

@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import PropTypes from "prop-types";
 
 const AddButton = ({ text, onClick, className }) => {
   return (
@@ -13,6 +14,12 @@ const AddButton = ({ text, onClick, className }) => {
       {text}
     </button>
   );
+};
+
+AddButton.propTypes = {
+  text: PropTypes.string,
+  onClick: PropTypes.func,
+  className: PropTypes.string,
 };
 
 export default AddButton;

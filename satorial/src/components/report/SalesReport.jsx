@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { 
-  Search, 
-  Download, 
-  MoreVertical, 
-  Eye, 
+import {
+  Search,
+  Download,
+  MoreVertical,
+  Eye,
   Filter,
   Calendar,
   DollarSign,
@@ -13,6 +13,7 @@ import {
   ChevronDown,
   BarChart3
 } from "lucide-react";
+import PropTypes from "prop-types";
 import ReportService from "../../services/ReportService";
 import OrderService from "../../services/OrderService";
 import OrderCategoryService from "../../services/OrderCategoryService";
@@ -203,12 +204,16 @@ const SalesReport = () => {
       'On Delivery': 'bg-orange-100 text-orange-800',
       'Cancelled': 'bg-red-100 text-red-800',
     };
-    
+
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
         {status}
       </span>
     );
+  };
+
+  StatusBadge.propTypes = {
+    status: PropTypes.string,
   };
 
   return (

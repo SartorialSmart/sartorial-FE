@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import { useAuth } from "../../../contexts/AuthContext";
 import ExpensescategoryService from "../../../services/expensesServices/ExpensesCategoryService";
 import SuccessModal from "../../modals/SuccessModal"; // ✅ Import SuccessModal
@@ -130,6 +131,10 @@ const AddExpensesCategoryForm = ({ onClose }) => {
       )}
     </div>
   );
+};
+
+AddExpensesCategoryForm.propTypes = {
+  onClose: PropTypes.func.isRequired,
 };
 
 export default AddExpensesCategoryForm;

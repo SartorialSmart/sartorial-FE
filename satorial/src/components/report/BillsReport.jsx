@@ -1,5 +1,6 @@
 import { Search, Download, MoreVertical, CheckSquare } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
+import PropTypes from "prop-types";
 
 import BillsService from "../../services/BillsService";
 

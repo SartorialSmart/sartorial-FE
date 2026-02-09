@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import PropTypes from "prop-types";
 import ExitStaffFormModal from "../modals/formModals/ExitStaffFormModal";
 import AddButton from "../buttons/AddButton";
 
@@ -41,6 +42,11 @@ const ToolbarWithDateFilter_7 = ({
       />
     </div>
   );
+};
+
+ToolbarWithDateFilter_7.propTypes = {
+  searchQuery: PropTypes.string,
+  onSearchChange: PropTypes.func,
 };
 
 export default ToolbarWithDateFilter_7;

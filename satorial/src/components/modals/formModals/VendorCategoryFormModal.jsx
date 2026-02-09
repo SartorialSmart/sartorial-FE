@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import AddVendorCategoryForm from "../../forms/vendorForms/AddVendorCategoryForm";
 import { motion, AnimatePresence } from "framer-motion";
+import PropTypes from "prop-types";
 
 const VendorCategoryFormModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1);
@@ -36,6 +37,11 @@ const VendorCategoryFormModal = ({ isOpen, onClose }) => {
       )}
     </AnimatePresence>
   );
+};
+
+VendorCategoryFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default VendorCategoryFormModal;

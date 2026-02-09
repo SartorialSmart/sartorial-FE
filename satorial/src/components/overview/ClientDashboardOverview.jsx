@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
-import { 
-  User, 
-  Mail, 
-  CheckCircle, 
-  Hourglass, 
-  ClipboardList, 
-  XCircle, 
+import {
+  User,
+  Mail,
+  CheckCircle,
+  Hourglass,
+  ClipboardList,
+  XCircle,
   TrendingUp,
   Users,
   Package,
   AlertCircle
 } from "lucide-react";
+import PropTypes from "prop-types";
 import AddButton from "@/components/buttons/AddButton";
 import ClientFormModal from "../modals/formModals/ClientFormModal";
 import ClientService from "../../services/ClientService";

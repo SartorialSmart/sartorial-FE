@@ -1,3 +1,5 @@
+import PropTypes from "prop-types";
+
 const InputField = ({ label, name, value, onChange, readOnly, icon }) => (
     <div>
       <label className="block text-gray-600">{label}</label>
@@ -14,6 +16,15 @@ const InputField = ({ label, name, value, onChange, readOnly, icon }) => (
       </div>
     </div>
   );
+
+InputField.propTypes = {
+  label: PropTypes.string,
+  name: PropTypes.string.isRequired,
+  value: PropTypes.any,
+  onChange: PropTypes.func,
+  readOnly: PropTypes.bool,
+  icon: PropTypes.node,
+};
 
 export default InputField
   

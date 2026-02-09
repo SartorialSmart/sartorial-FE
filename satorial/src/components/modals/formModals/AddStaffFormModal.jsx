@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import AddStaffForm from "../../forms/staffForms/AddStaffForm";
 import { motion, AnimatePresence } from "framer-motion";
+import PropTypes from "prop-types";
 
 const AddStaffFormModal = ({ isOpen, onClose, onStaffCreated }) => {
   const [step, setStep] = useState(1);
@@ -36,6 +37,12 @@ const AddStaffFormModal = ({ isOpen, onClose, onStaffCreated }) => {
       )}
     </AnimatePresence>
   );
+};
+
+AddStaffFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onStaffCreated: PropTypes.func,
 };
 
 export default AddStaffFormModal;

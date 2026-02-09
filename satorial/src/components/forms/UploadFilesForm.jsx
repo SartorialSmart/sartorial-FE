@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Upload } from "lucide-react";
+import PropTypes from "prop-types";
 
 const UploadFilesForm = ({ buttonText = "Upload Files", onUpload }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -34,6 +35,11 @@ const UploadFilesForm = ({ buttonText = "Upload Files", onUpload }) => {
       )}
     </div>
   );
+};
+
+UploadFilesForm.propTypes = {
+  buttonText: PropTypes.string,
+  onUpload: PropTypes.func,
 };
 
 export default UploadFilesForm;

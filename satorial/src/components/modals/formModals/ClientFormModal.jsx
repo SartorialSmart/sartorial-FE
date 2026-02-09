@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import AddClientForm from "../../forms/clientForms/AddClientForm";
 import AddClientMeasurementForm from "../../forms/clientForms/AddClientMeasurementForm";
 import AddClientDesignsForm from "../../forms/clientForms/AddClientDesignsForm";
+import PropTypes from "prop-types";
 
 const ClientFormModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1);
@@ -65,6 +66,11 @@ const ClientFormModal = ({ isOpen, onClose }) => {
       </div>
     </div>
   );
+};
+
+ClientFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default ClientFormModal;

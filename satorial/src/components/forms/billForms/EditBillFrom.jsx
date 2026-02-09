@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import BillsService from "../../../services/BillsService";
 import VendorCategoryService from "../../../services/VendorCategoryService";
 
@@ -220,6 +221,11 @@ const EditBillForm = ({ billId, onClose }) => {
       </div>
     </div>
   );
+};
+
+EditBillForm.propTypes = {
+  billId: PropTypes.number.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default EditBillForm;

@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 
@@ -102,6 +103,15 @@ const SuccessModal = ({
       </div>
     </AnimatePresence>
   );
+};
+
+SuccessModal.propTypes = {
+  title: PropTypes.string,
+  message: PropTypes.string,
+  buttonText: PropTypes.string,
+  onClose: PropTypes.func,
+  isError: PropTypes.bool,
+  isWarning: PropTypes.bool,
 };
 
 export default SuccessModal;

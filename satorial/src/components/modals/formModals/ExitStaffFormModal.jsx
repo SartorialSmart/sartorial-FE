@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import ExitStaffForm from "../../forms/staffForms/ExitStaffForm";
 import { motion, AnimatePresence } from "framer-motion";
+import PropTypes from "prop-types";
 
 const ExitStaffFormModal = ({ isOpen, onClose }) => {
   return (
@@ -32,6 +33,11 @@ const ExitStaffFormModal = ({ isOpen, onClose }) => {
       )}
     </AnimatePresence>
   );
+};
+
+ExitStaffFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default ExitStaffFormModal;

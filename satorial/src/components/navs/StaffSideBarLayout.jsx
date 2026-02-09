@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import Header from "./NavLayout/Header";
 import Sidebar from "./NavLayout/SideBar";
 import { Users, LogOut, DollarSign, LifeBuoy, HelpCircle } from "lucide-react";
@@ -30,6 +31,10 @@ const StaffSideBarLayout = ({ children }) => {
       </div>
     </div>
   );
+};
+
+StaffSideBarLayout.propTypes = {
+  children: PropTypes.node
 };
 
 export default StaffSideBarLayout;

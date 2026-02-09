@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { MoreVertical } from "lucide-react";
 import VendorCategoryService from "../../services/VendorCategoryService";
 
@@ -101,6 +102,10 @@ const VendorCategoryListTable = ({ searchTerm = "" }) => {
       </div>
     </div>
   );
+};
+
+VendorCategoryListTable.propTypes = {
+  searchTerm: PropTypes.string,
 };
 
 export default VendorCategoryListTable;
