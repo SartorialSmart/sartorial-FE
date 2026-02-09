@@ -87,6 +87,19 @@ const ClientGeneralInfo = ({ clientId }) => {
 
     try {
       await ClientService.updateClient(clientId, formData, true);
+
+      // Also update address if it exists
+      if (clientAddress?.id) {
+        await ClientService.updateClientAddress(clientAddress.id, {
+          house_number: clientAddress.house_number,
+          street: clientAddress.street,
+          city: clientAddress.city,
+          state: clientAddress.state,
+          country: clientAddress.country,
+          postal_code: clientAddress.postal_code,
+        });
+      }
+
       setClient(editedClient);
       setIsEditing(false);
       setSaveSuccess(true);

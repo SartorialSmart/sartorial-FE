@@ -1,11 +1,8 @@
-import { useState } from "react";
 import { X } from "lucide-react";
 import AddBillPaymentForm from "../../forms/billForms/AddBillPaymentForm";
 import { motion, AnimatePresence } from "framer-motion";
 
-const AddOrderFormModal = ({ isOpen, onClose }) => {
-  const [step, setStep] = useState(1);
-
+const AddBillPaymentFormModal = ({ isOpen, onClose, bill, onSuccess }) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -16,20 +13,25 @@ const AddOrderFormModal = ({ isOpen, onClose }) => {
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="bg-white rounded-lg shadow-lg w-full max-w-7xl relative flex flex-col max-h-[90vh] overflow-hidden"
+            className="bg-transparent rounded-lg w-full max-w-md relative flex flex-col max-h-[90vh] overflow-hidden"
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 50, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-
-            <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
+            >
               <X size={20} />
             </button>
 
-
-            <div className="flex-1 overflow-y-auto p-6">
-              {step === 1 && <AddBillPaymentForm onNext={() => setStep(2)} onClose={onClose} />}
+            <div className="flex-1 overflow-y-auto">
+              <AddBillPaymentForm
+                bill={bill}
+                onClose={onClose}
+                onSuccess={onSuccess}
+              />
             </div>
           </motion.div>
         </motion.div>
@@ -38,4 +40,4 @@ const AddOrderFormModal = ({ isOpen, onClose }) => {
   );
 };
 
-export default AddOrderFormModal;
+export default AddBillPaymentFormModal;

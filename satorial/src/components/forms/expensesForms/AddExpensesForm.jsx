@@ -6,6 +6,7 @@ import VendorService from "../../../services/VendorService";
 import StaffService from "../../../services/staffServices/StaffService";
 import { useAuth } from "../../../contexts/AuthContext";
 import SuccessModal from "../../modals/SuccessModal";
+import { extractErrorMessage } from "../../../../utils/errorUtils";
 
 const AddExpensesForm = ({ onClose, onSuccess }) => {
   const { user } = useAuth();
@@ -62,7 +63,6 @@ const AddExpensesForm = ({ onClose, onSuccess }) => {
     if (!form.amount || form.amount <= 0) newErrors.amount = "Amount must be greater than 0";
     if (!form.createdBy) newErrors.createdBy = "Created by is required";
     if (!form.paidTo) newErrors.paidTo = "Paid to is required";
-    if (!form.receipt) newErrors.receipt = "Receipt is required";
     if (!form.description?.trim()) newErrors.description = "Description is required";
 
     // Validate receipt file type and size
@@ -155,11 +155,7 @@ const AddExpensesForm = ({ onClose, onSuccess }) => {
         onSuccess();
       }
     } catch (err) {
-      console.error("Error creating expense:", err);
-      const errorMsg = err.response?.data?.detail || 
-                       err.response?.data?.message || 
-                       "Failed to create expense. Please try again.";
-      setErrorMessage(errorMsg);
+      setErrorMessage(extractErrorMessage(err, "Failed to create expense. Please try again."));
       setShowError(true);
     } finally {
       setLoading(false);
@@ -322,7 +318,7 @@ const AddExpensesForm = ({ onClose, onSuccess }) => {
           {/* Receipt Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Receipt <span className="text-red-500">*</span>
+              Receipt <span className="text-gray-400 text-xs">(optional)</span>
             </label>
             
             {!form.receipt ? (

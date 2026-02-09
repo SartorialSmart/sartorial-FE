@@ -1,6 +1,6 @@
 // services/settingsServices/FabricsService.js
 
-import axiosInstance from "../../../utils/axiosConfig";
+import { apiGet, apiPost, apiPut, apiDelete } from "../../../utils/serviceHelper";
 import { API } from "../../api/apiEndpoints";
 
 const FabricsService = {
@@ -10,77 +10,32 @@ const FabricsService = {
    * @param {string} params.fabric_type - Filter by fabric type
    * @returns {Promise} List of fabrics
    */
-  getFabrics: async (params = {}) => {
-    try {
-      const response = await axiosInstance.get(API.SETTINGS.FABRICS.LIST, {
-        params,
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching fabrics:", error);
-      throw error;
-    }
-  },
+  getFabrics: (params = {}) => apiGet(API.SETTINGS.FABRICS.LIST, { params }),
 
   /**
    * Get fabric statistics
    * @returns {Promise} Fabric statistics
    */
-  getFabricStatistics: async () => {
-    try {
-      const response = await axiosInstance.get(
-        API.SETTINGS.FABRICS.STATISTICS
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching fabric statistics:", error);
-      throw error;
-    }
-  },
+  getFabricStatistics: () => apiGet(API.SETTINGS.FABRICS.STATISTICS),
 
   /**
    * Get specific fabric
    * @param {string} fabricId - Fabric ID
    * @returns {Promise} Fabric data
    */
-  getFabric: async (fabricId) => {
-    try {
-      const response = await axiosInstance.get(
-        API.SETTINGS.FABRICS.DETAIL(fabricId)
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching fabric:", error);
-      throw error;
-    }
-  },
+  getFabric: (fabricId) => apiGet(API.SETTINGS.FABRICS.DETAIL(fabricId)),
 
   /**
    * Create new fabric
    * @param {Object} payload - Fabric data (can be FormData for image upload)
    * @returns {Promise} Created fabric
    */
-  createFabric: async (payload) => {
-    try {
-      const config =
-        payload instanceof FormData
-          ? {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
-            }
-          : {};
-
-      const response = await axiosInstance.post(
-        API.SETTINGS.FABRICS.CREATE,
-        payload,
-        config
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error creating fabric:", error);
-      throw error;
-    }
+  createFabric: (payload) => {
+    const config =
+      payload instanceof FormData
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : {};
+    return apiPost(API.SETTINGS.FABRICS.CREATE, payload, config);
   },
 
   /**
@@ -89,27 +44,12 @@ const FabricsService = {
    * @param {Object} payload - Updated fabric data (can be FormData for image upload)
    * @returns {Promise} Updated fabric
    */
-  updateFabric: async (fabricId, payload) => {
-    try {
-      const config =
-        payload instanceof FormData
-          ? {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
-            }
-          : {};
-
-      const response = await axiosInstance.put(
-        API.SETTINGS.FABRICS.UPDATE(fabricId),
-        payload,
-        config
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error updating fabric:", error);
-      throw error;
-    }
+  updateFabric: (fabricId, payload) => {
+    const config =
+      payload instanceof FormData
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : {};
+    return apiPut(API.SETTINGS.FABRICS.UPDATE(fabricId), payload, config);
   },
 
   /**
@@ -117,26 +57,15 @@ const FabricsService = {
    * @param {string} fabricId - Fabric ID
    * @returns {Promise} Deletion confirmation
    */
-  deleteFabric: async (fabricId) => {
-    try {
-      const response = await axiosInstance.delete(
-        API.SETTINGS.FABRICS.DELETE(fabricId)
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error deleting fabric:", error);
-      throw error;
-    }
-  },
+  deleteFabric: (fabricId) => apiDelete(API.SETTINGS.FABRICS.DELETE(fabricId)),
 
   /**
    * Get fabrics by type
    * @param {string} fabricType - Fabric type
    * @returns {Promise} Filtered fabrics
    */
-  getFabricsByType: async (fabricType) => {
-    return FabricsService.getFabrics({ fabric_type: fabricType });
-  },
+  getFabricsByType: (fabricType) =>
+    FabricsService.getFabrics({ fabric_type: fabricType }),
 };
 
 export default FabricsService;

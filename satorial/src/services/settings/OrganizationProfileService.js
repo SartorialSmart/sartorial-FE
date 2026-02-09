@@ -1,6 +1,6 @@
 // services/settingsServices/OrganizationProfileService.js
 
-import axiosInstance from "../../../utils/axiosConfig";
+import { apiGet, apiPut } from "../../../utils/serviceHelper";
 import { API } from "../../api/apiEndpoints";
 
 const OrganizationProfileService = {
@@ -8,15 +8,7 @@ const OrganizationProfileService = {
    * Get organization profile
    * @returns {Promise} Organization profile data
    */
-  getProfile: async () => {
-    try {
-      const response = await axiosInstance.get(API.SETTINGS.PROFILE.GET);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching organization profile:", error);
-      throw error;
-    }
-  },
+  getProfile: () => apiGet(API.SETTINGS.PROFILE.GET),
 
   /**
    * Update organization profile
@@ -24,26 +16,11 @@ const OrganizationProfileService = {
    * @param {boolean} isFormData - Whether payload is FormData (for logo upload)
    * @returns {Promise} Updated profile data
    */
-  updateProfile: async (payload, isFormData = false) => {
-    try {
-      const config = isFormData
-        ? {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        : {};
-
-      const response = await axiosInstance.put(
-        API.SETTINGS.PROFILE.UPDATE,
-        payload,
-        config
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error updating organization profile:", error);
-      throw error;
-    }
+  updateProfile: (payload, isFormData = false) => {
+    const config = isFormData
+      ? { headers: { "Content-Type": "multipart/form-data" } }
+      : {};
+    return apiPut(API.SETTINGS.PROFILE.UPDATE, payload, config);
   },
 
   /**
@@ -51,25 +28,12 @@ const OrganizationProfileService = {
    * @param {File} logoFile - Logo file
    * @returns {Promise} Updated profile data
    */
-  updateLogo: async (logoFile) => {
-    try {
-      const formData = new FormData();
-      formData.append("logo", logoFile);
-
-      const response = await axiosInstance.put(
-        API.SETTINGS.PROFILE.UPDATE,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error updating logo:", error);
-      throw error;
-    }
+  updateLogo: (logoFile) => {
+    const formData = new FormData();
+    formData.append("logo", logoFile);
+    return apiPut(API.SETTINGS.PROFILE.UPDATE, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
   },
 
   /**
@@ -77,54 +41,27 @@ const OrganizationProfileService = {
    * @param {Object} colors - Primary and secondary colors
    * @returns {Promise} Updated profile data
    */
-  updateBrandColors: async (colors) => {
-    try {
-      const response = await axiosInstance.put(API.SETTINGS.PROFILE.UPDATE, {
-        primary_color: colors.primary,
-        secondary_color: colors.secondary,
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error updating brand colors:", error);
-      throw error;
-    }
-  },
+  updateBrandColors: (colors) =>
+    apiPut(API.SETTINGS.PROFILE.UPDATE, {
+      primary_color: colors.primary,
+      secondary_color: colors.secondary,
+    }),
 
   /**
    * Update social media handles
    * @param {Object} socialMedia - Social media handles
    * @returns {Promise} Updated profile data
    */
-  updateSocialMedia: async (socialMedia) => {
-    try {
-      const response = await axiosInstance.put(
-        API.SETTINGS.PROFILE.UPDATE,
-        socialMedia
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error updating social media:", error);
-      throw error;
-    }
-  },
+  updateSocialMedia: (socialMedia) =>
+    apiPut(API.SETTINGS.PROFILE.UPDATE, socialMedia),
 
   /**
    * Update business address
    * @param {Object} address - Address data
    * @returns {Promise} Updated profile data
    */
-  updateAddress: async (address) => {
-    try {
-      const response = await axiosInstance.put(
-        API.SETTINGS.PROFILE.UPDATE,
-        address
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error updating address:", error);
-      throw error;
-    }
-  },
+  updateAddress: (address) =>
+    apiPut(API.SETTINGS.PROFILE.UPDATE, address),
 };
 
 export default OrganizationProfileService;

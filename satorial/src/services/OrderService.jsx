@@ -1,4 +1,4 @@
-import axiosInstance from "../../utils/axiosConfig";
+import { apiGet, apiPost, apiPut, apiDelete } from "../../utils/serviceHelper";
 import { API } from "../api/apiEndpoints";
 
 const OrderService = {
@@ -6,52 +6,21 @@ const OrderService = {
    * Fetch all orders
    * @returns {Promise}
    */
-  getOrders: async () => {
-    try {
-      const response = await axiosInstance.get(
-        API.ORDER_MANAGEMENT.ORDERS.LIST
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-      throw error;
-    }
-  },
+  getOrders: () => apiGet(API.ORDER_MANAGEMENT.ORDERS.LIST),
 
   /**
    * Fetch a single order by ID
    * @param {string} orderId
    * @returns {Promise}
    */
-  getOrderById: async (orderId) => {
-    try {
-      const response = await axiosInstance.get(
-        API.ORDER_MANAGEMENT.ORDERS.DETAIL(orderId)
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching order ${orderId}:`, error);
-      throw error;
-    }
-  },
+  getOrderById: (orderId) => apiGet(API.ORDER_MANAGEMENT.ORDERS.DETAIL(orderId)),
 
   /**
    * Create a new order
    * @param {Object} orderData
    * @returns {Promise}
    */
-  createOrder: async (orderData) => {
-    try {
-      const response = await axiosInstance.post(
-        API.ORDER_MANAGEMENT.ORDERS.CREATE,
-        orderData
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error creating order:", error);
-      throw error;
-    }
-  },
+  createOrder: (orderData) => apiPost(API.ORDER_MANAGEMENT.ORDERS.CREATE, orderData),
 
   /**
    * Update an existing order
@@ -59,113 +28,39 @@ const OrderService = {
    * @param {Object} orderData
    * @returns {Promise}
    */
-  updateOrder: async (orderId, orderData) => {
-    try {
-      const response = await axiosInstance.put(
-        API.ORDER_MANAGEMENT.ORDERS.UPDATE(orderId),
-        orderData
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error updating order ${orderId}:`, error);
-      throw error;
-    }
-  },
+  updateOrder: (orderId, orderData) => apiPut(API.ORDER_MANAGEMENT.ORDERS.UPDATE(orderId), orderData),
 
   /**
    * Delete an order
    * @param {string} orderId
    * @returns {Promise}
    */
-  deleteOrder: async (orderId) => {
-    try {
-      const response = await axiosInstance.delete(
-        API.ORDER_MANAGEMENT.ORDERS.DETAIL(orderId)
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error deleting order ${orderId}:`, error);
-      throw error;
-    }
-  },
+  deleteOrder: (orderId) => apiDelete(API.ORDER_MANAGEMENT.ORDERS.DETAIL(orderId)),
 
   /**
    * Fetch order dashboard overview
    * @returns {Promise}
    */
-  getOrderDashboard: async () => {
-    try {
-      const response = await axiosInstance.get(
-        API.ORDER_MANAGEMENT.DASHBOARD.OVERVIEW
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching order dashboard data:", error);
-      throw error;
-    }
-  },
+  getOrderDashboard: () => apiGet(API.ORDER_MANAGEMENT.DASHBOARD.OVERVIEW),
 
   /**
    * Fetch order dashboard overview with date filters
    * @param {Object} filters - Date filter parameters
    * @returns {Promise}
    */
-  getOrderDashboardWithFilters: async (filters = {}) => {
-    try {
-      const response = await axiosInstance.get(
-        API.ORDER_MANAGEMENT.DASHBOARD.OVERVIEW,
-        { params: filters }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching filtered order dashboard data:", error);
-      throw error;
-    }
-  },
+  getOrderDashboardWithFilters: (filters = {}) =>
+    apiGet(API.ORDER_MANAGEMENT.DASHBOARD.OVERVIEW, { params: filters }),
 
-  getClientOrdersHistory: async (clientId) => {
-    try {
-      const response = await axiosInstance.get(
-        API.ORDER_MANAGEMENT.CLIENT_ORDERS.HISTORY(clientId)
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        `Error fetching client orders history for ${clientId}:`,
-        error
-      );
-      throw error;
-    }
-  },
+  getClientOrdersHistory: (clientId) =>
+    apiGet(API.ORDER_MANAGEMENT.CLIENT_ORDERS.HISTORY(clientId)),
 
-  assignOrder: async (payload) => {
-    try {
-      const response = await axiosInstance.post(
-        API.ORDER_MANAGEMENT.ORDERS.ASSIGN,
-        payload
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error assigning order:`, error);
-      throw error;
-    }
-  },
+  assignOrder: (payload) => apiPost(API.ORDER_MANAGEMENT.ORDERS.ASSIGN, payload),
 
   /**
    * Fetch all allocations for the current user
    * @returns {Promise}
    */
-  getAllocations: async () => {
-    try {
-      const response = await axiosInstance.get(
-        API.ORDER_MANAGEMENT.ORDERS.ALLOCATION
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching allocations:", error);
-      throw error;
-    }
-  },
+  getAllocations: () => apiGet(API.ORDER_MANAGEMENT.ORDERS.ALLOCATION),
 };
 
 export default OrderService;

@@ -184,73 +184,6 @@ const DashboardLayout = () => {
           </div>
         </div>
 
-        {/* Quick Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">$24,580</p>
-                <div className="flex items-center gap-1 mt-2">
-                  <TrendingUp className="w-4 h-4 text-green-500" />
-                  <span className="text-sm text-green-600 font-medium">+12.5%</span>
-                </div>
-              </div>
-              <div className="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg">
-                <DollarSign className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-purple-600">Active Orders</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">28</p>
-                <div className="flex items-center gap-1 mt-2">
-                  <Activity className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm text-blue-600 font-medium">+5 today</span>
-                </div>
-              </div>
-              <div className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg">
-                <Archive className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-600">Client Satisfaction</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">94%</p>
-                <div className="flex items-center gap-1 mt-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-500" />
-                  <span className="text-sm text-emerald-600 font-medium">+2.1%</span>
-                </div>
-              </div>
-              <div className="p-3 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-indigo-100 hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-indigo-600">Tasks Completed</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">156</p>
-                <div className="flex items-center gap-1 mt-2">
-                  <Activity className="w-4 h-4 text-purple-500" />
-                  <span className="text-sm text-purple-600 font-medium">88% rate</span>
-                </div>
-              </div>
-              <div className="p-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg">
-                <Box className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Dashboard Cards Grid */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -317,38 +250,6 @@ const DashboardLayout = () => {
           </div>
         </div>
 
-        {/* Recent Activity Section */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-lg border border-blue-100 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
-            <button className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors bg-white/80 px-3 py-1 rounded-full border border-blue-200">
-              View All
-            </button>
-          </div>
-          <div className="space-y-3">
-            {[
-              { action: "New order received", time: "2 min ago", user: "John Doe", type: "order" },
-              { action: "Client profile updated", time: "15 min ago", user: "Sarah Wilson", type: "client" },
-              { action: "Order completed", time: "1 hour ago", user: "Mike Johnson", type: "success" },
-              { action: "New staff member added", time: "2 hours ago", user: "Admin", type: "staff" },
-            ].map((activity, index) => (
-              <div key={index} className="flex items-center gap-4 p-4 rounded-xl bg-white/80 hover:bg-white transition-all duration-300 border border-blue-100/50 hover:border-blue-200 hover:shadow-md">
-                <div className={`w-3 h-3 rounded-full ${
-                  activity.type === 'order' ? 'bg-blue-500' :
-                  activity.type === 'client' ? 'bg-purple-500' :
-                  activity.type === 'success' ? 'bg-green-500' : 'bg-orange-500'
-                }`}></div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">{activity.action}</p>
-                  <p className="text-xs text-gray-600">by {activity.user}</p>
-                </div>
-                <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                  {activity.time}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

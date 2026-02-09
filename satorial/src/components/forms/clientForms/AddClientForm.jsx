@@ -6,6 +6,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import PropTypes from "prop-types";
 import { useClient } from "../../../contexts/ClientContext";
+import { extractErrorMessage } from "../../../../utils/errorUtils";
 
 const AddClientForm = ({ onNext, onClose }) => {
   // const { user } = useAuth(); // user is not used
@@ -212,17 +213,8 @@ const AddClientForm = ({ onNext, onClose }) => {
 
       refreshClients();
     } catch (err) {
-      let message = "Failed to create client. Please try again.";
-      if (err.response?.data) {
-        message = Object.entries(err.response.data)
-          .map(
-            ([field, errors]) =>
-              `${field.replace("_", " ")}: ${errors.join(", ")}`
-          )
-          .join(". ");
-      }
+      const message = extractErrorMessage(err, "Failed to create client. Please try again.");
       setModalData({ title: "Error!", message, buttonText: "Close" });
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -234,12 +226,7 @@ const AddClientForm = ({ onNext, onClose }) => {
         <SuccessModal {...modalData} onClose={() => setModalData(null)} />
       )}
 
-      <div className="fixed inset-0 bg-black/40 flex justify-center items-center p-4">
-        <div className="bg-white rounded-lg w-full max-w-3xl relative p-6">
-          <button onClick={onClose} className="absolute top-4 right-4">
-            <X size={20} />
-          </button>
-
+      <div className="w-full">
           <h2 className="text-2xl font-semibold mb-4">Add Client</h2>
 
           <div className="mb-6">
@@ -396,7 +383,6 @@ const AddClientForm = ({ onNext, onClose }) => {
               {loading ? "Saving..." : "Next: Measurement"}
             </button>
           </div>
-        </div>
       </div>
     </>
   );

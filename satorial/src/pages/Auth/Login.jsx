@@ -5,6 +5,7 @@ import loginBg from "../../assets/images/bg-2.jpg";
 import { useNavigate, Link } from "react-router-dom";
 import googleIcon from "../../assets/images/google-logo.svg";
 import twitterIcon from "../../assets/images/twitter-logo.svg";
+import { extractErrorMessage } from "../../../utils/errorUtils";
 
 const Login = () => {
   const { login } = useAuth();
@@ -108,28 +109,7 @@ const Login = () => {
         navigate("/dashboard");
       }, 2000);
     } catch (error) {
-      let message = "Login failed. Please check your credentials.";
-
-      if (error.response?.data) {
-        if (typeof error.response.data === "string") {
-          message = error.response.data;
-        } else if (error.response.data.detail) {
-          message = error.response.data.detail;
-        } else {
-          message = Object.entries(error.response.data)
-            .map(
-              ([field, errors]) =>
-                `${field}: ${
-                  Array.isArray(errors) ? errors.join(", ") : errors
-                }`
-            )
-            .join(". ");
-        }
-      } else if (error.message) {
-        message = error.message;
-      }
-
-      setErrorMessage(message);
+      setErrorMessage(extractErrorMessage(error, "Login failed. Please check your credentials."));
       setShowModal(true);
     } finally {
       setIsLoading(false);

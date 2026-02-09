@@ -1,8 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
 const Login = () => {
-    const { user } = useAuth(); 
+    const { user } = useAuth();
+
+    // Redirect logged-in users to dashboard
+    if (user) {
+        return <Navigate to="/dashboard" replace />;
+    }
 
     return (
         <div className="relative min-h-screen flex flex-col bg-black overflow-hidden">
@@ -26,18 +31,10 @@ const Login = () => {
 
 
                 <div className="space-x-4">
-                    {user ? (
-                        <Link to="/dashboard" className="bg-blue-600 text-white px-5 py-2 rounded-lg shadow-lg text-lg">
-                            Dashboard
-                        </Link>
-                    ) : (
-                        <>
-                            <Link to="/login" className="text-blue-600 font-semibold text-lg">Login</Link>
-                            <Link to="/register" className="bg-blue-600 text-white px-5 py-2 rounded-lg shadow-lg text-lg">
-                                Sign Up
-                            </Link>
-                        </>
-                    )}
+                    <Link to="/login" className="text-blue-600 font-semibold text-lg">Login</Link>
+                    <Link to="/register" className="bg-blue-600 text-white px-5 py-2 rounded-lg shadow-lg text-lg">
+                        Sign Up
+                    </Link>
                 </div>
             </header>
 
@@ -51,11 +48,9 @@ const Login = () => {
                 </p>
 
 
-                {!user && (
-                    <Link to="/register" className="bg-blue-700 text-white px-7 py-4 rounded-xl mt-8 shadow-lg text-xl font-semibold hover:bg-blue-800 transition duration-300">
-                        Get Started
-                    </Link>
-                )}
+                <Link to="/register" className="bg-blue-700 text-white px-7 py-4 rounded-xl mt-8 shadow-lg text-xl font-semibold hover:bg-blue-800 transition duration-300">
+                    Get Started
+                </Link>
             </main>
         </div>
     );

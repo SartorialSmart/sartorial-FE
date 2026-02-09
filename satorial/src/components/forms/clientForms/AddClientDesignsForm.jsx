@@ -4,6 +4,7 @@ import ClientService from "../../../services/ClientService";
 import { useClient } from "../../../contexts/ClientContext";
 import SuccessModal from "../../modals/SuccessModal";
 import PropTypes from "prop-types";
+import { extractErrorMessage } from "../../../../utils/errorUtils";
 
 // Add these constants at the top
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB in bytes
@@ -153,15 +154,10 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
         isError: false,
       });
     } catch (error) {
-      console.error("Error processing images:", error, error.response?.data);
       setModal({
         show: true,
         title: "Upload Failed",
-        message:
-          error.response?.data?.message ||
-          error.response?.data?.upload_error ||
-          error.message ||
-          "Failed to process images. Please try again.",
+        message: extractErrorMessage(error, "Failed to process images. Please try again."),
         isError: true,
       });
     } finally {

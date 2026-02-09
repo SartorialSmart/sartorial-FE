@@ -6,6 +6,7 @@ import {
 import BillsService from "../../../services/BillsService";
 import VendorCategoryService from "../../../services/VendorCategoryService";
 import VendorService from "../../../services/VendorService";
+import { extractErrorMessage } from "../../../../utils/errorUtils";
 
 const AddBillForm = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -136,8 +137,7 @@ const AddBillForm = ({ onClose, onSuccess }) => {
         onClose();
       }, 1500);
     } catch (err) {
-      console.error("Failed to create bill:", err);
-      setError(err.response?.data?.message || "Failed to create bill. Please try again.");
+      setError(extractErrorMessage(err, "Failed to create bill. Please try again."));
     } finally {
       setLoading(false);
     }
