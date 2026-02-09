@@ -92,6 +92,13 @@ const NotificationSettings = () => {
     </div>
   );
 
+  Toggle.propTypes = {
+    enabled: PropTypes.bool,
+    onToggle: PropTypes.func,
+    label: PropTypes.string,
+    description: PropTypes.string,
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Email Notifications */}
@@ -258,13 +265,6 @@ const NotificationSettings = () => {
       </div>
     </form>
   );
-};
-
-Toggle.propTypes = {
-  enabled: PropTypes.bool,
-  onToggle: PropTypes.func,
-  label: PropTypes.string,
-  description: PropTypes.string
 };
 
 export default NotificationSettings;
