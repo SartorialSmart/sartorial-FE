@@ -80,10 +80,12 @@ const ClientGeneralInfo = ({ clientId }) => {
   const handleSave = async () => {
     setIsSaving(true);
 
+    const editableFields = ["first_name", "last_name", "email", "phone_number", "birthdate", "gender"];
     const formData = new FormData();
-    Object.keys(editedClient).forEach((key) => {
-      if (key === "client_image") return;
-      formData.append(key, editedClient[key] || "");
+    editableFields.forEach((key) => {
+      if (editedClient[key] != null) {
+        formData.append(key, editedClient[key]);
+      }
     });
 
     try {
@@ -92,6 +94,7 @@ const ClientGeneralInfo = ({ clientId }) => {
       // Also update address if it exists
       if (clientAddress?.id) {
         await ClientService.updateClientAddress(clientAddress.id, {
+          client: clientId,
           house_number: clientAddress.house_number,
           street: clientAddress.street,
           city: clientAddress.city,
