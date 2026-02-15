@@ -40,7 +40,7 @@ export const API = {
     ORDER_CATEGORIES: {
       CREATE: "/orders/order-categories/",
       LIST: "/orders/order-categories/",
-      DETAIL: (categoryId) => `/order-categories/${categoryId}/`,
+      DETAIL: (categoryId) => `/orders/order-categories/${categoryId}/`,
     },
 
     ORDERS: {
@@ -66,7 +66,7 @@ export const API = {
     VENDOR_CATEGORIES: {
       CREATE: "/orders/vendors-category/",
       LIST: "/orders/vendors-category/",
-      DETAIL: (categoryId) => `/vendors-category/${categoryId}/`,
+      DETAIL: (categoryId) => `/orders/vendors-category/${categoryId}/`,
       WITH_BILL_COUNT: "/orders/vendors-bills/",
     },
 
@@ -107,9 +107,9 @@ export const API = {
     EXPENSE_CATEGORIES: {
       CREATE: "/expenses/expenses-category/",
       LIST: "/expenses/expenses-category/with-count/",
-      DETAIL: (categoryId) => `/expenses-category/${categoryId}/`,
-      DELETE: (categoryId) => `/expenses-category/${categoryId}/`,
-      UPDATE: (categoryId) => `/expenses-category/${categoryId}/`,
+      DETAIL: (categoryId) => `/expenses/expenses-category/${categoryId}/`,
+      DELETE: (categoryId) => `/expenses/expenses-category/${categoryId}/`,
+      UPDATE: (categoryId) => `/expenses/expenses-category/${categoryId}/`,
     },
 
     EXPENSES: {
@@ -150,7 +150,7 @@ export const API = {
     },
     ATTENDANCE: {
       LIST: "/users/attendance/",
-      DETAIL: (attendanceId) => `/attendance/${attendanceId}/`,
+      DETAIL: (attendanceId) => `/users/attendance/${attendanceId}/`,
     },
     PAYROLL: {
       ADD: "/users/payroll/",

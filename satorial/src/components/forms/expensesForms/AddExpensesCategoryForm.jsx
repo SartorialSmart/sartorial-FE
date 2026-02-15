@@ -7,7 +7,6 @@ import SuccessModal from "../../modals/SuccessModal"; // ✅ Import SuccessModal
 const AddExpensesCategoryForm = ({ onClose }) => {
   const [form, setForm] = useState({
     categoryName: "",
-    description: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -32,7 +31,6 @@ const AddExpensesCategoryForm = ({ onClose }) => {
     try {
       const payload = {
         name: form.categoryName,
-        description: form.description,
       };
 
       await ExpensescategoryService.createExpenseCategory(payload);
@@ -91,21 +89,6 @@ const AddExpensesCategoryForm = ({ onClose }) => {
             required
             className="w-full border border-gray-300 rounded-md px-3 py-2"
             placeholder="Materials"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description<span className="text-red-500"> *</span>
-          </label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            required
-            rows={4}
-            placeholder="Type here"
-            className="w-full border border-gray-300 rounded-md px-3 py-2"
           />
         </div>
 

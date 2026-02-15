@@ -313,7 +313,7 @@ Thank you for your business! 🙏`;
   const subtotal = Number(orderData?.order_price || 0);
   const vat = calculateVAT(subtotal);
   const total = subtotal + vat;
-  const paidAmount = orderData?.paid_amount || 0;
+  const paidAmount = Number(orderData?.total_paid || 0);
   const balanceDue = total - paidAmount;
   const paymentStatus = balanceDue <= 0 ? "Paid" : "Pending";
 
