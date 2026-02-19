@@ -35,8 +35,12 @@ const StaffService = {
     });
   },
 
-  updateStaff: (slug, updatedData) =>
-    apiPut(API.STAFF_MANAGEMENT.STAFF.UPDATE(slug), updatedData),
+  updateStaff: (slug, updatedData, isFormData = false) => {
+    const config = isFormData
+      ? { headers: { "Content-Type": "multipart/form-data" } }
+      : {};
+    return apiPut(API.STAFF_MANAGEMENT.STAFF.UPDATE(slug), updatedData, config);
+  },
 
   deleteStaff: (slug) => apiDelete(API.STAFF_MANAGEMENT.STAFF.DELETE(slug)),
 
