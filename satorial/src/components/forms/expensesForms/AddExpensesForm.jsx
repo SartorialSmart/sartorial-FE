@@ -42,7 +42,8 @@ const AddExpensesForm = ({ onClose, onSuccess }) => {
           StaffService.listStaff(),
         ]);
 
-        setCategories(categoriesRes.data || []);
+        const categoriesData = Array.isArray(categoriesRes) ? categoriesRes : categoriesRes.results || [];
+        setCategories(categoriesData);
         setVendors(vendorsRes || []);
         setStaff(staffRes.results || []);
       } catch (err) {
