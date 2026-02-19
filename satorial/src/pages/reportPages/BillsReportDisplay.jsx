@@ -4,7 +4,7 @@ import BillsReport from "../../components/report/BillsReport";
 const BillsReportDisplay = () => {
   return (
     <ReportSideABrLayout>
-      <div className="bg-gray-100 p-6 rounded-sm ">
+      <div className="space-y-6">
         <BillsReport />
       </div>
     </ReportSideABrLayout>

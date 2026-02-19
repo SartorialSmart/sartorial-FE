@@ -6,7 +6,7 @@ import SettingsProfile from "../../components/settings/SettingsProfile";
 const ProfileSettingsDisplay = () => {
   return (
     <SettingsSideBarLayout>
-      <div className="bg-gray-100 p-6 rounded-sm ">
+      <div className="space-y-6">
         <SettingsProfile />
       </div>
     </SettingsSideBarLayout>

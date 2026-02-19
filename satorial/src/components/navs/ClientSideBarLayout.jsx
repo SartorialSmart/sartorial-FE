@@ -29,28 +29,18 @@ const ClientSideABrLayout = ({ children }) => {
   ];
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-blue-50/20">
-      {/* Sidebar */}
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} 
-        sidebarItems={sidebarItems} 
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar
+        isOpen={isSidebarOpen}
+        toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+        sidebarItems={sidebarItems}
       />
 
-      {/* Main Content */}
       <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"} md:ml-64`}>
-        {/* Header */}
         <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
-        
-        {/* Main Content Area */}
+
         <main className="flex-1 overflow-auto mt-16 md:mt-0 p-6">
-          {/* Breadcrumbs */}
-          <Breadcrumbs />
-          
-          {/* Page Content */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 p-6 min-h-[calc(100vh-200px)]">
-            {children}
-          </div>
+          {children}
         </main>
       </div>
     </div>

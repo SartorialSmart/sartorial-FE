@@ -24,15 +24,15 @@ const InventorySideBarLayout = ({ children }) => {
   ];
 
   return (
-    <div className="flex h-screen">
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} 
-        sidebarItems={sidebarItems} 
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar
+        isOpen={isSidebarOpen}
+        toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+        sidebarItems={sidebarItems}
       />
       <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"} md:ml-64`}>
         <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
-        <main className="mt-16 md:mt-0 rounded-sm">{children}</main>
+        <main className="flex-1 overflow-auto mt-16 md:mt-0 p-6">{children}</main>
       </div>
     </div>
   );

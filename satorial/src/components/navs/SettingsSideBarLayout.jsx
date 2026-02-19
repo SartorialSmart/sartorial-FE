@@ -13,7 +13,7 @@ const SettingsSideBarLayout = ({ children }) => {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-50">
       <Sidebar
         isOpen={isSidebarOpen}
         toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
@@ -22,10 +22,10 @@ const SettingsSideBarLayout = ({ children }) => {
       <div
         className={`flex-1 flex flex-col transition-all duration-300 ${
           isSidebarOpen ? "ml-64" : "ml-20"
-        }`}
+        } md:ml-64`}
       >
         <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
-        <main className="p-4 mt-16 md:mt-0 rounded-sm">{children}</main>
+        <main className="flex-1 overflow-auto mt-16 md:mt-0 p-6">{children}</main>
       </div>
     </div>
   );

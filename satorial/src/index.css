@@ -1,23 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+* {
+  font-family: "Inter", "Roboto", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
 
-*{
-    font-family: "Roboto", serif;
-    font-optical-sizing: auto;
-    font-weight: 200;
-    font-style: normal;
-    font-size:normal;
-    font-variation-settings:
-      "wdth" 100;
-  }
-  
-  .dashed-line {
-    border-left: 2px dashed;
-  }
+body {
+  @apply text-gray-900 antialiased;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.dashed-line {
+  border-left: 2px dashed;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
 
 /* Custom DatePicker Styles */
 .react-datepicker-wrapper {
@@ -30,15 +51,22 @@
 
 .react-datepicker {
   font-family: inherit;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 .react-datepicker__header {
-  background-color: #f3f4f6;
+  background-color: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
+  border-radius: 0.75rem 0.75rem 0 0;
 }
 
 .react-datepicker__day--selected {
   background-color: #2563eb !important;
+  border-radius: 0.375rem;
+}
+
+.react-datepicker__day:hover {
+  border-radius: 0.375rem;
 }
