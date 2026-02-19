@@ -30,7 +30,7 @@ const TrackOrderStatusModal = ({ isOpen, onClose, currentStatus, orderId }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 overflow-y-auto py-8"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto py-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -50,7 +50,7 @@ const TrackOrderStatusModal = ({ isOpen, onClose, currentStatus, orderId }) => {
               {/* Close Button */}
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-white text-gray-500 hover:text-gray-700 rounded-full p-2 backdrop-blur-sm border border-gray-200 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
+                className="absolute top-4 right-4 z-10 p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <X size={18} />
               </button>

@@ -7,7 +7,7 @@ import ExpensesList from "../../components/lists/ExpensesList";
 const ExpensesDashboardDisplay = () => {
   return (
     <ExpensesSideABrLayout>
-      <div className="bg-gray-100 p-6 rounded-sm min-h-screen ">
+      <div className="space-y-6">
         {/* <ExpensesOverview /> */}
         <ExpensesList />
       </div>

@@ -9,7 +9,7 @@ const ClientsListDisplay = () => {
 
   return (
     <ClientSideABrLayout>
-      <div className="bg-gray-100 p-6 rounded-sm ">
+      <div className="space-y-6">
         <Toolbar_1
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}

@@ -5,7 +5,7 @@ import StaffDetail from "../../components/entityData/staffData/StaffDetail";
 const StaffDetailDisplay = () => {
   return (
     <StaffSideBarLayout>
-      <div className="bg-gray-100 p-6 rounded-sm">
+      <div className="space-y-6">
         <Breadcrumbs /> {/* Add Breadcrumbs here */}
 
         <StaffDetail />

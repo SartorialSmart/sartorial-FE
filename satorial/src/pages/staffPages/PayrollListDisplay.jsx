@@ -6,7 +6,7 @@ import Breadcrumbs from "../../components/navs/NavLayout/Breadcrumbs";
 const PayrollListDisplay = () => {
   return (
     <StaffSideBarLayout>
-      <div className="bg-gray-100 p-6 rounded-sm">
+      <div className="space-y-6">
         <Breadcrumbs /> {/* Add Breadcrumbs here */}
         <ToolbarWithDateFilter_8 />
         <PayrollListTable />

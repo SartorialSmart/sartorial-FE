@@ -5,7 +5,7 @@ import EditOrderForm from "../../components/forms/orderforms/EditOrderForm";
 const EditOrderFormDisplay = () => {
   return (
     <OrderSideABrLayout>
-      <div className="bg-gray-100 p-6 rounded-sm min-h-screen ">
+      <div className="space-y-6">
         <EditOrderForm />
       </div>
     </OrderSideABrLayout>

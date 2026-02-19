@@ -6,7 +6,7 @@ const BillsListDisplay = () => {
   
   return (
     <OrderSideABrLayout>
-      <div className="bg-gray-100 p-6 rounded-sm ">
+      <div className="space-y-6">
         <ToolbarWithDateFilter_3 />
 
         <BillsList />

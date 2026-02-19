@@ -7,7 +7,7 @@ import ClientsList from "../../components/lists/ClientsListTable";
 const ClientDashboard = () => {
   return (
     <ClientSideABrLayout>
-      <div className="bg-gray-100 p-6 rounded-sm min-h-screen ">
+      <div className="space-y-6">
         <DashboardOverview />
         <ClientsList />
       </div>

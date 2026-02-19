@@ -199,6 +199,25 @@ export const API = {
     },
   },
 
+  SUBSCRIPTION_MANAGEMENT: {
+    PLANS: {
+      LIST: "/subscriptions/plans/",
+    },
+    SUBSCRIPTION: {
+      DETAIL: "/subscriptions/subscription/",
+      SUBSCRIBE: "/subscriptions/subscribe/",
+      CANCEL: "/subscriptions/subscription/cancel/",
+      REACTIVATE: "/subscriptions/subscription/reactivate/",
+    },
+    TRANSACTIONS: {
+      LIST: "/subscriptions/transactions/",
+      VERIFY: "/subscriptions/verify-transaction/",
+    },
+    USAGE: {
+      STATS: "/subscriptions/usage/",
+    },
+  },
+
   SETTINGS: {
     // Organization Profile
     PROFILE: {
