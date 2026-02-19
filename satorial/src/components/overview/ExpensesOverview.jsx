@@ -31,20 +31,20 @@ const ExpensesOverview = () => {
         const summaryRes = await ExpensesService.getExpenseSummary();
         // Try to get total amount from common keys
         let total = null;
-        if (summaryRes.data) {
+        if (summaryRes) {
           total =
-            summaryRes.data.total_expense_amount ||
-            summaryRes.data.total ||
-            summaryRes.data.amount ||
+            summaryRes.total_expense_amount ||
+            summaryRes.total ||
+            summaryRes.amount ||
             0;
         }
         setTotalExpense(total);
 
         // Fetch categories
         const catRes = await ExpensescategoryService.getExpenseCategoriesList();
-        let categories = Array.isArray(catRes.data)
-          ? catRes.data
-          : catRes.data?.results || [];
+        let categories = Array.isArray(catRes)
+          ? catRes
+          : catRes.results || [];
         setTotalCategories(categories.length);
       } catch {
         setError("Failed to load expenses overview. Please try again later.");

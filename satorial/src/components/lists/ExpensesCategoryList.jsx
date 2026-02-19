@@ -23,7 +23,8 @@ const ExpensesCategoryList = () => {
     try {
       setLoading(true);
       const response = await ExpensescategoryService.getExpenseCategoriesList();
-      setExpenseCategories(response.data || []);
+      const data = Array.isArray(response) ? response : response.results || [];
+      setExpenseCategories(data);
     } catch (err) {
       console.error("Failed to fetch expense categories:", err);
     } finally {
