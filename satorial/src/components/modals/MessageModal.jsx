@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle, XCircle, X } from "lucide-react";
 import PropTypes from "prop-types";
 
 const MessageModal = ({ type, message, duration = 5000, onClose }) => {
   const [progress, setProgress] = useState(100);
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -10,7 +13,8 @@ const MessageModal = ({ type, message, duration = 5000, onClose }) => {
     }, 100);
 
     const timer = setTimeout(() => {
-      onClose();
+      setIsVisible(false);
+      setTimeout(onClose, 200);
     }, duration);
 
     return () => {
@@ -19,32 +23,62 @@ const MessageModal = ({ type, message, duration = 5000, onClose }) => {
     };
   }, [duration, onClose]);
 
-  const modalColors =
-    type === "success"
-      ? "bg-green-100 text-green-800 border-green-500"
-      : "bg-red-100 text-red-800 border-red-500";
+  const isSuccess = type === "success";
+  const Icon = isSuccess ? CheckCircle : XCircle;
 
   return (
-    <div
-      className={`fixed top-4 right-4 max-w-sm w-full p-4 rounded-lg shadow-md border ${modalColors} transition-opacity duration-300 z-50`}
-    >
-      <div className="flex justify-between items-center">
-        <span className="font-semibold">{type === "success" ? "Success" : "Error"}</span>
-        <button onClick={onClose} className="text-gray-600 hover:text-gray-800">
-          &times;
-        </button>
-      </div>
-      <p className="mt-2">{message}</p>
-      <div className="relative mt-4 h-1 w-full bg-gray-200 rounded-full">
-        <div
-          className="absolute top-0 left-0 h-1 rounded-full"
-          style={{
-            width: `${progress}%`,
-            backgroundColor: type === "success" ? "#22c55e" : "#ef4444",
-          }}
-        ></div>
-      </div>
-    </div>
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 50 }}
+          transition={{ duration: 0.2 }}
+          className={`fixed top-4 right-4 max-w-sm w-full rounded-xl shadow-lg border z-50 overflow-hidden ${
+            isSuccess
+              ? "bg-white border-green-200"
+              : "bg-white border-red-200"
+          }`}
+        >
+          <div className="p-4">
+            <div className="flex items-start gap-3">
+              <Icon
+                size={20}
+                className={`flex-shrink-0 mt-0.5 ${
+                  isSuccess ? "text-green-500" : "text-red-500"
+                }`}
+              />
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-semibold ${
+                  isSuccess ? "text-green-800" : "text-red-800"
+                }`}>
+                  {isSuccess ? "Success" : "Error"}
+                </p>
+                <p className="text-sm text-gray-600 mt-0.5">{message}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsVisible(false);
+                  setTimeout(onClose, 200);
+                }}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+              >
+                <X size={14} className="text-gray-400" />
+              </button>
+            </div>
+          </div>
+          <div className="h-1 w-full bg-gray-100">
+            <div
+              className="h-full rounded-full transition-all duration-100 ease-linear"
+              style={{
+                width: `${progress}%`,
+                backgroundColor: isSuccess ? "#22c55e" : "#ef4444",
+              }}
+            />
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

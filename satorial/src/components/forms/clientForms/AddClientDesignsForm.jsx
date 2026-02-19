@@ -216,123 +216,119 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 flex justify-center items-center p-4 z-50">
-        <div className="bg-white rounded-lg w-full max-w-3xl p-6 relative max-h-[90vh] overflow-y-auto">
-          <button onClick={onClose} className="absolute top-4 right-4 z-10">
-            <X size={20} />
-          </button>
+      <div className="w-full">
+        <div className="mb-5">
+          <h2 className="text-2xl font-semibold mb-1">Client Designs</h2>
+          <p className="text-gray-500 text-sm">
+            Upload design images for this client (optional)
+          </p>
+        </div>
 
-          <div className="mb-6">
-            <h2 className="text-2xl font-semibold mb-2">Add Client Designs</h2>
-            <p className="text-gray-600 text-sm">
-              Upload design images for this client (optional)
-            </p>
-          </div>
-
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">Uploaded Designs</h3>
-            {designs.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {designs.map((design, index) => (
-                  <div
-                    key={design.id || index}
-                    className="flex flex-col items-center relative group"
-                  >
-                    <img
-                      src={design.uploadedUrl || design.localUrl}
-                      alt={`Design ${index + 1}`}
-                      className="w-28 h-28 rounded-lg object-cover"
-                      onError={(e) => {
-                        console.error("Image failed to load:", e.target.src);
-                        e.target.src = "/placeholder-image.png"; // Add a placeholder image
-                      }}
-                    />
-                    <p className="text-sm text-gray-600 mt-2">
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Uploaded Designs</h3>
+          {designs.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {designs.map((design, index) => (
+                <div
+                  key={design.id || index}
+                  className="relative group rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
+                >
+                  <img
+                    src={design.uploadedUrl || design.localUrl}
+                    alt={`Design ${index + 1}`}
+                    className="w-full h-28 object-cover"
+                    onError={(e) => {
+                      console.error("Image failed to load:", e.target.src);
+                      e.target.src = "/placeholder-image.png";
+                    }}
+                  />
+                  <div className="px-2 py-1.5 text-center">
+                    <p className="text-xs text-gray-500 font-medium">
                       Design {index + 1}
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveDesign(design.id)}
-                      className="absolute top-1 right-1 bg-white bg-opacity-80 rounded-full p-1 shadow hover:bg-red-500 hover:text-white transition group-hover:opacity-100 opacity-70"
-                      title="Remove"
-                    >
-                      <X size={16} />
-                    </button>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                <ImageIcon size={48} className="mx-auto mb-3 opacity-50" />
-                <p className="font-medium mb-1">No designs uploaded yet</p>
-                <p className="text-sm">You can add designs later if needed</p>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 border rounded-lg p-2 bg-gray-50">
-            <input
-              type="file"
-              multiple
-              accept="image/jpeg,image/png,image/jpg"
-              onChange={handleFileUpload}
-              className="hidden"
-              id="fileUpload"
-              disabled={loading}
-            />
-            <label
-              htmlFor="fileUpload"
-              className={`flex-1 ${
-                loading ? "text-gray-400" : "text-gray-600 cursor-pointer"
-              }`}
-            >
-              {loading
-                ? "Uploading..."
-                : "Choose files (JPG, PNG - Max 1MB each)"}
-            </label>
-            <label
-              htmlFor="fileUpload"
-              className={`${
-                loading
-                  ? "bg-gray-100 cursor-not-allowed"
-                  : "bg-gray-200 cursor-pointer hover:bg-gray-300"
-              } px-4 py-1 rounded-lg transition`}
-            >
-              <Upload size={16} />
-            </label>
-          </div>
-
-          {loading && (
-            <div className="mt-2 flex items-center gap-2 text-gray-500">
-              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              <span>Uploading and processing images...</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveDesign(design.id)}
+                    className="absolute top-1.5 right-1.5 bg-white/90 rounded-full p-1 shadow-sm hover:bg-red-500 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+                    title="Remove"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+              <ImageIcon size={40} className="mx-auto mb-2 opacity-40" />
+              <p className="font-medium text-sm mb-0.5">No designs uploaded yet</p>
+              <p className="text-xs">You can add designs later if needed</p>
             </div>
           )}
+        </div>
 
-          <div className="flex justify-between mt-6 gap-3">
+        <div className="flex items-center gap-3 border border-gray-200 rounded-lg p-3 bg-gray-50">
+          <input
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/jpg"
+            onChange={handleFileUpload}
+            className="hidden"
+            id="fileUpload"
+            disabled={loading}
+          />
+          <label
+            htmlFor="fileUpload"
+            className={`flex-1 text-sm ${
+              loading ? "text-gray-400" : "text-gray-600 cursor-pointer"
+            }`}
+          >
+            {loading
+              ? "Uploading..."
+              : "Choose files (JPG, PNG - Max 1MB each)"}
+          </label>
+          <label
+            htmlFor="fileUpload"
+            className={`${
+              loading
+                ? "bg-gray-100 cursor-not-allowed"
+                : "bg-white border border-gray-200 cursor-pointer hover:bg-gray-100"
+            } px-3 py-1.5 rounded-lg transition-colors`}
+          >
+            <Upload size={16} />
+          </label>
+        </div>
+
+        {loading && (
+          <div className="mt-3 flex items-center gap-2 text-gray-500 text-sm">
+            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <span>Uploading and processing images...</span>
+          </div>
+        )}
+
+        <div className="flex justify-between mt-8 pt-4 border-t border-gray-100 gap-3">
+          <button
+            onClick={onBack}
+            className="border border-gray-300 text-gray-600 px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+            disabled={loading}
+          >
+            Back
+          </button>
+          <div className="flex gap-3">
             <button
-              onClick={onBack}
-              className="border border-gray-400 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
+              onClick={handleSkip}
+              className="border border-gray-300 text-gray-600 px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
               disabled={loading}
             >
-              Back: Measurements
+              Skip
             </button>
-            <div className="flex gap-3">
-              <button
-                onClick={handleSkip}
-                className="border border-gray-400 text-gray-600 px-6 py-2 rounded-lg hover:bg-gray-100 transition"
-                disabled={loading}
-              >
-                Skip & Finish
-              </button>
-              <button
-                onClick={handleSave}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition"
-                disabled={loading}
-              >
-                {designs.length > 0 ? "Save & Finish" : "Finish"}
-              </button>
-            </div>
+            <button
+              onClick={handleSave}
+              className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors text-sm font-medium"
+              disabled={loading}
+            >
+              {designs.length > 0 ? "Save & Finish" : "Finish"}
+            </button>
           </div>
         </div>
       </div>

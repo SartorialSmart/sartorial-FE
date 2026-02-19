@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
 import PropTypes from "prop-types";
 import ClientService from "@/services/ClientService";
 import M_1 from "../../../assets/images/measurement/mes-1.svg";
@@ -124,68 +123,64 @@ const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg w-full max-w-3xl relative p-6">
-        <button onClick={onClose} className="absolute top-4 right-4">
-          <X size={20} />
-        </button>
+    <div className="w-full">
+      <h2 className="text-2xl font-semibold mb-1">Client Measurements</h2>
+      <p className="text-gray-500 text-sm mb-5">Enter body measurements for accurate tailoring</p>
 
-        <h2 className="text-2xl font-semibold mb-4">Add Client Measurements</h2>
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {error}
+        </div>
+      )}
 
-        {error && <p className="text-red-600">{error}</p>}
-
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">Measurements</h3>
-
-          <div className="grid grid-cols-2 gap-4">
-            {Object.keys(measurements).map((key) => (
-              <div key={key} className="flex items-center gap-3">
-                <img
-                  src={measurementImages[key]}
-                  alt={key}
-                  className="w-12 h-12 object-contain"
-                />
-                <div className="flex-1 relative">
-                  <label className="text-gray-600 capitalize">
-                    {key.replace(/_/g, " ")}
-                  </label>
-                  <input
-                    type="number"
-                    name={key}
-                    value={measurements[key]}
-                    onChange={handleChange}
-                    className={`border ${
-                      errors[key] ? "border-red-500" : "border-gray-300"
-                    } rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 ${
-                      errors[key] ? "focus:ring-red-200" : "focus:ring-blue-200"
-                    }`}
-                  />
-                  {errors[key] && (
-                    <p className="absolute -bottom-5 left-0 text-red-500 text-xs">
-                      {errors[key]}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+        {Object.keys(measurements).map((key) => (
+          <div key={key} className="flex items-center gap-3">
+            <img
+              src={measurementImages[key]}
+              alt={key}
+              className="w-10 h-10 object-contain flex-shrink-0"
+            />
+            <div className="flex-1">
+              <label className="text-gray-600 text-sm font-medium capitalize block mb-1">
+                {key.replace(/_/g, " ")}
+              </label>
+              <input
+                type="number"
+                name={key}
+                value={measurements[key]}
+                onChange={handleChange}
+                placeholder="0.00"
+                className={`border ${
+                  errors[key] ? "border-red-500" : "border-gray-300"
+                } rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 ${
+                  errors[key] ? "focus:ring-red-200" : "focus:ring-blue-200"
+                } transition-colors`}
+              />
+              {errors[key] && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors[key]}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        ))}
+      </div>
 
-        <div className="flex justify-between mt-6">
-          <button
-            onClick={onBack}
-            className="border border-gray-400 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-100"
-          >
-            Back: Client Details
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-            disabled={loading}
-          >
-            {loading ? "Saving..." : "Next: Client Designs"}
-          </button>
-        </div>
+      <div className="flex justify-between mt-8 pt-4 border-t border-gray-100">
+        <button
+          onClick={onBack}
+          className="border border-gray-300 text-gray-600 px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+        >
+          Back
+        </button>
+        <button
+          onClick={handleSubmit}
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors text-sm font-medium"
+          disabled={loading}
+        >
+          {loading ? "Saving..." : "Next: Designs"}
+        </button>
       </div>
     </div>
   );
