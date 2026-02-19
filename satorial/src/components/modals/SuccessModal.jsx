@@ -44,36 +44,31 @@ const SuccessModal = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-[60] p-4">
+      <motion.div
+        className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-[60] p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ duration: 0.2 }}
-          className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md text-center"
+          className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center"
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Icon Container */}
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-            className="relative flex justify-center mb-6"
+            className="flex justify-center mb-5"
           >
-            <div className={`w-20 h-20 ${config.bgColor} rounded-full flex items-center justify-center shadow-lg`}>
-              <Icon className="text-white w-10 h-10" />
+            <div className={`w-16 h-16 ${config.bgColor} rounded-full flex items-center justify-center shadow-lg`}>
+              <Icon className="text-white w-8 h-8" />
             </div>
-
-            {/* Decorative elements */}
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-0"
-            >
-              <div className="absolute -top-2 left-4 text-blue-400 text-lg">✦</div>
-              <div className="absolute -top-3 right-8 text-yellow-400 text-xs">✹</div>
-              <div className="absolute top-6 left-2 text-purple-400 text-sm">◌</div>
-              <div className="absolute bottom-4 right-4 text-pink-400 text-xs">∗</div>
-            </motion.div>
           </motion.div>
 
           {/* Content */}
@@ -82,25 +77,25 @@ const SuccessModal = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <h2 className={`text-2xl font-bold ${config.textColor} mb-2`}>
+            <h2 className={`text-xl font-bold ${config.textColor} mb-2`}>
               {title}
             </h2>
 
             {message && (
-              <p className="text-gray-600 mb-6 leading-relaxed">
+              <p className="text-gray-500 text-sm mb-6 leading-relaxed">
                 {message}
               </p>
             )}
 
             <button
               onClick={onClose}
-              className={`w-full ${config.bgColor} text-white px-6 py-3 rounded-lg ${config.hoverColor} transition-colors font-medium text-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all`}
+              className={`w-full ${config.bgColor} text-white px-6 py-2.5 rounded-lg ${config.hoverColor} font-medium shadow-md hover:shadow-lg transition-all`}
             >
               {buttonText}
             </button>
           </motion.div>
         </motion.div>
-      </div>
+      </motion.div>
     </AnimatePresence>
   );
 };
