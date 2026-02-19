@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, User, Ruler, Palette, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AddClientForm from "../../forms/clientForms/AddClientForm";
@@ -41,7 +42,7 @@ const ClientFormModal = ({ isOpen, onClose }) => {
     onClose();
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -148,7 +149,8 @@ const ClientFormModal = ({ isOpen, onClose }) => {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

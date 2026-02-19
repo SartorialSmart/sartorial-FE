@@ -1,6 +1,7 @@
 // components/common/Modal.jsx
 
 import React from "react";
+import { createPortal } from "react-dom";
 import { X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import PropTypes from "prop-types";
@@ -21,7 +22,7 @@ const Modal = ({
     xl: "max-w-6xl",
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -70,7 +71,8 @@ const Modal = ({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 
