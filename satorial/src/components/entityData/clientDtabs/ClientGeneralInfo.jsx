@@ -18,9 +18,6 @@ const ClientGeneralInfo = ({ clientId }) => {
     const fetchClientData = async () => {
       try {
         const data = await ClientService.getClientById(clientId);
-        if (data.client_image) {
-          data.client_image = data.client_image.replace("image/upload/", "");
-        }
         setClient(data);
         setEditedClient({ ...data });
 
@@ -62,13 +59,14 @@ const ClientGeneralInfo = ({ clientId }) => {
         formData,
         true
       );
-      updatedClient.client_image = updatedClient.client_image.replace(
-        "image/upload/",
-        ""
-      );
+      const imageUrl = updatedClient.client_image_url;
       setClient((prev) => ({
         ...prev,
-        client_image: updatedClient.client_image,
+        client_image: imageUrl,
+      }));
+      setEditedClient((prev) => ({
+        ...prev,
+        client_image: imageUrl,
       }));
     } catch (error) {
       console.error("Error uploading client image:", error);
