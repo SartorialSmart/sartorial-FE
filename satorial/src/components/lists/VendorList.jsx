@@ -72,7 +72,6 @@ const VendorsList = () => {
     setError(null);
     try {
       const response = await VendorService.getVendorsList();
-      console.log("Fetched vendors:", response);
       setVendors(response || []);
     } catch (err) {
       console.error("Failed to fetch vendors", err);
@@ -146,8 +145,7 @@ const VendorsList = () => {
         selectedFilter === "All" || vendor.vendor_type === selectedFilter;
 
       return typeMatch && (nameMatch || emailMatch || phoneMatch);
-    } catch (error) {
-      console.error("Error filtering vendor:", vendor, error);
+    } catch {
       return false;
     }
   });
@@ -596,7 +594,7 @@ const VendorsList = () => {
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         @keyframes slide-in-right {
           from {
             transform: translateX(100%);

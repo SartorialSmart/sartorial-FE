@@ -53,7 +53,7 @@ const AuthProviderComponent = ({ children }) => {
   const register = async (userData) => {
     showLoading('Creating your account...');
     try {
-      const response = await AuthService.register(userData);
+      const response = await AuthService.registerOrganization(userData);
       hideLoading();
       return response;
     } catch (error) {
@@ -123,7 +123,7 @@ const AuthProviderComponent = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, authLoading, register, login, logout }}>
+    <AuthContext.Provider value={{ user, loading: authLoading, register, login, logout, fetchAuthenticatedUser, setUser }}>
       {!authLoading ? children : (
         <div className="fixed inset-0 flex items-center justify-center">
           <Loader2 className="animate-spin h-12 w-12 text-blue-600" />

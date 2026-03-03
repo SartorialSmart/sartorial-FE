@@ -102,26 +102,6 @@ const AddClientDesignsForm = ({ onClose, onBack, clientId }) => {
       processedFiles.forEach((file) => formData.append("images", file));
       formData.append("client", clientId);
 
-      // Enhanced debug logging
-      console.log("=== FormData Debug ===");
-      console.log("Client ID being sent:", clientId);
-      console.log("Client ID type:", typeof clientId);
-      console.log("Files to upload:", processedFiles.length);
-      console.log("All FormData entries:");
-      for (let pair of formData.entries()) {
-        if (pair[1] instanceof File) {
-          console.log(
-            `${pair[0]}: File - ${pair[1].name} (${pair[1].size} bytes)`
-          );
-        } else {
-          console.log(`${pair[0]}: ${pair[1]}`);
-        }
-      }
-
-      // Verify client field is actually there
-      console.log("Client field from FormData:", formData.get("client"));
-      console.log("Has client field:", formData.has("client"));
-
       // Use your existing service method
       const uploadedImages = await ClientService.uploadStyleImage(formData);
 

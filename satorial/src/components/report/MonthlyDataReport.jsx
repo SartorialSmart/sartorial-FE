@@ -78,7 +78,6 @@ const MonthlyDataReport = () => {
       setError(null);
       try {
         const data = await ReportService.getMonthlyStatistics();
-        console.log("Monthly statistics data:", data);
         // data is an array of { month, sales, expenses }
         setSalesData(
           data.map((item) => ({ month: item.month, value: item.sales }))

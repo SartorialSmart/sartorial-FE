@@ -185,8 +185,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
         avatar: formData.avatar,
       };
 
-      console.log("Sending staff data:", staffData);
-
       await StaffService.addStaff(staffData);
       toast.success("Staff created successfully!");
       setFormData(initialFormData);

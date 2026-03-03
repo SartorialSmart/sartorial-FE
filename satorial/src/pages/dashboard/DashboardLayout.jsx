@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/navs/NavBar";
 import { useAuth } from "../../contexts/AuthContext";
 import {
@@ -123,6 +124,7 @@ const dashboardItems = [
 
 const DashboardLayout = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState("");
 
   useEffect(() => {
@@ -142,11 +144,11 @@ const DashboardLayout = () => {
   }, []);
 
   const handleHelpClick = () => {
-    window.location.href = "/help-centre";
+    navigate("/help-centre");
   };
 
   const handleCardClick = (link) => {
-    window.location.href = link;
+    navigate(link);
   };
 
   return (

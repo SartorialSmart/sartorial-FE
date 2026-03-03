@@ -56,7 +56,6 @@ const ClientMeasurementInfo = ({ clientId }) => {
       if (!clientId) return;
       try {
         const data = await ClientService.getMeasurementById(clientId);
-        console.log("Fetched measurements:", data);
 
         if (Array.isArray(data) && data.length > 0) {
           setMeasurements(data[0]);

@@ -66,6 +66,7 @@ const AddOrderForm = ({ onClose }) => {
           end_date: dateValue ? dateValue.toISOString().split("T")[0] : "",
         }));
       }
+      return;
     }
 
     // Handle other fields
@@ -179,7 +180,7 @@ const AddOrderForm = ({ onClose }) => {
   const refreshCategories = async () => {
     try {
       const response = await OrderCategoryService.getCategories();
-      setCategories(response.data || []);
+      setCategories(Array.isArray(response) ? response : []);
     } catch {
       setErrorTitle("Error");
       setErrorMessage("Failed to refresh categories.");

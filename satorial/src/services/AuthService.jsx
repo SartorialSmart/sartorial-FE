@@ -12,7 +12,7 @@ const AuthService = {
 
   addStaff: async (userData) => {
     const response = await axiosInstance.post(
-      API.USER_MANAGEMENT.STAFF.ADD,
+      API.STAFF_MANAGEMENT.STAFF.ADD,
       userData
     );
     return response.data;
@@ -36,7 +36,7 @@ const AuthService = {
 
   updateStaff: async (staffId, staffData) => {
     const response = await axiosInstance.put(
-      API.USER_MANAGEMENT.STAFF.UPDATE + staffId + "/",
+      API.STAFF_MANAGEMENT.STAFF.UPDATE(staffId),
       staffData
     );
     return response.data;
@@ -44,7 +44,7 @@ const AuthService = {
 
   deleteStaff: async (staffId) => {
     const response = await axiosInstance.delete(
-      API.USER_MANAGEMENT.STAFF.DETAIL(staffId)
+      API.STAFF_MANAGEMENT.STAFF.DELETE(staffId)
     );
     return response.data;
   },

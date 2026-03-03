@@ -33,28 +33,14 @@ const Login = () => {
     setSuccessMessage("");
     setIsLoading(false);
 
-    // Debug logging
-    console.log("Login component mounted - clearing all state");
-
     // Cleanup function for unmount
     return () => {
-      console.log("Login component unmounting - clearing state");
       setShowModal(false);
       setErrorMessage("");
       setSuccessMessage("");
       setIsLoading(false);
     };
   }, []);
-
-  // Additional effect to monitor state changes (for debugging)
-  useEffect(() => {
-    console.log("Modal state changed:", {
-      showModal,
-      errorMessage,
-      successMessage,
-      shouldShow: showModal && Boolean(successMessage || errorMessage),
-    });
-  }, [showModal, errorMessage, successMessage]);
 
   const validateForm = () => {
     let valid = true;
@@ -117,15 +103,6 @@ const Login = () => {
   };
 
   const handleModalClose = () => {
-    console.log("Modal close handler called");
-    setShowModal(false);
-    setErrorMessage("");
-    setSuccessMessage("");
-  };
-
-  // Force clear all modal state
-  const forceCloseModal = () => {
-    console.log("Force closing modal");
     setShowModal(false);
     setErrorMessage("");
     setSuccessMessage("");
@@ -133,18 +110,6 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Debug button - remove after fixing */}
-      {(showModal || errorMessage || successMessage) && (
-        <div className="fixed top-4 right-4 z-50">
-          <button
-            onClick={forceCloseModal}
-            className="bg-red-500 text-white px-4 py-2 rounded text-sm"
-          >
-            Force Close Modal (Debug)
-          </button>
-        </div>
-      )}
-
       {/* Message Modal - Only render when needed */}
       {showModal && (successMessage || errorMessage) && (
         <MessageModal
