@@ -273,19 +273,19 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
       </div>
 
       {/* Custom Scrollbar Styles */}
-      <style jsx>{`
-        .max-h-\[60vh\]::-webkit-scrollbar {
+      <style>{`
+        .max-h-\\[60vh\\]::-webkit-scrollbar {
           width: 6px;
         }
-        .max-h-\[60vh\]::-webkit-scrollbar-track {
+        .max-h-\\[60vh\\]::-webkit-scrollbar-track {
           background: #f8fafc;
           border-radius: 3px;
         }
-        .max-h-\[60vh\]::-webkit-scrollbar-thumb {
+        .max-h-\\[60vh\\]::-webkit-scrollbar-thumb {
           background: #cbd5e1;
           border-radius: 3px;
         }
-        .max-h-\[60vh\]::-webkit-scrollbar-thumb:hover {
+        .max-h-\\[60vh\\]::-webkit-scrollbar-thumb:hover {
           background: #94a3b8;
         }
       `}</style>

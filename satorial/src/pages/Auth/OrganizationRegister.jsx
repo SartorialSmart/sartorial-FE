@@ -8,6 +8,7 @@ const OrganizationRegister = () => {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
+    phone_number: "",
     password: "",
   });
 
@@ -39,7 +40,6 @@ const OrganizationRegister = () => {
       const message = response.data?.message || "Registration successful!";
       setSuccessMessage(message);
       setShowModal(true);
-      console.log("Registration response:", response);
 
       setTimeout(() => {
         navigate("/login");

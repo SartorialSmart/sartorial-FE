@@ -25,11 +25,6 @@ const StaffService = {
       }
     });
 
-    // Log FormData entries for debugging
-    for (let [key, value] of formData.entries()) {
-      console.log(`FormData entry - ${key}:`, value);
-    }
-
     return apiPost(API.STAFF_MANAGEMENT.STAFF.ADD, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });

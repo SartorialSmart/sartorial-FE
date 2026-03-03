@@ -883,7 +883,7 @@ Thank you for your business! 🙏`;
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         @keyframes slideIn {
           from {
             opacity: 0;

@@ -10,29 +10,29 @@ export const API = {
 
   CLIENT_MANAGEMENT: {
     CLIENTS: {
-      CREATE: "client/clients/",
-      LIST: "client/clients/",
-      DETAIL: (clientId) => `client/clients/${clientId}/`,
+      CREATE: "/client/clients/",
+      LIST: "/client/clients/",
+      DETAIL: (clientId) => `/client/clients/${clientId}/`,
       SEARCH: "/client/search/",
     },
     ADDRESSES: {
-      CREATE: "client/addresses/",
-      LIST: "client/addresses/",
+      CREATE: "/client/addresses/",
+      LIST: "/client/addresses/",
       DETAIL: (addressId) => `/client/addresses/${addressId}/`,
     },
     MEASUREMENTS: {
-      CREATE: "client/measurements/",
-      LIST: "client/measurements/",
-      DETAIL: (measurementId) => `client/measurements/${measurementId}/`,
+      CREATE: "/client/measurements/",
+      LIST: "/client/measurements/",
+      DETAIL: (measurementId) => `/client/measurements/${measurementId}/`,
     },
     STYLE_IMAGES: {
-      CREATE: "client/style-images/",
-      LIST: "client/style-images/",
-      DETAIL: (imageId) => `client/style-images/${imageId}/`,
-      DELETE: (imageId) => `client/style-images/${imageId}/`,
+      CREATE: "/client/style-images/",
+      LIST: "/client/style-images/",
+      DETAIL: (imageId) => `/client/style-images/${imageId}/`,
+      DELETE: (imageId) => `/client/style-images/${imageId}/`,
     },
     DASHBOARD: {
-      OVERVIEW: "client/client-dashboard/",
+      OVERVIEW: "/client/client-dashboard/",
     },
   },
 

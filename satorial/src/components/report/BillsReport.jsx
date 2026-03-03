@@ -183,8 +183,7 @@ const BillsReport = () => {
     try {
       const dateFiltered = filterBillsByDate(bills);
       return searchBills(dateFiltered);
-    } catch (err) {
-      console.error("Error filtering bills:", err);
+    } catch {
       return [];
     }
   }, [bills, selectedFilter, searchQuery, customStartDate, customEndDate]);
@@ -192,11 +191,30 @@ const BillsReport = () => {
   // Handle export functionality
   const handleExport = () => {
     try {
-      // This would typically export the filtered data
-      console.log("Exporting data:", filteredBills);
-      // Implement actual export logic here
-    } catch (err) {
-      console.error("Error exporting data:", err);
+      const csvContent = [
+        ["Date", "Vendor Name", "Vendor Category", "Quantity", "Amount", "Amount Paid", "Balance"].join(","),
+        ...filteredBills.map(bill => [
+          `"${getBillValue(bill, "date", "created_at") ? new Date(getBillValue(bill, "date", "created_at")).toLocaleDateString() : ""}"`,
+          `"${getBillValue(bill, "vendor_name", "vendor", "supplier") || ""}"`,
+          `"${getBillValue(bill, "vendor_category", "vendor_category_obj.name", "category") || ""}"`,
+          getBillValue(bill, "quantity") ?? "",
+          getBillValue(bill, "amount") ?? 0,
+          getBillValue(bill, "amount_paid") ?? 0,
+          getBillValue(bill, "balance") ?? 0,
+        ].join(","))
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bills_report_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // Export failed silently
     }
   };
 

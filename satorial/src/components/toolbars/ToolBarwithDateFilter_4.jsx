@@ -70,9 +70,7 @@ const ToolbarWithDateFilter_4 = ({
   };
 
   const handleExportData = () => {
-    // Placeholder for export functionality
-    console.log("Export payments data");
-    // You can implement CSV/PDF export here
+    // TODO: Implement CSV/PDF export
   };
 
   return (

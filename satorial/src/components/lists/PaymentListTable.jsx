@@ -34,7 +34,6 @@ const PaymentsListTable = ({ searchTerm, dateFilter, customDateRange }) => {
     const fetchPayments = async () => {
       try {
         const response = await PaymentService.getPaymentList();
-        console.log("API Response:", response);
 
         const paymentsData = Array.isArray(response)
           ? response.map((item) => ({
@@ -51,7 +50,6 @@ const PaymentsListTable = ({ searchTerm, dateFilter, customDateRange }) => {
             }))
           : [];
 
-        console.log("Formatted Payments Data:", paymentsData);
         setPayments(paymentsData);
         dropdownRefs.current = new Array(paymentsData.length).fill(null);
         buttonRefs.current = new Array(paymentsData.length).fill(null);
@@ -215,8 +213,8 @@ const PaymentsListTable = ({ searchTerm, dateFilter, customDateRange }) => {
       if (!orderData && payment.order) {
         try {
           orderData = await OrderService.getOrderById(payment.order);
-        } catch (error) {
-          console.warn("Could not fetch order details:", error);
+        } catch {
+          // Order details unavailable
         }
       }
 

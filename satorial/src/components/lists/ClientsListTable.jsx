@@ -198,13 +198,39 @@ const ClientsList = () => {
       });
     }
 
-    // Apply date filter (simulated - you'll need actual created_at field)
+    // Apply date filter based on client birthdate (created_at not available on client model)
     if (dateFilter !== "all") {
-      result = result.filter(client => {
-        // This is a simulation - you'll need to implement based on your data
-        // For now, we'll filter randomly for demo
-        return Math.random() > 0.5; // Replace with actual date filtering
-      });
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      let startDate;
+
+      switch (dateFilter) {
+        case "today":
+          startDate = today;
+          break;
+        case "week":
+          startDate = new Date(today);
+          startDate.setDate(today.getDate() - today.getDay());
+          break;
+        case "month":
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case "quarter":
+          startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+          break;
+        case "year":
+          startDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          startDate = null;
+      }
+
+      if (startDate) {
+        result = result.filter(client => {
+          const clientDate = client.created_at ? new Date(client.created_at) : null;
+          return clientDate && clientDate >= startDate;
+        });
+      }
     }
 
     // Apply tag filtering (simulated - you'll need actual tags field)
@@ -798,7 +824,7 @@ const ClientsList = () => {
         )}
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
