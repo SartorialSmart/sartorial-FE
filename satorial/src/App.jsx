@@ -55,6 +55,7 @@ import AddVendorFormDisplay from "./pages/orderPages/AddVendorFormDisplay";
 
 import ProfileSettingsDisplay from "./pages/settingsPages/ProfileSettingsDisplay";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
+import ResetPassword from "./pages/Auth/ResetPassword";
 
 const dashboards = [
   "client",
@@ -139,6 +140,7 @@ const App = () => {
         <Route path="/register" element={<OrganizationRegister />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {dashboards.map((dashboard, index) => (
           <Route

@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import AuthService from "../../services/AuthService";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import MessageModal from "../../components/modals/MessageModal";
 import registerBg from "../../assets/images/bg-2.jpg";
+import { extractErrorMessage } from "../../../utils/errorUtils";
 
 const OrganizationRegister = () => {
   const [formData, setFormData] = useState({
@@ -37,7 +38,7 @@ const OrganizationRegister = () => {
 
       const response = await AuthService.registerOrganization(payload);
 
-      const message = response.data?.message || "Registration successful!";
+      const message = response?.message || "Registration successful!";
       setSuccessMessage(message);
       setShowModal(true);
 
@@ -45,21 +46,9 @@ const OrganizationRegister = () => {
         navigate("/login");
       }, 3000);
     } catch (error) {
-      const errorResponse = error.response?.data;
-      let message = "Registration failed. Please try again.";
-
-      if (errorResponse) {
-        message = Object.entries(errorResponse)
-          .map(
-            ([field, errors]) =>
-              `${field.replace("_", " ")}: ${errors.join(", ")}`
-          )
-          .join(". ");
-      }
-
-      setErrorMessage(message);
+      setErrorMessage(extractErrorMessage(error, "Registration failed. Please try again."));
       setShowModal(true);
-      console.error("Registration error:", errorResponse);
+      console.error("Registration error:", error.response?.data);
     }
   };
 
@@ -126,7 +115,7 @@ const OrganizationRegister = () => {
             <div>
               <label className="block text-gray-700">Phone Number</label>
               <input
-                type="phone"
+                type="tel"
                 name="phone_number"
                 value={formData.phone_number}
                 onChange={handleChange}
@@ -195,9 +184,9 @@ const OrganizationRegister = () => {
           </div>
           <p className="mt-6 text-center text-gray-600">
             Already have an account?{" "}
-            <a href="/login" className="text-blue-600">
+            <Link to="/login" className="text-blue-600">
               Login
-            </a>
+            </Link>
           </p>
         </div>
       </div>
