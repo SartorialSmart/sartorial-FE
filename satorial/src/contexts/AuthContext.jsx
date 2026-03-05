@@ -102,6 +102,7 @@ const AuthProviderComponent = ({ children }) => {
     } catch (error) {
       console.error("Failed to fetch authenticated user:", error.response?.data || error.message);
       logout();
+      throw error;
     } finally {
       hideLoading();
       setAuthLoading(false);
@@ -119,7 +120,9 @@ const AuthProviderComponent = ({ children }) => {
   };
 
   useEffect(() => {
-    fetchAuthenticatedUser();
+    fetchAuthenticatedUser().catch(() => {
+      // Error already handled inside fetchAuthenticatedUser
+    });
   }, []);
 
   return (

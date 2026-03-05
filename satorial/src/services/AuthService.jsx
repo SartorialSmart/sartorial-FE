@@ -34,6 +34,14 @@ const AuthService = {
     return response.data;
   },
 
+  resetPassword: async (payload) => {
+    const response = await axiosInstance.post(
+      API.USER_MANAGEMENT.AUTH.RESET_PASSWORD,
+      payload
+    );
+    return response.data;
+  },
+
   updateStaff: async (staffId, staffData) => {
     const response = await axiosInstance.put(
       API.STAFF_MANAGEMENT.STAFF.UPDATE(staffId),

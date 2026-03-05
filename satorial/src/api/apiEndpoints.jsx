@@ -5,6 +5,7 @@ export const API = {
       REGISTER_ORGANIZATION: "/users/register-organization/",
       DETAIL: "/users/me/",
       FORGOT_PASSWORD: "/users/forgot-password/",
+      RESET_PASSWORD: "/users/reset-password/",
     },
   },
 
