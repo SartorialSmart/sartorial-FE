@@ -14,6 +14,11 @@ import {
 } from "lucide-react";
 
 const UNIT_OPTIONS = [
+  { value: "pcs", label: "Pieces" },
+  { value: "units", label: "Units" },
+  { value: "dozen", label: "Dozen" },
+  { value: "kg", label: "Kilograms" },
+  { value: "g", label: "Grams" },
   { value: "mm", label: "Millimeters" },
   { value: "cm", label: "Centimeters" },
   { value: "m", label: "Meters" },

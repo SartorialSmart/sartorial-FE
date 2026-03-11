@@ -42,7 +42,7 @@ const ClientGeneralInfo = ({ clientId }) => {
 
   const handleAddressChange = (e) => {
     const { name, value } = e.target;
-    setClientAddress((prev) => ({ ...prev, [name]: value }));
+    setClientAddress((prev) => ({ ...(prev || {}), [name]: value }));
   };
 
   const handleImageUpload = async (event) => {
@@ -89,17 +89,24 @@ const ClientGeneralInfo = ({ clientId }) => {
     try {
       await ClientService.updateClient(clientId, formData, true);
 
-      // Also update address if it exists
+      // Update or create address
+      const addressFields = {
+        client: clientId,
+        house_number: clientAddress?.house_number || "",
+        street: clientAddress?.street || "",
+        city: clientAddress?.city || "",
+        state: clientAddress?.state || "",
+        country: clientAddress?.country || "",
+        postal_code: clientAddress?.postal_code || "",
+      };
+      const hasAddressData = Object.entries(addressFields).some(
+        ([k, v]) => k !== "client" && v
+      );
       if (clientAddress?.id) {
-        await ClientService.updateClientAddress(clientAddress.id, {
-          client: clientId,
-          house_number: clientAddress.house_number,
-          street: clientAddress.street,
-          city: clientAddress.city,
-          state: clientAddress.state,
-          country: clientAddress.country,
-          postal_code: clientAddress.postal_code,
-        });
+        await ClientService.updateClientAddress(clientAddress.id, addressFields);
+      } else if (hasAddressData) {
+        const newAddress = await ClientService.createClientAddress(addressFields);
+        setClientAddress(newAddress);
       }
 
       setClient(editedClient);
