@@ -960,13 +960,14 @@ const OrderDetail = () => {
                     <p className="text-gray-900 font-semibold">Payment receipt uploaded</p>
                     <p className="text-gray-500 text-sm mt-1">Click to view the receipt</p>
                   </div>
-                  <Link
-                    to={order.order_payment_receipt_url}
+                  <a
+                    href={order.order_payment_receipt_url}
                     className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-xl hover:from-teal-700 hover:to-cyan-700 transition-all font-medium shadow-md hover:shadow-lg"
                     target="_blank"
+                    rel="noopener noreferrer"
                   >
                     View Receipt
-                  </Link>
+                  </a>
                 </div>
               ) : (
                 <div className="text-center py-4">

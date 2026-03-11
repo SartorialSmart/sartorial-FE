@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { MoreVertical, ShoppingBag, Search, Filter } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ShoppingBag, Search, Filter, ExternalLink } from "lucide-react";
 import OrderService from "../../../services/OrderService";
 import PropTypes from "prop-types";
 
@@ -8,7 +9,7 @@ export default function ClientOrderHistory({ clientId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedOrders, setSelectedOrders] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!clientId) return;
@@ -17,42 +18,42 @@ export default function ClientOrderHistory({ clientId }) {
     OrderService.getClientOrdersHistory(clientId)
       .then((data) => {
         const orderList = Array.isArray(data) ? data : data.results || [];
-        setOrders(
-          orderList.map((order) => ({
-            email: order.email || order.client_email || "-",
-            phone:
-              order.phone || order.client_phone || order.phone_number || "-",
-            role: order.role || order.client_role || "-",
-            date: order.date || order.created_at || order.order_date || "-",
-          }))
-        );
+        setOrders(orderList);
       })
       .catch(() => setError("Failed to load order history."))
       .finally(() => setLoading(false));
   }, [clientId]);
 
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedOrders(orders.map((_, index) => index));
-    } else {
-      setSelectedOrders([]);
-    }
+  const formatCurrency = (amount) => {
+    if (!amount && amount !== 0) return "₦0.00";
+    return `₦${Number(amount).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
   };
 
-  const handleSelectOrder = (index) => {
-    setSelectedOrders((prev) =>
-      prev.includes(index)
-        ? prev.filter((i) => i !== index)
-        : [...prev, index]
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "N/A";
+    return new Date(dateStr).toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const getStatusColor = (status) => {
+    const s = (status || "").toLowerCase();
+    if (s === "completed" || s === "delivered") return "bg-green-100 text-green-800";
+    if (s === "in_progress" || s === "in progress") return "bg-blue-100 text-blue-800";
+    if (s === "pending") return "bg-amber-100 text-amber-800";
+    if (s === "cancelled") return "bg-red-100 text-red-800";
+    return "bg-gray-100 text-gray-700";
+  };
+
+  const filteredOrders = orders.filter((order) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      (order.order_title || "").toLowerCase().includes(term) ||
+      (order.order_status || "").toLowerCase().includes(term)
     );
-  };
-
-  const filteredOrders = orders.filter(
-    (order) =>
-      order.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  });
 
   if (loading) {
     return (
@@ -117,7 +118,7 @@ export default function ClientOrderHistory({ clientId }) {
                 />
                 <input
                   type="text"
-                  placeholder="Search by email, phone, or role..."
+                  placeholder="Search by title or status..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
@@ -128,16 +129,6 @@ export default function ClientOrderHistory({ clientId }) {
                 Filter
               </button>
             </div>
-            {selectedOrders.length > 0 && (
-              <div className="mt-3 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <span className="font-semibold">
-                    {selectedOrders.length}
-                  </span>{" "}
-                  {selectedOrders.length === 1 ? "order" : "orders"} selected
-                </p>
-              </div>
-            )}
           </div>
         )}
 
@@ -146,28 +137,20 @@ export default function ClientOrderHistory({ clientId }) {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedOrders.length === filteredOrders.length &&
-                      filteredOrders.length > 0
-                    }
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
-                  />
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Order Title
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Email
+                  Status
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Phone Number
+                  Price
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Role
+                  Start Date
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Employment Date
+                  End Date
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Actions
@@ -196,43 +179,44 @@ export default function ClientOrderHistory({ clientId }) {
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((order, index) => (
+                filteredOrders.map((order) => (
                   <tr
-                    key={index}
-                    className={`hover:bg-gray-50 transition-colors ${
-                      selectedOrders.includes(index) ? "bg-blue-50" : ""
-                    }`}
+                    key={order.id}
+                    className="hover:bg-gray-50 transition-colors"
                   >
-                    <td className="px-6 py-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedOrders.includes(index)}
-                        onChange={() => handleSelectOrder(index)}
-                        className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
-                      />
-                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
-                          <span className="text-emerald-600 font-semibold text-sm">
-                            {order.email.charAt(0).toUpperCase()}
-                          </span>
+                          <ShoppingBag size={14} className="text-emerald-600" />
                         </div>
                         <span className="text-gray-900 font-medium">
-                          {order.email}
+                          {order.order_title || "—"}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-gray-700">{order.phone}</td>
                     <td className="px-6 py-4">
-                      <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
-                        {order.role}
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.order_status)}`}
+                      >
+                        {order.order_status || "—"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-700">{order.date}</td>
+                    <td className="px-6 py-4 text-gray-700">
+                      {formatCurrency(order.order_price)}
+                    </td>
+                    <td className="px-6 py-4 text-gray-700">
+                      {formatDate(order.start_date)}
+                    </td>
+                    <td className="px-6 py-4 text-gray-700">
+                      {formatDate(order.end_date)}
+                    </td>
                     <td className="px-6 py-4">
-                      <button className="p-2 hover:bg-gray-100 rounded-lg transition-all">
-                        <MoreVertical size={18} className="text-gray-600" />
+                      <button
+                        onClick={() => navigate(`/order/detail/${order.id}`)}
+                        className="flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-800 font-medium"
+                      >
+                        <ExternalLink size={14} />
+                        View
                       </button>
                     </td>
                   </tr>
