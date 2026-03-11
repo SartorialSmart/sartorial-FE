@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import PropTypes from "prop-types";
 import { MoreVertical } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import BillsService from "../../services/BillsService";
 import EditBillsFormModal from "../modals/formModals/EditBillsFormModal";
 import AddBillPaymentFormModal from "../modals/formModals/AddBillPaymentFormModal";
 
 const BillsList = () => {
+  const navigate = useNavigate();
   const columns = useMemo(
     () => [
       { label: "Date", key: "created_at" },
@@ -76,6 +78,10 @@ const BillsList = () => {
     setDropdownOpen(dropdownOpen === id ? null : id);
   };
 
+  const handleViewDetail = (billId) => {
+    navigate(`/order/bill-detail/${billId}`);
+  };
+
   const handleEditBill = (billId) => {
     setSelectedBillId(billId);
     setEditModalOpen(true);
@@ -143,6 +149,7 @@ const BillsList = () => {
                 handleSelect={handleSelect}
                 toggleDropdown={toggleDropdown}
                 dropdownOpen={dropdownOpen}
+                handleViewDetail={handleViewDetail}
                 handleEditBill={handleEditBill}
                 handleUpdatePayment={handleUpdatePayment}
                 columns={columns}
@@ -167,7 +174,7 @@ const BillsList = () => {
   );
 };
 
-const BillRow = ({ bill, selectedBills, handleSelect, toggleDropdown, dropdownOpen, handleEditBill, handleUpdatePayment, columns }) => {
+const BillRow = ({ bill, selectedBills, handleSelect, toggleDropdown, dropdownOpen, handleViewDetail, handleEditBill, handleUpdatePayment, columns }) => {
   return (
     <tr className="border-t hover:bg-gray-50 transition relative">
       <td className="p-3 sm:p-4 w-12">
@@ -200,6 +207,12 @@ const BillRow = ({ bill, selectedBills, handleSelect, toggleDropdown, dropdownOp
 
         {dropdownOpen === bill.id && (
           <div className="absolute right-0 mt-1 w-40 bg-white border rounded shadow-lg z-10">
+            <button
+              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+              onClick={() => handleViewDetail(bill.id)}
+            >
+              View Details
+            </button>
             <button
               className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
               onClick={() => handleEditBill(bill.id)}
@@ -235,6 +248,7 @@ BillRow.propTypes = {
   handleSelect: PropTypes.func.isRequired,
   toggleDropdown: PropTypes.func.isRequired,
   dropdownOpen: PropTypes.number,
+  handleViewDetail: PropTypes.func.isRequired,
   handleEditBill: PropTypes.func.isRequired,
   handleUpdatePayment: PropTypes.func.isRequired,
   columns: PropTypes.arrayOf(PropTypes.shape({

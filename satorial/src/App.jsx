@@ -23,6 +23,7 @@ import ClientDataDisplay from "./pages/clientPages/ClientDataDisplay";
 import OrderDashboardDisplay from "./pages/orderPages/OrderDashboard";
 import OrderListDisplay from "./pages/orderPages/OrderListDisplay";
 import BillsListDisplay from "./pages/orderPages/BillsListDisplay";
+import BillDetailDisplay from "./pages/orderPages/BillDetailDisplay";
 import PaymentsListDisplay from "./pages/orderPages/PaymentsListDisplay";
 import VendorCategoryListDisplay from "./pages/orderPages/VendorCategoryListDisplay";
 import OrderDetailDisplay from "./pages/orderPages/OrderDetailDisplay";
@@ -82,6 +83,7 @@ const protectedRoutes = [
   { path: "/order/order-dashboard", element: <OrderDashboardDisplay /> },
   { path: "/order/orders-list", element: <OrderListDisplay /> },
   { path: "/order/bills-list", element: <BillsListDisplay /> },
+  { path: "/order/bill-detail/:billId", element: <BillDetailDisplay /> },
   { path: "/order/payments-list", element: <PaymentsListDisplay /> },
   {
     path: "/order/vendor-category-list",

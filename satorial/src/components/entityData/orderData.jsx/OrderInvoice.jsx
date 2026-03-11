@@ -259,7 +259,7 @@ Invoice Details:
 Thank you for your business!
 
 Best regards,
-${orderData.business_name || "Your Company"}`;
+${orderData.business_profile?.business_name || "Your Company"}`;
 
         const mailtoLink = `mailto:${orderData.client_email || ""}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         window.open(mailtoLink);
@@ -458,15 +458,23 @@ Thank you for your business! 🙏`;
                       <div className="flex justify-between items-start mb-8 pb-6 border-b border-gray-200">
                         <div>
                           <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                              <Building className="text-white" size={20} />
-                            </div>
+                            {orderData.business_profile?.logo_url ? (
+                              <img
+                                src={orderData.business_profile.logo_url}
+                                alt="Business Logo"
+                                className="w-10 h-10 object-contain rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                                <Building className="text-white" size={20} />
+                              </div>
+                            )}
                             <div>
                               <h1 className="text-2xl font-bold text-gray-900">INVOICE</h1>
                               <p className="text-sm text-gray-600">{invoiceNumber}</p>
                             </div>
                           </div>
-                          <p className="text-gray-500 text-sm">Issued by {orderData.business_name || "Your Business"}</p>
+                          <p className="text-gray-500 text-sm">Issued by {orderData.business_profile?.business_name || "Your Business"}</p>
                         </div>
                         <div className="text-right">
                           <div className="text-lg font-bold text-blue-600 mb-1">{formatAmount(total)}</div>
@@ -485,9 +493,16 @@ Thank you for your business! 🙏`;
                         <div>
                           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Bill From</h3>
                           <div className="space-y-2">
-                            <p className="font-semibold text-gray-900">{orderData.business_name || "Your Business"}</p>
-                            <p className="text-gray-600">business@example.com</p>
-                            <p className="text-gray-600">+234 123 456 7890</p>
+                            <p className="font-semibold text-gray-900">{orderData.business_profile?.business_name || "Your Business"}</p>
+                            {orderData.business_profile?.business_email && (
+                              <p className="text-gray-600">{orderData.business_profile.business_email}</p>
+                            )}
+                            {orderData.business_profile?.business_phone && (
+                              <p className="text-gray-600">{orderData.business_profile.business_phone}</p>
+                            )}
+                            {orderData.business_profile?.address && (
+                              <p className="text-gray-600 text-sm">{orderData.business_profile.address}</p>
+                            )}
                           </div>
                         </div>
                         <div>

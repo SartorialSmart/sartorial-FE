@@ -25,18 +25,19 @@ const measurementImages = {
   seat: M_9,
   sleeve_length: M_10,
   front_neck_depth: M_11,
-}; 
+  hip: M_3,  // Re-uses waist silhouette (all-around measurement)
+};
 
 const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId }) => {
   const STORAGE_KEY = `client_measurements_${clientId}`;
   
   const [measurements, setMeasurements] = useState({
-    // client: "should be the client ID",
     length: "",
     shoulder: "",
     upper_chest: "",
     bust: "",
     waist: "",
+    hip: "",
     seat: "",
     armhole: "",
     sleeve_length: "",
@@ -53,6 +54,7 @@ const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId }) => {
     upper_chest: "",
     bust: "",
     waist: "",
+    hip: "",
     seat: "",
     armhole: "",
     sleeve_length: "",
