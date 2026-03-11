@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { Bell, Mail, MessageSquare, Clock, Save } from "lucide-react";
+import { Bell, Mail, MessageSquare, Clock, Save, Cake, Package } from "lucide-react";
 import { motion } from "framer-motion";
 import { message } from "antd";
 import SettingsService from "../../services/settings";
@@ -17,6 +17,10 @@ const NotificationSettings = () => {
     due_order_reminder_days: "3",
     order_status_notifications: true,
     payment_notifications: true,
+    birthday_notifications_enabled: false,
+    order_limit_notifications_enabled: false,
+    max_daily_orders: "0",
+    max_weekly_deliveries: "0",
   });
 
   useEffect(() => {
@@ -32,6 +36,10 @@ const NotificationSettings = () => {
           due_order_reminder_days: profile.due_order_reminder_days != null ? String(profile.due_order_reminder_days) : prev.due_order_reminder_days,
           order_status_notifications: profile.order_status_notifications ?? prev.order_status_notifications,
           payment_notifications: profile.payment_notifications ?? prev.payment_notifications,
+          birthday_notifications_enabled: profile.birthday_notifications_enabled ?? prev.birthday_notifications_enabled,
+          order_limit_notifications_enabled: profile.order_limit_notifications_enabled ?? prev.order_limit_notifications_enabled,
+          max_daily_orders: profile.max_daily_orders != null ? String(profile.max_daily_orders) : prev.max_daily_orders,
+          max_weekly_deliveries: profile.max_weekly_deliveries != null ? String(profile.max_weekly_deliveries) : prev.max_weekly_deliveries,
         }));
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -61,6 +69,10 @@ const NotificationSettings = () => {
         due_order_reminder_days: Number(settings.due_order_reminder_days),
         order_status_notifications: settings.order_status_notifications,
         payment_notifications: settings.payment_notifications,
+        birthday_notifications_enabled: settings.birthday_notifications_enabled,
+        order_limit_notifications_enabled: settings.order_limit_notifications_enabled,
+        max_daily_orders: Number(settings.max_daily_orders),
+        max_weekly_deliveries: Number(settings.max_weekly_deliveries),
       });
       message.success("Notification settings saved successfully");
     } catch (error) {
@@ -238,6 +250,90 @@ const NotificationSettings = () => {
               label="Payment Alerts"
               description="Get notified when payments are received or overdue"
             />
+          </div>
+        </FormSection>
+      </motion.div>
+
+      {/* Client Birthday Notifications */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <FormSection
+          title="Client Birthday Notifications"
+          description="Get reminded when a client's birthday is today"
+        >
+          <div className="space-y-4">
+            <Toggle
+              enabled={settings.birthday_notifications_enabled}
+              onToggle={() => handleToggle("birthday_notifications_enabled")}
+              label="Enable Birthday Notifications"
+              description="Receive a daily email listing clients whose birthday is today"
+            />
+            {settings.birthday_notifications_enabled && (
+              <div className="pl-4 border-l-2 border-blue-200">
+                <p className="text-sm text-gray-500">
+                  <Cake size={14} className="inline mr-1" />
+                  Notifications are sent at 8:15 AM daily to your notification email.
+                </p>
+              </div>
+            )}
+          </div>
+        </FormSection>
+      </motion.div>
+
+      {/* Order Intake & Delivery Limit Notifications */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+      >
+        <FormSection
+          title="Order Intake & Delivery Limits"
+          description="Get alerted when daily intake or weekly delivery counts exceed your limits"
+        >
+          <div className="space-y-4">
+            <Toggle
+              enabled={settings.order_limit_notifications_enabled}
+              onToggle={() => handleToggle("order_limit_notifications_enabled")}
+              label="Enable Order Limit Alerts"
+              description="Receive an alert when your intake or delivery limits are reached"
+            />
+            {settings.order_limit_notifications_enabled && (
+              <div className="pl-4 border-l-2 border-blue-200 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Package size={14} className="inline mr-2" />
+                    Max daily order intake (0 = no limit)
+                  </label>
+                  <input
+                    type="number"
+                    name="max_daily_orders"
+                    min="0"
+                    value={settings.max_daily_orders}
+                    onChange={handleChange}
+                    placeholder="e.g. 10"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Package size={14} className="inline mr-2" />
+                    Max weekly deliveries (0 = no limit)
+                  </label>
+                  <input
+                    type="number"
+                    name="max_weekly_deliveries"
+                    min="0"
+                    value={settings.max_weekly_deliveries}
+                    onChange={handleChange}
+                    placeholder="e.g. 20"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </FormSection>
       </motion.div>
