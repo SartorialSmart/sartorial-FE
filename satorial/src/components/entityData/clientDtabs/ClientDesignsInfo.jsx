@@ -185,8 +185,7 @@ const ClientDesignsInfo = ({ clientId }) => {
                   <div className="relative aspect-square overflow-hidden bg-gray-100">
                     <img
                       src={
-                        design.preview ||
-                        design.image.replace("image/upload/", "")
+                        design.preview || design.image
                       }
                       alt={`Design ${index + 1}`}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
@@ -195,8 +194,7 @@ const ClientDesignsInfo = ({ clientId }) => {
                       <button
                         onClick={() =>
                           openImageModal(
-                            design.preview ||
-                              design.image.replace("image/upload/", ""),
+                            design.preview || design.image,
                             design.description
                           )
                         }
