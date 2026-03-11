@@ -142,11 +142,6 @@ const ExpenseFormModal = ({ isOpen, onClose, onSuccess, expenseToEdit = null }) 
     if (!form.createdBy) newErrors.createdBy = "Created by is required";
     if (!form.paidTo) newErrors.paidTo = "Paid to is required";
     
-    // Receipt is required only for new expenses
-    if (!isEditMode && !form.receipt) {
-      newErrors.receipt = "Receipt is required";
-    }
-    
     if (!form.description?.trim()) newErrors.description = "Description is required";
 
     // Validate receipt file type and size if provided
@@ -482,7 +477,7 @@ const ExpenseFormModal = ({ isOpen, onClose, onSuccess, expenseToEdit = null }) 
                   {/* Receipt Upload */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Receipt {!isEditMode && <span className="text-red-500">*</span>}
+                      Receipt <span className="text-xs text-gray-400 ml-0.5">(optional)</span>
                       <span className="text-xs text-gray-500 ml-1">(PDF, JPEG, or PNG, max 5MB)</span>
                     </label>
                     
