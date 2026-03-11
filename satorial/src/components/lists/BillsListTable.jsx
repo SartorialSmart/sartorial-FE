@@ -188,7 +188,7 @@ const BillRow = ({ bill, selectedBills, handleSelect, toggleDropdown, dropdownOp
       {columns.map((col, colIndex) => (
         <td key={colIndex} className="p-3 sm:p-4 text-sm sm:text-base">
           {col.key === "vendor_category"
-            ? bill.vendor_category.name
+            ? bill.vendor_category?.name ?? "—"
             : col.key === "created_at"
             ? new Date(bill.created_at).toLocaleString()
             : bill[col.key]}
