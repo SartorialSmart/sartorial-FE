@@ -888,6 +888,25 @@ const OrderListTable = () => {
                           <CreditCard size={16} className="text-gray-400" />
                           <p className="font-bold text-gray-900">{formatAmount(order.order_price)}</p>
                         </div>
+                        {(() => {
+                          const balance = Number(order.balance_amount ?? order.order_price);
+                          const paid = Number(order.total_paid ?? 0);
+                          if (balance <= 0) return (
+                            <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                              <CheckCircle size={10} /> Fully Paid
+                            </span>
+                          );
+                          if (paid > 0) return (
+                            <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+                              <TrendingUp size={10} /> Partially Paid
+                            </span>
+                          );
+                          return (
+                            <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                              <XCircle size={10} /> Unpaid
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
