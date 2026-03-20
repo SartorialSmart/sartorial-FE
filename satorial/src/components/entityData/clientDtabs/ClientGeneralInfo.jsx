@@ -90,8 +90,7 @@ const ClientGeneralInfo = ({ clientId }) => {
       await ClientService.updateClient(clientId, formData, true);
 
       // Update or create address
-      const addressFields = {
-        client: clientId,
+      const addressData = {
         house_number: clientAddress?.house_number || "",
         street: clientAddress?.street || "",
         city: clientAddress?.city || "",
@@ -99,13 +98,12 @@ const ClientGeneralInfo = ({ clientId }) => {
         country: clientAddress?.country || "",
         postal_code: clientAddress?.postal_code || "",
       };
-      const hasAddressData = Object.entries(addressFields).some(
-        ([k, v]) => k !== "client" && v
-      );
+      const hasAddressData = Object.values(addressData).some((v) => v);
       if (clientAddress?.id) {
-        await ClientService.updateClientAddress(clientAddress.id, addressFields);
+        const updated = await ClientService.updateClientAddress(clientAddress.id, addressData);
+        setClientAddress(updated);
       } else if (hasAddressData) {
-        const newAddress = await ClientService.createClientAddress(addressFields);
+        const newAddress = await ClientService.createClientAddress({ client: clientId, ...addressData });
         setClientAddress(newAddress);
       }
 
