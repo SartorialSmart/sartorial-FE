@@ -1000,12 +1000,37 @@ const OrderDetail = () => {
                 {order.ordered_at ? formatDate(order.ordered_at) : 'N/A'}
               </span>
             </div>
-            
+
+            {/* Payment timeline events */}
+            {order.payments && order.payments.length > 0 && (
+              [...order.payments]
+                .sort((a, b) => new Date(a.paid_at) - new Date(b.paid_at))
+                .map((payment, idx) => (
+                  <div key={`pay-${idx}`} className="flex items-center justify-between py-4 border-b border-gray-100 hover:bg-gray-50 rounded-lg px-4 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center shadow-md">
+                        <CreditCard className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">{payment.payment_type || "Payment Received"}</p>
+                        <p className="text-gray-500 text-sm">
+                          {`₦${Number(payment.amount_paid).toLocaleString()}`}
+                          {payment.payment_method ? ` via ${payment.payment_method}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-gray-600 text-sm font-medium">
+                      {payment.paid_at ? formatDate(payment.paid_at) : 'N/A'}
+                    </span>
+                  </div>
+                ))
+            )}
+
             <div className="flex items-center justify-between py-4 border-b border-gray-100 hover:bg-gray-50 rounded-lg px-4 transition-colors">
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
-                  order.order_status !== 'Pending' 
-                    ? 'bg-gradient-to-br from-blue-400 to-blue-500' 
+                  order.order_status !== 'Pending'
+                    ? 'bg-gradient-to-br from-blue-400 to-blue-500'
                     : 'bg-gray-200'
                 }`}>
                   {order.order_status !== 'Pending' ? (
