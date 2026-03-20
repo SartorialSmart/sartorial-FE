@@ -192,7 +192,7 @@ const InventoryList = () => {
                   "Date",
                   "Item Name",
                   "Inventory Category",
-                  "Quantity In Stock",
+                  "Qty In Stock",
                   "Actions",
                 ].map((header, idx) => (
                   <th key={idx} className="p-3 font-medium">
@@ -220,7 +220,14 @@ const InventoryList = () => {
                     <td className="p-3">
                       {categoryMap[item.category] || item.category || "-"}
                     </td>
-                    <td className="p-3">{item.quantity || "-"}</td>
+                    <td className="p-3">
+                      <span className="font-medium">{item.quantity ?? "-"}</span>
+                      {item.is_low_stock && (
+                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                          Low Stock
+                        </span>
+                      )}
+                    </td>
                     <td className="p-3">
                       <Menu
                         as="div"
