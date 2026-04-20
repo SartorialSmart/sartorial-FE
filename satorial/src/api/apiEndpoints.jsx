@@ -219,6 +219,10 @@ export const API = {
     },
   },
 
+  NOTIFICATIONS: {
+    SUMMARY: "/notifications/summary/",
+  },
+
   SETTINGS: {
     // Organization Profile
     PROFILE: {

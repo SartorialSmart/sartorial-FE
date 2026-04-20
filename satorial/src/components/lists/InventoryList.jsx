@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MoreVertical, Search, Download, Plus } from "lucide-react";
+import { MoreVertical, Search, Download, Plus, Package, AlertTriangle, CheckCircle, Layers } from "lucide-react";
 import InventoryService from "../../services/InventoryService";
 import AddInventoryFormModal from "../modals/formModals/AddInventoryFormModal";
 import { Menu, Transition } from "@headlessui/react";
@@ -90,8 +90,55 @@ const InventoryList = () => {
     return categoryMatch && searchMatch;
   });
 
+  const totalItems = inventoryItems.length;
+  const lowStockItems = inventoryItems.filter((item) => item.is_low_stock);
+  const healthyItems = totalItems - lowStockItems.length;
+  const totalQuantity = inventoryItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
+      {/* Stock Level Summary Cards */}
+      {!loading && !error && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center gap-3">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Layers size={20} className="text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Total Items</p>
+              <p className="text-xl font-bold text-gray-900">{totalItems}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center gap-3">
+            <div className="p-2 bg-green-50 rounded-lg">
+              <Package size={20} className="text-green-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Total Quantity</p>
+              <p className="text-xl font-bold text-gray-900">{totalQuantity}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center gap-3">
+            <div className="p-2 bg-emerald-50 rounded-lg">
+              <CheckCircle size={20} className="text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Healthy Stock</p>
+              <p className="text-xl font-bold text-gray-900">{healthyItems}</p>
+            </div>
+          </div>
+          <div className={`bg-white rounded-lg shadow-sm border p-4 flex items-center gap-3 ${lowStockItems.length > 0 ? "border-red-200 bg-red-50" : "border-gray-200"}`}>
+            <div className={`p-2 rounded-lg ${lowStockItems.length > 0 ? "bg-red-100" : "bg-gray-100"}`}>
+              <AlertTriangle size={20} className={lowStockItems.length > 0 ? "text-red-600" : "text-gray-400"} />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Low Stock</p>
+              <p className={`text-xl font-bold ${lowStockItems.length > 0 ? "text-red-700" : "text-gray-900"}`}>{lowStockItems.length}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <AddInventoryFormModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

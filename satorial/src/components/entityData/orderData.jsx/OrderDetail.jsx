@@ -6,7 +6,6 @@ import {
   CreditCard, BarChart3, Tag 
 } from "lucide-react";
 import OrderService from "../../../services/OrderService";
-import PaymentService from "../../../services/PaymentService";
 import SettingsService from "../../../services/settings";
 import AddPaymentModal from "../../modals/formModals/AddOrderPaymentFormModal";
 import TrackOrderStatusModal from "../../modals/formModals/TrackOrderStatusModal";
@@ -58,18 +57,14 @@ const OrderDetail = () => {
     fetchOrgProfile();
   }, [orderId]);
 
-  const handleSavePayment = async (paymentData) => {
+  const handleSavePayment = async () => {
+    // AddPaymentForm already called PaymentService.createPayment — just refresh order state
     try {
-      await PaymentService.createPayment({
-        order: orderId,
-        amount_paid: Number(paymentData.amountPaid),
-      });
-
       setShowPaymentModal(false);
       const updatedOrder = await OrderService.getOrderById(orderId);
       setOrder(updatedOrder);
     } catch (err) {
-      console.error("Failed to save payment:", err);
+      console.error("Failed to refresh order after payment:", err);
     }
   };
 
