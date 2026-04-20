@@ -13,6 +13,7 @@ const ClientGeneralInfo = ({ clientId }) => {
   const [editedClient, setEditedClient] = useState(null);
   const [clientAddress, setClientAddress] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   useEffect(() => {
     const fetchClientData = async () => {
@@ -77,14 +78,19 @@ const ClientGeneralInfo = ({ clientId }) => {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSaveError(null);
 
-    const editableFields = ["first_name", "last_name", "email", "phone_number", "birthdate", "gender"];
+    const editableFields = ["first_name", "last_name", "email", "phone_number", "gender"];
     const formData = new FormData();
     editableFields.forEach((key) => {
-      if (editedClient[key] != null) {
+      if (editedClient[key] != null && editedClient[key] !== "") {
         formData.append(key, editedClient[key]);
       }
     });
+    // Only include birthdate when it has a valid value
+    if (editedClient?.birthdate && editedClient.birthdate !== "") {
+      formData.append("birthdate", editedClient.birthdate);
+    }
 
     try {
       await ClientService.updateClient(clientId, formData, true);
@@ -107,12 +113,21 @@ const ClientGeneralInfo = ({ clientId }) => {
         setClientAddress(newAddress);
       }
 
-      setClient(editedClient);
+      // Re-fetch from server so the UI reflects the saved state exactly
+      const refreshed = await ClientService.getClientById(clientId);
+      setClient(refreshed);
+      setEditedClient({ ...refreshed });
+
       setIsEditing(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error("Error updating client:", error);
+      const msg =
+        error?.response?.data
+          ? Object.values(error.response.data).flat().join(" ")
+          : "Failed to save changes. Please try again.";
+      setSaveError(msg);
     }
 
     setIsSaving(false);
@@ -132,6 +147,16 @@ const ClientGeneralInfo = ({ clientId }) => {
 
   return (
     <div className="space-y-6">
+      {/* Error Message */}
+      {saveError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
+          <div className="flex-shrink-0 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+            <X size={16} className="text-white" />
+          </div>
+          <p className="text-red-800 font-medium">{saveError}</p>
+        </div>
+      )}
+
       {/* Success Message */}
       {saveSuccess && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3 animate-fade-in">
