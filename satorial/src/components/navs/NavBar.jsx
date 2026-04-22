@@ -107,9 +107,8 @@ const Navbar = () => {
 
         <div className="flex items-center space-x-2">
           <Avatar
-            src={user?.avatar || "/src/assets/images/default_avatar.svg"}
+            src={user?.avatar || null}
             alt="User"
-            fallback={user?.first_name?.[0] || "U"}
           />
           <span className="text-gray-700 font-medium">
             {user?.first_name || "User"}
