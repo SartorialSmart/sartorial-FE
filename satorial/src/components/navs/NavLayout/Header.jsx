@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Bell, Search, ChevronDown, User, Settings, LogOut, Menu, Package, Clock, AlertTriangle, X } from "lucide-react";
-import DFAULT_AVATAR from "../../../assets/images/default_avatar.svg";
 import { useAuth } from "../../../contexts/AuthContext";
 import { Link } from "react-router-dom";
 import NotificationService from "../../../services/NotificationService";
@@ -166,11 +165,12 @@ const Header = ({ toggleSidebar }) => {
             className="flex items-center space-x-2.5 p-1.5 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <div className="relative">
-              <img
-                src={user?.avatar || DFAULT_AVATAR}
-                alt="User"
-                className="w-8 h-8 rounded-full border border-gray-200"
-              />
+              <div className="w-8 h-8 rounded-full border border-gray-200 bg-gray-200 flex items-center justify-center overflow-hidden">
+                {user?.avatar
+                  ? <img src={user.avatar} alt="User" className="w-full h-full object-cover" />
+                  : <User className="w-5 h-5 text-gray-500" />
+                }
+              </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
             <div className="hidden md:block text-left">
@@ -188,11 +188,12 @@ const Header = ({ toggleSidebar }) => {
               {/* User Info */}
               <div className="px-4 py-3 border-b border-gray-100">
                 <div className="flex items-center space-x-3">
-                  <img
-                    src={user?.avatar || DFAULT_AVATAR}
-                    alt="User"
-                    className="w-9 h-9 rounded-full border border-gray-200"
-                  />
+                  <div className="w-9 h-9 rounded-full border border-gray-200 bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {user?.avatar
+                      ? <img src={user.avatar} alt="User" className="w-full h-full object-cover" />
+                      : <User className="w-5 h-5 text-gray-500" />
+                    }
+                  </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {user?.first_name} {user?.last_name}
