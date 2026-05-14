@@ -210,7 +210,7 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
 
 AddPaymentForm.propTypes = {
   order: PropTypes.shape({
-    id: PropTypes.number.isRequired,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     order_price: PropTypes.number,
     initial_deposit: PropTypes.number,
     balance_amount: PropTypes.number,

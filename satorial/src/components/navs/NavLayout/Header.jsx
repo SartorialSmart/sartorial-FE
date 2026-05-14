@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
-import { Bell, Search, ChevronDown, User, Settings, LogOut, Menu, Package, Clock, AlertTriangle, X } from "lucide-react";
+import { Bell, Search, ChevronDown, User, Settings, LogOut, Menu, Package, Clock, AlertTriangle, X, Cake, Gauge } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
 import { Link } from "react-router-dom";
 import NotificationService from "../../../services/NotificationService";
@@ -9,12 +9,16 @@ const NOTIFICATION_ICONS = {
   due_order: Clock,
   overdue_order: AlertTriangle,
   low_stock: Package,
+  birthday: Cake,
+  order_limit: Gauge,
 };
 
 const NOTIFICATION_COLORS = {
   due_order: "text-yellow-600 bg-yellow-50",
   overdue_order: "text-red-600 bg-red-50",
   low_stock: "text-orange-600 bg-orange-50",
+  birthday: "text-pink-600 bg-pink-50",
+  order_limit: "text-purple-600 bg-purple-50",
 };
 
 const Header = ({ toggleSidebar }) => {
