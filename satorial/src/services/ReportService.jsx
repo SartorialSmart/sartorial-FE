@@ -26,6 +26,14 @@ const ReportService = {
     return response.data;
   },
 
+  // Fetch revenue, gross profit, and net profit report
+  getProfitReport: async (params = {}) => {
+    const response = await axiosInstance.get(API.REPORT.PROFIT_REPORT, {
+      params,
+    });
+    return response.data;
+  },
+
   // Fetch staff performance report
   getStaffPerformance: async () => {
     const response = await axiosInstance.get(API.REPORT.STAFF_PERFORMANCE);

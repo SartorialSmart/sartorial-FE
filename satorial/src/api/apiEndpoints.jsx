@@ -164,6 +164,7 @@ export const API = {
     REPORT_SUMMARY: "/report/report-summary/",
     ORDER_SUMMARY: "/report/order-summary/",
     PAYMENT_SUMMARY: "/report/payment-summary/",
+    PROFIT_REPORT: "/report/profit-report/",
     STAFF_PERFORMANCE: "/report/staff-performance/",
     SALES_BY_DURATION: "/report/total-sales-by-duration/",
   },

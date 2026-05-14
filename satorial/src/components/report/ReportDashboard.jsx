@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Mail, User, CreditCard } from "lucide-react";
+import { Mail, User, CreditCard, TrendingUp, Wallet } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -19,14 +19,22 @@ const ReportDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState({});
+  const [profitReport, setProfitReport] = useState(null);
+  const [monthlyStats, setMonthlyStats] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await ReportService.getReportSummary();
+        const [data, profit, monthly] = await Promise.all([
+          ReportService.getReportSummary(),
+          ReportService.getProfitReport(),
+          ReportService.getMonthlyStatistics(),
+        ]);
         setSummary(data || {});
+        setProfitReport(profit || null);
+        setMonthlyStats(Array.isArray(monthly) ? monthly : []);
       } catch {
         setError("Failed to load report summary.");
       } finally {
@@ -69,6 +77,24 @@ const ReportDashboard = () => {
       bg: "bg-purple-100",
     },
     {
+      title: "Revenue",
+      value: profitReport ? `₦${Number(profitReport.revenue).toLocaleString()}` : "-",
+      icon: <TrendingUp />,
+      bg: "bg-emerald-100",
+    },
+    {
+      title: "Gross Profit",
+      value: profitReport ? `₦${Number(profitReport.gross_profit).toLocaleString()}` : "-",
+      icon: <Wallet />,
+      bg: "bg-cyan-100",
+    },
+    {
+      title: "Net Profit",
+      value: profitReport ? `₦${Number(profitReport.net_profit).toLocaleString()}` : "-",
+      icon: <Wallet />,
+      bg: "bg-indigo-100",
+    },
+    {
       title: "Total Staff",
       value: summary.total_staff ?? "-",
       icon: <User />,
@@ -77,7 +103,7 @@ const ReportDashboard = () => {
   ];
 
   // Chart data: expects summary.monthly_stats = [{ month, expenses, sales }]
-  const chartData = summary.monthly_stats || [];
+  const chartData = monthlyStats;
 
   // Pie data: expects summary.retention = [{ name, value }]
   const pieData = summary.retention || [];
