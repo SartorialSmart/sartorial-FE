@@ -19,11 +19,12 @@ import SettingsService from "../../services/settings";
 const normalizeHandle = (value = "") => value.trim().replace(/^@/, "");
 const digitsOnly = (value = "") => value.replace(/\D/g, "");
 
-const buildSocialLinks = (profile = {}) => {
-  const instagram = normalizeHandle(profile.instagram_handle);
-  const twitter = normalizeHandle(profile.twitter_handle);
-  const facebook = normalizeHandle(profile.facebook_handle);
-  const linkedin = normalizeHandle(profile.linkedin_handle);
+const buildSocialLinks = (profile) => {
+  const safeProfile = profile || {};
+  const instagram = normalizeHandle(safeProfile.instagram_handle);
+  const twitter = normalizeHandle(safeProfile.twitter_handle);
+  const facebook = normalizeHandle(safeProfile.facebook_handle);
+  const linkedin = normalizeHandle(safeProfile.linkedin_handle);
 
   return [
     instagram && {
@@ -58,11 +59,11 @@ const buildSocialLinks = (profile = {}) => {
         : `https://linkedin.com/company/${linkedin}`,
       color: "text-blue-600 bg-blue-50 border-blue-100",
     },
-    profile.website_url && {
+    safeProfile.website_url && {
       key: "website",
       label: "Website",
       icon: Globe,
-      href: profile.website_url,
+      href: safeProfile.website_url,
       color: "text-emerald-600 bg-emerald-50 border-emerald-100",
     },
   ].filter(Boolean);
@@ -70,7 +71,7 @@ const buildSocialLinks = (profile = {}) => {
 
 const ChatComponent = () => {
   const [clients, setClients] = useState([]);
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState({});
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [message, setMessage] = useState("");
