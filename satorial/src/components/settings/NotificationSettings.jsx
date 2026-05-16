@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { Bell, Mail, MessageSquare, Clock, Save, Cake, Package } from "lucide-react";
 import { motion } from "framer-motion";
-import { message } from "antd";
 import SettingsService from "../../services/settings";
 import { FormSection } from "../common/FormComponents";
 import { extractErrorMessage } from "../../../utils/errorUtils";
+import SuccessModal from "../modals/SuccessModal";
 
 const NotificationSettings = () => {
   const [saving, setSaving] = useState(false);
+  const [modalData, setModalData] = useState(null);
   const [settings, setSettings] = useState({
     email_notifications_enabled: false,
     notification_email: "",
@@ -134,9 +135,18 @@ const NotificationSettings = () => {
         max_monthly_deliveries: Number(settings.max_monthly_deliveries),
         max_yearly_deliveries: Number(settings.max_yearly_deliveries),
       });
-      message.success("Notification settings saved successfully");
+      setModalData({
+        title: "Settings Saved",
+        message: "Your notification and order limit settings have been updated successfully.",
+        buttonText: "Done",
+      });
     } catch (error) {
-      message.error(extractErrorMessage(error, "Failed to save notification settings"));
+      setModalData({
+        title: "Save Failed",
+        message: extractErrorMessage(error, "Failed to save notification settings"),
+        buttonText: "Close",
+        isError: true,
+      });
     } finally {
       setSaving(false);
     }
@@ -434,6 +444,12 @@ const NotificationSettings = () => {
           )}
         </button>
       </div>
+      {modalData && (
+        <SuccessModal
+          {...modalData}
+          onClose={() => setModalData(null)}
+        />
+      )}
     </form>
   );
 };
