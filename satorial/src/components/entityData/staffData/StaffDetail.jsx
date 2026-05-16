@@ -35,6 +35,7 @@ import StaffService from "../../../services/staffServices/StaffService";
 import StaffReportService from "../../../services/staffServices/StaffReportService";
 import dayjs from "dayjs";
 import PropTypes from "prop-types";
+import SuccessModal from "../../modals/SuccessModal";
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -51,6 +52,7 @@ const StaffDetail = () => {
   const [formData, setFormData] = useState({});
   const [fileList, setFileList] = useState([]);
   const [user, setUser] = useState({ avatar: "" });
+  const [successModal, setSuccessModal] = useState(null);
   const [dateRange, setDateRange] = useState({
     start_date: dayjs().subtract(30, 'days').format('YYYY-MM-DD'),
     end_date: dayjs().format('YYYY-MM-DD'),
@@ -137,7 +139,11 @@ const StaffDetail = () => {
 
       await StaffService.updateStaff(staff.slug, formPayload, true);
 
-      message.success("Staff details updated successfully");
+      setSuccessModal({
+        title: "Staff Updated",
+        message: "Staff details have been updated successfully.",
+        buttonText: "Done",
+      });
       setIsEditing(false);
       setFileList([]);
 
@@ -693,6 +699,12 @@ const StaffDetail = () => {
           </div>
         </TabPane>
       </Tabs>
+      {successModal && (
+        <SuccessModal
+          {...successModal}
+          onClose={() => setSuccessModal(null)}
+        />
+      )}
     </div>
   );
 };

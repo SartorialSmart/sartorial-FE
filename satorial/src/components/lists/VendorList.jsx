@@ -24,6 +24,7 @@ import VendorService from "../../services/VendorService";
 import AddVendorFormModal from "../modals/formModals/AddVendorFormModal";
 import EditVendorFormModal from "../modals/formModals/EditVendorFormModal";
 import DeleteConfirmationModal from "../modals/DeleteConfirmationModal";
+import SuccessModal from "../modals/SuccessModal";
 
 const VendorsList = () => {
   const [selectedFilter, setSelectedFilter] = useState("All");
@@ -36,8 +37,7 @@ const VendorsList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  const [successModal, setSuccessModal] = useState(null);
 
   // Custom Badge Component
   const CustomBadge = ({ variant = "default", children, className = "" }) => {
@@ -84,9 +84,11 @@ const VendorsList = () => {
   };
 
   const showSuccessNotification = (message) => {
-    setSuccessMessage(message);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+    setSuccessModal({
+      title: "Success",
+      message,
+      buttonText: "Done",
+    });
   };
 
   const handleVendorAdded = async () => {
@@ -189,25 +191,11 @@ const VendorsList = () => {
 
   return (
     <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-      {/* Success Notification */}
-      {showSuccess && (
-        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
-          <div className="bg-white rounded-xl shadow-2xl border-2 border-green-200 p-4 flex items-center gap-3 min-w-80">
-            <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-semibold text-gray-900">Success</h4>
-              <p className="text-sm text-gray-600">{successMessage}</p>
-            </div>
-            <button
-              onClick={() => setShowSuccess(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X size={18} />
-            </button>
-          </div>
-        </div>
+      {successModal && (
+        <SuccessModal
+          {...successModal}
+          onClose={() => setSuccessModal(null)}
+        />
       )}
 
       {/* Modals */}

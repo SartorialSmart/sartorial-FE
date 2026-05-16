@@ -6,6 +6,7 @@ import StaffService from "../../../services/staffServices/StaffService";
 import SettingsService from "../../../services/settings";
 import { toast } from "react-toastify";
 import PropTypes from "prop-types";
+import SuccessModal from "../../modals/SuccessModal";
 
 const AddStaffForm = ({ onClose, onStaffCreated }) => {
   const initialFormData = {
@@ -29,6 +30,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
+  const [successModal, setSuccessModal] = useState(null);
   const fileInputRef = useRef(null);
 
   // Fetch departments on component mount
@@ -101,7 +103,11 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setFormData({ ...formData, password });
-    toast.success("Password generated!");
+    setSuccessModal({
+      title: "Password Generated",
+      message: "A secure password has been generated for this staff member.",
+      buttonText: "Done",
+    });
   };
 
   const handleChange = (e) => {
@@ -186,7 +192,11 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
       };
 
       await StaffService.addStaff(staffData);
-      toast.success("Staff created successfully!");
+      setSuccessModal({
+        title: "Staff Created",
+        message: "The staff member has been created successfully.",
+        buttonText: "Done",
+      });
       setFormData(initialFormData);
       setAvatarPreview(null);
 
@@ -195,7 +205,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
         onStaffCreated();
       }
 
-      onClose();
     } catch (error) {
       console.error("Staff creation error:", error.response?.data || error);
 
@@ -575,6 +584,17 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
           </div>
         </form>
       </div>
+      {successModal && (
+        <SuccessModal
+          {...successModal}
+          onClose={() => {
+            setSuccessModal(null);
+            if (successModal.title === "Staff Created") {
+              onClose();
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

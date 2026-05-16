@@ -20,6 +20,7 @@ import {
   RefreshCw,
   Receipt,
 } from "lucide-react";
+import SuccessModal from "../modals/SuccessModal";
 
 const STATUS_CONFIG = {
   active: { label: "Active", color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2 },
@@ -36,6 +37,7 @@ const SubscriptionPanel = () => {
   const [transactions, setTransactions] = useState([]);
   const [txLoading, setTxLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
+  const [successModal, setSuccessModal] = useState(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -51,7 +53,11 @@ const SubscriptionPanel = () => {
     try {
       const result = await SubscriptionService.verifyTransaction(reference);
       if (result.success) {
-        toast.success("Payment verified successfully! Your subscription is now active.");
+        setSuccessModal({
+          title: "Payment Verified",
+          message: "Your payment was verified successfully and your subscription is now active.",
+          buttonText: "Done",
+        });
         await refreshAll();
       } else {
         toast.error("Payment verification failed. Please contact support.");
@@ -86,7 +92,11 @@ const SubscriptionPanel = () => {
     try {
       const result = await SubscriptionService.cancelSubscription();
       if (result.success) {
-        toast.success(result.message || "Subscription cancelled.");
+        setSuccessModal({
+          title: "Subscription Cancelled",
+          message: result.message || "Your subscription has been cancelled.",
+          buttonText: "Done",
+        });
         await refreshAll();
       } else {
         toast.error(result.message || "Failed to cancel subscription.");
@@ -103,7 +113,11 @@ const SubscriptionPanel = () => {
     try {
       const result = await SubscriptionService.reactivateSubscription();
       if (result.success) {
-        toast.success("Subscription reactivated!");
+        setSuccessModal({
+          title: "Subscription Reactivated",
+          message: "Your subscription has been reactivated successfully.",
+          buttonText: "Done",
+        });
         await refreshAll();
       } else {
         toast.error(result.message || "Failed to reactivate subscription.");
@@ -438,6 +452,12 @@ const SubscriptionPanel = () => {
           </div>
         )}
       </div>
+      {successModal && (
+        <SuccessModal
+          {...successModal}
+          onClose={() => setSuccessModal(null)}
+        />
+      )}
     </div>
   );
 };

@@ -9,6 +9,7 @@ import StaffService from "../../services/staffServices/StaffService";
 import StaffReportService from "../../services/staffServices/StaffReportService";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
+import SuccessModal from "../modals/SuccessModal";
 
 const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState(null);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [successModal, setSuccessModal] = useState(null);
 
   const dropdownRef = useRef(null);
   const rowRefs = useRef({});
@@ -96,8 +98,13 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
       );
       
       setStaffList(prev => prev.filter(s => !selectedStaff.includes(s.email)));
+      const deletedCount = selectedStaff.length;
       setSelectedStaff([]);
-      message.success(`${selectedStaff.length} staff member${selectedStaff.length > 1 ? 's' : ''} deleted successfully`);
+      setSuccessModal({
+        title: "Staff Deleted",
+        message: `${deletedCount} staff member${deletedCount > 1 ? 's' : ''} deleted successfully.`,
+        buttonText: "Done",
+      });
     } catch (error) {
       console.error("Failed to delete staff:", error);
       message.error("Failed to delete staff members");
@@ -130,7 +137,11 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
       setStaffList((prev) => prev.filter((s) => s.slug !== staffToDelete.slug));
       setShowDeleteModal(false);
       setStaffToDelete(null);
-      message.success("Staff deleted successfully");
+      setSuccessModal({
+        title: "Staff Deleted",
+        message: "The staff member has been deleted successfully.",
+        buttonText: "Done",
+      });
     } catch (error) {
       console.error("Failed to delete staff:", error);
       message.error("Failed to delete staff");
@@ -622,6 +633,12 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
           </motion.div>
         )}
       </AnimatePresence>
+      {successModal && (
+        <SuccessModal
+          {...successModal}
+          onClose={() => setSuccessModal(null)}
+        />
+      )}
     </div>
   );
 });
