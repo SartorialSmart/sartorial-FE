@@ -66,7 +66,49 @@ const NotificationSettings = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setSettings((prev) => ({ ...prev, [name]: value }));
+    setSettings((prev) => {
+      if (name === "max_daily_orders") {
+        const daily = Number(value);
+        if (!value || Number.isNaN(daily)) {
+          return {
+            ...prev,
+            max_daily_orders: value,
+            max_weekly_orders: value,
+            max_monthly_orders: value,
+            max_yearly_orders: value,
+          };
+        }
+        return {
+          ...prev,
+          max_daily_orders: value,
+          max_weekly_orders: String(daily * 7),
+          max_monthly_orders: String(daily * 30),
+          max_yearly_orders: String(daily * 365),
+        };
+      }
+
+      if (name === "max_daily_deliveries") {
+        const daily = Number(value);
+        if (!value || Number.isNaN(daily)) {
+          return {
+            ...prev,
+            max_daily_deliveries: value,
+            max_weekly_deliveries: value,
+            max_monthly_deliveries: value,
+            max_yearly_deliveries: value,
+          };
+        }
+        return {
+          ...prev,
+          max_daily_deliveries: value,
+          max_weekly_deliveries: String(daily * 7),
+          max_monthly_deliveries: String(daily * 30),
+          max_yearly_deliveries: String(daily * 365),
+        };
+      }
+
+      return { ...prev, [name]: value };
+    });
   };
 
   const handleSubmit = async (e) => {
