@@ -4,6 +4,7 @@ import MessageModal from "../../components/modals/MessageModal";
 import loginBg from "../../assets/images/bg-2.jpg";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { extractErrorMessage } from "../../../utils/errorUtils";
+import SuccessModal from "../../components/modals/SuccessModal";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -122,11 +123,19 @@ const ResetPassword = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {showModal && (successMessage || errorMessage) && (
+      {showModal && successMessage && (
+        <SuccessModal
+          title="Password Reset"
+          message={successMessage}
+          buttonText="Done"
+          onClose={handleModalClose}
+        />
+      )}
+      {showModal && errorMessage && (
         <MessageModal
           isOpen={true}
-          type={successMessage ? "success" : "error"}
-          message={successMessage || errorMessage}
+          type="error"
+          message={errorMessage}
           onClose={handleModalClose}
         />
       )}

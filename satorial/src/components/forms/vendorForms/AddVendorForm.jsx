@@ -618,59 +618,12 @@ const AddVendorForm = () => {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 relative">
-            <div className="flex items-start justify-between mb-5">
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900">Success</h3>
-              </div>
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="mt-3">
-              <p className="text-sm text-gray-500">{successMessage}</p>
-            </div>
-            <div className="mt-5">
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:text-sm"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <SuccessModal
+          title="Vendor Created"
+          message={successMessage}
+          buttonText="Done"
+          onClose={() => setShowSuccessModal(false)}
+        />
       )}
     </div>
   );

@@ -3,6 +3,7 @@ import AuthService from "../../services/AuthService";
 import MessageModal from "../../components/modals/MessageModal";
 import loginBg from "../../assets/images/bg-2.jpg";
 import { useNavigate } from "react-router-dom";
+import SuccessModal from "../../components/modals/SuccessModal";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -117,11 +118,19 @@ const ForgotPassword = () => {
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Message Modal - Only render when needed */}
-      {showModal && (successMessage || errorMessage) && (
+      {showModal && successMessage && (
+        <SuccessModal
+          title="Reset Link Sent"
+          message={successMessage}
+          buttonText="Done"
+          onClose={handleModalClose}
+        />
+      )}
+      {showModal && errorMessage && (
         <MessageModal
           isOpen={true}
-          type={successMessage ? "success" : "error"}
-          message={successMessage || errorMessage}
+          type="error"
+          message={errorMessage}
           onClose={handleModalClose}
         />
       )}

@@ -25,6 +25,7 @@ import {
   TextAreaField,
   FileUpload,
 } from "../common/FormComponents";
+import SuccessModal from "../modals/SuccessModal";
 
 const OrganizationProfile = () => {
   const [loading, setLoading] = useState(false);
@@ -54,6 +55,7 @@ const OrganizationProfile = () => {
   });
   const [logoPreview, setLogoPreview] = useState(null);
   const [errors, setErrors] = useState({});
+  const [successModal, setSuccessModal] = useState(null);
 
   const predefinedColors = [
     "#EF4444",
@@ -142,7 +144,11 @@ const OrganizationProfile = () => {
         await SettingsService.Profile.updateProfile(updateData);
       }
 
-      message.success("Profile updated successfully");
+      setSuccessModal({
+        title: "Profile Saved",
+        message: "Your organization profile has been updated successfully.",
+        buttonText: "Done",
+      });
       fetchProfile();
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -415,6 +421,12 @@ const OrganizationProfile = () => {
           )}
         </button>
       </div>
+      {successModal && (
+        <SuccessModal
+          {...successModal}
+          onClose={() => setSuccessModal(null)}
+        />
+      )}
     </form>
   );
 };

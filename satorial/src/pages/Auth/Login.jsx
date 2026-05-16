@@ -6,6 +6,7 @@ import { useNavigate, Link } from "react-router-dom";
 import googleIcon from "../../assets/images/google-logo.svg";
 import twitterIcon from "../../assets/images/twitter-logo.svg";
 import { extractErrorMessage } from "../../../utils/errorUtils";
+import SuccessModal from "../../components/modals/SuccessModal";
 
 const Login = () => {
   const { login } = useAuth();
@@ -111,11 +112,19 @@ const Login = () => {
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Message Modal - Only render when needed */}
-      {showModal && (successMessage || errorMessage) && (
+      {showModal && successMessage && (
+        <SuccessModal
+          title="Login Successful"
+          message={successMessage}
+          buttonText="Continue"
+          onClose={handleModalClose}
+        />
+      )}
+      {showModal && errorMessage && (
         <MessageModal
           isOpen={true}
-          type={successMessage ? "success" : "error"}
-          message={successMessage || errorMessage}
+          type="error"
+          message={errorMessage}
           onClose={handleModalClose}
         />
       )}

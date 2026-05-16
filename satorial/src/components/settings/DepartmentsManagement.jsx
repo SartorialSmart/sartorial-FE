@@ -9,6 +9,7 @@ import SettingsService from "../../services/settings";
 import Modal from "../common/Modal";
 import Table from "../common/Table";
 import { InputField, TextAreaField } from "../common/FormComponents";
+import SuccessModal from "../modals/SuccessModal";
 
 const DepartmentsManagement = () => {
   const [departments, setDepartments] = useState([]);
@@ -17,6 +18,7 @@ const DepartmentsManagement = () => {
   const [editingDepartment, setEditingDepartment] = useState(null);
   const [saving, setSaving] = useState(false);
   const [activeAction, setActiveAction] = useState(null);
+  const [successModal, setSuccessModal] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -97,10 +99,18 @@ const DepartmentsManagement = () => {
           editingDepartment.id,
           formData
         );
-        message.success("Department updated successfully");
+        setSuccessModal({
+          title: "Department Updated",
+          message: "The department has been updated successfully.",
+          buttonText: "Done",
+        });
       } else {
         await SettingsService.Departments.createDepartment(formData);
-        message.success("Department created successfully");
+        setSuccessModal({
+          title: "Department Created",
+          message: "The department has been created successfully.",
+          buttonText: "Done",
+        });
       }
 
       handleCloseModal();
@@ -127,7 +137,11 @@ const DepartmentsManagement = () => {
 
     try {
       await SettingsService.Departments.deleteDepartment(department.id);
-      message.success("Department deleted successfully");
+      setSuccessModal({
+        title: "Department Deleted",
+        message: "The department has been deleted successfully.",
+        buttonText: "Done",
+      });
       fetchDepartments();
     } catch (error) {
       console.error("Error deleting department:", error);
@@ -348,6 +362,12 @@ const DepartmentsManagement = () => {
           />
         </form>
       </Modal>
+      {successModal && (
+        <SuccessModal
+          {...successModal}
+          onClose={() => setSuccessModal(null)}
+        />
+      )}
     </div>
   );
 };

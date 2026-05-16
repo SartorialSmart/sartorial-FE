@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import MessageModal from "../../components/modals/MessageModal";
 import registerBg from "../../assets/images/bg-2.jpg";
 import { extractErrorMessage } from "../../../utils/errorUtils";
+import SuccessModal from "../../components/modals/SuccessModal";
 
 const OrganizationRegister = () => {
   const [formData, setFormData] = useState({
@@ -54,10 +55,18 @@ const OrganizationRegister = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {showModal && (
+      {showModal && successMessage && (
+        <SuccessModal
+          title="Registration Successful"
+          message={successMessage}
+          buttonText="Done"
+          onClose={() => setShowModal(false)}
+        />
+      )}
+      {showModal && errorMessage && (
         <MessageModal
-          type={successMessage ? "success" : "error"}
-          message={successMessage || errorMessage}
+          type="error"
+          message={errorMessage}
           onClose={() => setShowModal(false)}
         />
       )}

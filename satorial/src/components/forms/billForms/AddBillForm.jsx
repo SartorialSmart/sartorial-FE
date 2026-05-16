@@ -8,6 +8,7 @@ import BillsService from "../../../services/BillsService";
 import VendorCategoryService from "../../../services/VendorCategoryService";
 import VendorService from "../../../services/VendorService";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
+import SuccessModal from "../../modals/SuccessModal";
 
 const AddBillForm = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ const AddBillForm = ({ onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
+  const [successModal, setSuccessModal] = useState(null);
 
   // Fetch vendor categories and vendors on component mount
   useEffect(() => {
@@ -125,18 +126,17 @@ const AddBillForm = ({ onClose, onSuccess }) => {
       };
 
       await BillsService.createBill(billData);
-      
-      setSuccess(true);
+      setSuccessModal({
+        title: "Bill Created",
+        message: "The bill has been created successfully.",
+        buttonText: "Done",
+      });
       
       // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
       }
 
-      // Close modal after short delay to show success message
-      setTimeout(() => {
-        onClose();
-      }, 1500);
     } catch (err) {
       setError(extractErrorMessage(err, "Failed to create bill. Please try again."));
     } finally {
@@ -180,15 +180,6 @@ const AddBillForm = ({ onClose, onSuccess }) => {
             <div className="flex flex-col items-center justify-center py-16">
               <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
               <p className="text-gray-600 font-medium">Loading vendors and categories...</p>
-            </div>
-          ) : success ? (
-            // Success State
-            <div className="flex flex-col items-center justify-center py-16">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <CheckCircle className="w-12 h-12 text-green-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Bill Created Successfully!</h3>
-              <p className="text-gray-600">Closing...</p>
             </div>
           ) : (
             // Form
@@ -419,7 +410,7 @@ const AddBillForm = ({ onClose, onSuccess }) => {
         </div>
 
         {/* Footer */}
-        {!loadingData && !success && (
+        {!loadingData && (
           <div className="bg-gray-50 px-6 py-4 rounded-b-2xl border-t border-gray-200 flex justify-end gap-3">
             <button
               type="button"
@@ -461,6 +452,15 @@ const AddBillForm = ({ onClose, onSuccess }) => {
           animation: shake 0.5s ease-in-out;
         }
       `}</style>
+      {successModal && (
+        <SuccessModal
+          {...successModal}
+          onClose={() => {
+            setSuccessModal(null);
+            onClose();
+          }}
+        />
+      )}
     </div>
   );
 };
