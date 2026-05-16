@@ -20,7 +20,13 @@ const NotificationSettings = () => {
     birthday_notifications_enabled: false,
     order_limit_notifications_enabled: false,
     max_daily_orders: "0",
+    max_weekly_orders: "0",
+    max_monthly_orders: "0",
+    max_yearly_orders: "0",
+    max_daily_deliveries: "0",
     max_weekly_deliveries: "0",
+    max_monthly_deliveries: "0",
+    max_yearly_deliveries: "0",
   });
 
   useEffect(() => {
@@ -39,7 +45,13 @@ const NotificationSettings = () => {
           birthday_notifications_enabled: profile.birthday_notifications_enabled ?? prev.birthday_notifications_enabled,
           order_limit_notifications_enabled: profile.order_limit_notifications_enabled ?? prev.order_limit_notifications_enabled,
           max_daily_orders: profile.max_daily_orders != null ? String(profile.max_daily_orders) : prev.max_daily_orders,
+          max_weekly_orders: profile.max_weekly_orders != null ? String(profile.max_weekly_orders) : prev.max_weekly_orders,
+          max_monthly_orders: profile.max_monthly_orders != null ? String(profile.max_monthly_orders) : prev.max_monthly_orders,
+          max_yearly_orders: profile.max_yearly_orders != null ? String(profile.max_yearly_orders) : prev.max_yearly_orders,
+          max_daily_deliveries: profile.max_daily_deliveries != null ? String(profile.max_daily_deliveries) : prev.max_daily_deliveries,
           max_weekly_deliveries: profile.max_weekly_deliveries != null ? String(profile.max_weekly_deliveries) : prev.max_weekly_deliveries,
+          max_monthly_deliveries: profile.max_monthly_deliveries != null ? String(profile.max_monthly_deliveries) : prev.max_monthly_deliveries,
+          max_yearly_deliveries: profile.max_yearly_deliveries != null ? String(profile.max_yearly_deliveries) : prev.max_yearly_deliveries,
         }));
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -72,7 +84,13 @@ const NotificationSettings = () => {
         birthday_notifications_enabled: settings.birthday_notifications_enabled,
         order_limit_notifications_enabled: settings.order_limit_notifications_enabled,
         max_daily_orders: Number(settings.max_daily_orders),
+        max_weekly_orders: Number(settings.max_weekly_orders),
+        max_monthly_orders: Number(settings.max_monthly_orders),
+        max_yearly_orders: Number(settings.max_yearly_orders),
+        max_daily_deliveries: Number(settings.max_daily_deliveries),
         max_weekly_deliveries: Number(settings.max_weekly_deliveries),
+        max_monthly_deliveries: Number(settings.max_monthly_deliveries),
+        max_yearly_deliveries: Number(settings.max_yearly_deliveries),
       });
       message.success("Notification settings saved successfully");
     } catch (error) {
@@ -109,6 +127,30 @@ const NotificationSettings = () => {
     onToggle: PropTypes.func,
     label: PropTypes.string,
     description: PropTypes.string,
+  };
+
+  const LimitInput = ({ name, label, placeholder }) => (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        <Package size={14} className="inline mr-2" />
+        {label}
+      </label>
+      <input
+        type="number"
+        name={name}
+        min="0"
+        value={settings[name]}
+        onChange={handleChange}
+        placeholder={placeholder}
+        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      />
+    </div>
+  );
+
+  LimitInput.propTypes = {
+    name: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    placeholder: PropTypes.string,
   };
 
   return (
@@ -291,7 +333,7 @@ const NotificationSettings = () => {
       >
         <FormSection
           title="Order Intake & Delivery Limits"
-          description="Get alerted when daily intake or weekly delivery counts exceed your limits"
+          description="Get alerted when order intake or delivery counts reach your daily, weekly, monthly, or yearly limits"
         >
           <div className="space-y-4">
             <Toggle
@@ -301,36 +343,24 @@ const NotificationSettings = () => {
               description="Receive an alert when your intake or delivery limits are reached"
             />
             {settings.order_limit_notifications_enabled && (
-              <div className="pl-4 border-l-2 border-blue-200 space-y-4">
+              <div className="pl-4 border-l-2 border-blue-200 space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Package size={14} className="inline mr-2" />
-                    Max daily order intake (0 = no limit)
-                  </label>
-                  <input
-                    type="number"
-                    name="max_daily_orders"
-                    min="0"
-                    value={settings.max_daily_orders}
-                    onChange={handleChange}
-                    placeholder="e.g. 10"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  <p className="text-sm font-semibold text-gray-900 mb-3">Order intake limits</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <LimitInput name="max_daily_orders" label="Max orders per day (0 = no limit)" placeholder="e.g. 10" />
+                    <LimitInput name="max_weekly_orders" label="Max orders per week (0 = no limit)" placeholder="e.g. 50" />
+                    <LimitInput name="max_monthly_orders" label="Max orders per month (0 = no limit)" placeholder="e.g. 200" />
+                    <LimitInput name="max_yearly_orders" label="Max orders per year (0 = no limit)" placeholder="e.g. 2400" />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Package size={14} className="inline mr-2" />
-                    Max weekly deliveries (0 = no limit)
-                  </label>
-                  <input
-                    type="number"
-                    name="max_weekly_deliveries"
-                    min="0"
-                    value={settings.max_weekly_deliveries}
-                    onChange={handleChange}
-                    placeholder="e.g. 20"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  <p className="text-sm font-semibold text-gray-900 mb-3">Delivery date limits</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <LimitInput name="max_daily_deliveries" label="Max deliveries per day (0 = no limit)" placeholder="e.g. 5" />
+                    <LimitInput name="max_weekly_deliveries" label="Max deliveries per week (0 = no limit)" placeholder="e.g. 20" />
+                    <LimitInput name="max_monthly_deliveries" label="Max deliveries per month (0 = no limit)" placeholder="e.g. 80" />
+                    <LimitInput name="max_yearly_deliveries" label="Max deliveries per year (0 = no limit)" placeholder="e.g. 960" />
+                  </div>
                 </div>
               </div>
             )}
