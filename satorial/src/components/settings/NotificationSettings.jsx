@@ -342,28 +342,31 @@ const NotificationSettings = () => {
               label="Enable Order Limit Alerts"
               description="Receive an alert when your intake or delivery limits are reached"
             />
-            {settings.order_limit_notifications_enabled && (
-              <div className="pl-4 border-l-2 border-blue-200 space-y-6">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 mb-3">Order intake limits</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <LimitInput name="max_daily_orders" label="Max orders per day (0 = no limit)" placeholder="e.g. 10" />
-                    <LimitInput name="max_weekly_orders" label="Max orders per week (0 = no limit)" placeholder="e.g. 50" />
-                    <LimitInput name="max_monthly_orders" label="Max orders per month (0 = no limit)" placeholder="e.g. 200" />
-                    <LimitInput name="max_yearly_orders" label="Max orders per year (0 = no limit)" placeholder="e.g. 2400" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 mb-3">Delivery date limits</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <LimitInput name="max_daily_deliveries" label="Max deliveries per day (0 = no limit)" placeholder="e.g. 5" />
-                    <LimitInput name="max_weekly_deliveries" label="Max deliveries per week (0 = no limit)" placeholder="e.g. 20" />
-                    <LimitInput name="max_monthly_deliveries" label="Max deliveries per month (0 = no limit)" placeholder="e.g. 80" />
-                    <LimitInput name="max_yearly_deliveries" label="Max deliveries per year (0 = no limit)" placeholder="e.g. 960" />
-                  </div>
+            <div className="pl-4 border-l-2 border-blue-200 space-y-6">
+              {!settings.order_limit_notifications_enabled && (
+                <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                  Limits can be saved now, but they are only enforced when order limit alerts are enabled.
+                </p>
+              )}
+              <div>
+                <p className="text-sm font-semibold text-gray-900 mb-3">Order intake limits</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <LimitInput name="max_daily_orders" label="Max orders per day (0 = no limit)" placeholder="e.g. 10" />
+                  <LimitInput name="max_weekly_orders" label="Max orders per week (0 = no limit)" placeholder="e.g. 50" />
+                  <LimitInput name="max_monthly_orders" label="Max orders per month (0 = no limit)" placeholder="e.g. 200" />
+                  <LimitInput name="max_yearly_orders" label="Max orders per year (0 = no limit)" placeholder="e.g. 2400" />
                 </div>
               </div>
-            )}
+              <div>
+                <p className="text-sm font-semibold text-gray-900 mb-3">Delivery date limits</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <LimitInput name="max_daily_deliveries" label="Max deliveries per day (0 = no limit)" placeholder="e.g. 5" />
+                  <LimitInput name="max_weekly_deliveries" label="Max deliveries per week (0 = no limit)" placeholder="e.g. 20" />
+                  <LimitInput name="max_monthly_deliveries" label="Max deliveries per month (0 = no limit)" placeholder="e.g. 80" />
+                  <LimitInput name="max_yearly_deliveries" label="Max deliveries per year (0 = no limit)" placeholder="e.g. 960" />
+                </div>
+              </div>
+            </div>
           </div>
         </FormSection>
       </motion.div>
