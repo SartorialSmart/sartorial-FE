@@ -9,6 +9,12 @@ import OrderService from "../../../services/OrderService";
 import SuccessModal from "../../modals/SuccessModal";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
 
+const getTodayDateString = () => {
+  const today = new Date();
+  const timezoneOffset = today.getTimezoneOffset() * 60000;
+  return new Date(today.getTime() - timezoneOffset).toISOString().split("T")[0];
+};
+
 const AddOrderForm = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,6 +27,7 @@ const AddOrderForm = ({ onClose }) => {
   const [errorTitle, setErrorTitle] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const { user } = useAuth();
+  const todayDate = getTodayDateString();
 
   const [formData, setFormData] = useState({
     created_by: user.id,
@@ -28,8 +35,8 @@ const AddOrderForm = ({ onClose }) => {
     client_email: "",
     order_title: "",
     order_description: "",
-    start_date: "",
-    end_date: "",
+    start_date: todayDate,
+    end_date: todayDate,
     order_price: "",
     order_category: "",
     order_type: "Single",
@@ -150,12 +157,13 @@ const AddOrderForm = ({ onClose }) => {
 
       // Reset form data and selected category
       setFormData({
+        created_by: user.id,
         client: "",
         client_email: "",
         order_title: "",
         order_description: "",
-        start_date: "",
-        end_date: "",
+        start_date: getTodayDateString(),
+        end_date: getTodayDateString(),
         order_category: "",
         order_price: "",
         order_type: "Single",
