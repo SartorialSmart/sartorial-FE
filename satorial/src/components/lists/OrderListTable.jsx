@@ -40,6 +40,51 @@ const formatDate = (dateString) => {
   });
 };
 
+const formatCurrencyDisplay = (amount = 0) => `NGN ${Number(amount).toLocaleString()}`;
+
+const formatDisplayDate = (dateString) => {
+  if (!dateString) return "No date";
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "Invalid date";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const formatDisplayTime = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+};
+
+const getClientName = (order) => {
+  const rawName = order.client_full_name || order.client_name || "Unknown Client";
+  return rawName.replace(/\s+/g, " ").trim();
+};
+
+const getInitials = (name) => {
+  const parts = name.split(" ").filter(Boolean);
+  if (parts.length === 0) return "C";
+  return parts.slice(0, 2).map((part) => part.charAt(0)).join("").toUpperCase();
+};
+
+const getPaymentState = (order) => {
+  const price = Number(order.order_price) || 0;
+  const paid = Number(order.total_paid ?? 0);
+  const balance = Number(order.balance_amount ?? Math.max(price - paid, 0));
+
+  if (price > 0 && balance <= 0) {
+    return { label: "Fully Paid", className: "bg-emerald-50 text-emerald-700 border-emerald-200", Icon: CheckCircle };
+  }
+  if (paid > 0) {
+    return { label: "Partially Paid", className: "bg-amber-50 text-amber-700 border-amber-200", Icon: TrendingUp };
+  }
+  return { label: "Unpaid", className: "bg-red-50 text-red-700 border-red-200", Icon: XCircle };
+};
+
 const getStatusClass = (status) => {
   const statusMap = {
     Pending: "bg-amber-50 text-amber-800 border-amber-200",
@@ -429,7 +474,7 @@ const OrderListTable = () => {
         `"${order.client_full_name}"`,
         `"${order.order_title}"`,
         order.order_price,
-        `"${formatDate(order.ordered_at)}"`,
+        `"${formatDisplayDate(order.ordered_at)}"`,
         `"${order.order_status}"`,
         `"${order.assignment_status || 'Not Assigned'}"`
       ].join(","))
@@ -850,11 +895,11 @@ const OrderListTable = () => {
                   {filteredOrders.map((order, index) => (
                     <tr 
                       key={order.id} 
-                      className={`hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 transition-all ${
+                      className={`hover:bg-blue-50/40 transition-colors ${
                         selectedRows.has(order.id) ? 'bg-blue-50/70' : ''
                       }`}
                     >
-                      <td className="p-4">
+                      <td className="px-4 py-3">
                         <input
                           type="checkbox"
                           checked={selectedRows.has(order.id)}
@@ -862,18 +907,20 @@ const OrderListTable = () => {
                           className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                         />
                       </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md text-lg">
-                            {order.client_full_name?.charAt(0) || 'C'}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3 min-w-56">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-sm text-sm">
+                            {getInitials(getClientName(order))}
                           </div>
-                          <div>
-                            <p className="font-semibold text-gray-900">{order.client_full_name}</p>
-                            <p className="text-xs text-gray-500 font-mono">ID: {order.id}</p>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-gray-900 truncate">{getClientName(order)}</p>
+                            {order.client_email && (
+                              <p className="text-xs text-gray-500 truncate">{order.client_email}</p>
+                            )}
                           </div>
                         </div>
                       </td>
-                      <td className="p-4">
+                      <td className="px-4 py-3">
                         <div>
                           <p className="font-semibold text-gray-900">{order.order_title}</p>
                           {order.order_description && (
@@ -883,57 +930,49 @@ const OrderListTable = () => {
                           )}
                         </div>
                       </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <CreditCard size={16} className="text-gray-400" />
-                          <p className="font-bold text-gray-900">{formatAmount(order.order_price)}</p>
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <CreditCard size={15} className="text-gray-400" />
+                            <p className="font-bold text-gray-900">{formatCurrencyDisplay(order.order_price)}</p>
+                          </div>
+                          {(() => {
+                            const payment = getPaymentState(order);
+                            return (
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${payment.className}`}>
+                                <payment.Icon size={11} />
+                                {payment.label}
+                              </span>
+                            );
+                          })()}
                         </div>
-                        {(() => {
-                          const balance = Number(order.balance_amount ?? order.order_price);
-                          const paid = Number(order.total_paid ?? 0);
-                          if (balance <= 0) return (
-                            <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                              <CheckCircle size={10} /> Fully Paid
-                            </span>
-                          );
-                          if (paid > 0) return (
-                            <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
-                              <TrendingUp size={10} /> Partially Paid
-                            </span>
-                          );
-                          return (
-                            <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                              <XCircle size={10} /> Unpaid
-                            </span>
-                          );
-                        })()}
                       </td>
-                      <td className="p-4">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <Calendar size={16} className="text-gray-400" />
                           <div>
-                            <p className="text-gray-700 font-medium">{formatDate(order.ordered_at)}</p>
+                            <p className="text-gray-700 font-medium">{formatDisplayDate(order.end_date || order.ordered_at)}</p>
                             <p className="text-xs text-gray-500">
-                              {new Date(order.ordered_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                              Created {formatDisplayDate(order.ordered_at)} {formatDisplayTime(order.ordered_at)}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="p-4">
-                        <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold border-2 shadow-sm ${getStatusClass(order.order_status)}`}>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold border shadow-sm ${getStatusClass(order.order_status)}`}>
                           {order.order_status}
                         </span>
                       </td>
-                      <td className="p-4">
-                        <div className="flex items-center justify-between gap-3">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-between gap-3 min-w-64">
                           {order.assignment_status === "Assigned" ? (
                             <div className="flex items-center gap-2">
-                              <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-sm"></div>
+                              <div className="w-2 h-2 bg-green-500 rounded-full shadow-sm"></div>
                               <span className="text-sm text-gray-700 font-medium">Assigned</span>
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
-                              <div className="w-2.5 h-2.5 bg-gray-400 rounded-full"></div>
+                              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                               <span className="text-sm text-gray-500">Not Assigned</span>
                             </div>
                           )}
@@ -942,7 +981,7 @@ const OrderListTable = () => {
                           {!order.assignment_status && order.order_status === "Pending" && (
                             <button
                               onClick={() => handleAssignClick(order)}
-                              className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm font-medium flex items-center gap-1.5"
+                              className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-all shadow-sm font-medium flex items-center gap-1.5"
                             >
                               <UserCheck size={14} />
                               Assign
@@ -953,7 +992,7 @@ const OrderListTable = () => {
                           {order.assignment_status && order.order_status !== "Cancelled" && (
                             <button
                               onClick={() => handleReassignClick(order)}
-                              className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white text-sm rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all shadow-sm font-medium flex items-center gap-1.5"
+                              className="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-all shadow-sm font-medium flex items-center gap-1.5"
                             >
                               <RefreshCw size={14} />
                               Reassign
@@ -961,10 +1000,10 @@ const OrderListTable = () => {
                           )}
                         </div>
                       </td>
-                      <td className="p-4">
+                      <td className="px-4 py-3">
                         <button
                           ref={(el) => (buttonRefs.current[index] = el)}
-                          className="p-2.5 hover:bg-gray-100 rounded-xl transition-all duration-200 text-gray-400 hover:text-gray-600 relative shadow-sm border border-gray-200"
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700 relative border border-gray-200"
                           onClick={() => toggleDropdown(index)}
                         >
                           <MoreVertical size={18} />
