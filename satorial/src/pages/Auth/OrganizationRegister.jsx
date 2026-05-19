@@ -3,6 +3,7 @@ import AuthService from "../../services/AuthService";
 import { useNavigate, Link } from "react-router-dom";
 import MessageModal from "../../components/modals/MessageModal";
 import registerBg from "../../assets/images/bg-2.jpg";
+import Logo from "../../assets/images/Logo.png";
 import { extractErrorMessage } from "../../../utils/errorUtils";
 import SuccessModal from "../../components/modals/SuccessModal";
 
@@ -76,7 +77,7 @@ const OrganizationRegister = () => {
         style={{ backgroundImage: `url(${registerBg})` }}
       >
         <div className="bg-black bg-opacity-40 w-full h-full flex flex-col justify-between p-16 ">
-          <h1 className="text-white font-roboto text-5xl font-bold mb-6">Satorial</h1>
+          <img src={Logo} alt="Sartorial" className="h-40 lg:h-48 w-auto mb-6 invert" style={{ transform: 'scale(0.85)' }} />
 
           <div>
             <h2 className="text-5xl md:text-5xl font-semibold text-white drop-shadow-lg mb-11">
