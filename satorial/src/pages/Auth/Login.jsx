@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import MessageModal from "../../components/modals/MessageModal";
 import loginBg from "../../assets/images/bg-2.jpg";
+import Logo from "../../assets/images/Logo.png";
 import { useNavigate, Link } from "react-router-dom";
 import googleIcon from "../../assets/images/google-logo.svg";
 import twitterIcon from "../../assets/images/twitter-logo.svg";
@@ -135,7 +136,7 @@ const Login = () => {
         style={{ backgroundImage: `url(${loginBg})` }}
       >
         <div className="bg-black bg-opacity-40 w-full h-full flex flex-col justify-between p-16">
-          <h1 className="text-white text-5xl font-bold mb-6">Sartorial</h1>
+          <img src={Logo} alt="Sartorial" className="h-40 lg:h-48 w-auto mb-6 invert" style={{ transform: 'scale(0.85)' }} />
           <div>
             <h2 className="text-5xl font-semibold text-white drop-shadow-lg">
               The Smarter Way to <br /> Manage Your Projects

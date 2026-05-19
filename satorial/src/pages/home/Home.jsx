@@ -231,10 +231,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
             <Link to="/" className="flex items-center gap-2">
-              <img src={Logo} alt="Satorial" className="h-8 lg:h-10" />
-              <span className="text-xl lg:text-2xl font-bold text-gray-900">
-                Satorial
-              </span>
+              <img src={Logo} alt="Satorial" className="h-40 lg:h-48" style={{ transform: 'scale(0.85)' }} />
             </Link>
 
             {/* Desktop Nav */}
