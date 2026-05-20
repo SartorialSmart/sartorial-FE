@@ -140,9 +140,9 @@ const Login = () => {
             src={Logo}
             alt="Sartorial"
             className="absolute left-0 top-4 h-40 lg:h-48 w-auto mb-6 invert"
-            style={{ transform: 'scale(0.85)', zIndex: 10 }}
+            style={{ transform: 'translate(-18px,-18px) scale(0.85)', zIndex: 10 }}
           />
-          <div className="pt-40 lg:pt-48">
+          <div className="pt-64 lg:pt-72">
             <h2 className="text-5xl font-semibold text-white drop-shadow-lg">
               The Smarter Way to <br /> Manage Your Projects
             </h2>
