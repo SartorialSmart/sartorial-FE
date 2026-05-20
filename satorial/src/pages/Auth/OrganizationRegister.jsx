@@ -84,7 +84,7 @@ const OrganizationRegister = () => {
             style={{ transform: 'scale(0.85)', zIndex: 10 }}
           />
 
-          <div>
+          <div className="pt-40 lg:pt-48">
             <h2 className="text-5xl md:text-5xl font-semibold text-white drop-shadow-lg mb-11">
               The Smarter Way to <br /> Manage Your Projects
             </h2>

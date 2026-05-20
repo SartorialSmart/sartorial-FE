@@ -142,7 +142,7 @@ const Login = () => {
             className="absolute left-0 top-4 h-40 lg:h-48 w-auto mb-6 invert"
             style={{ transform: 'scale(0.85)', zIndex: 10 }}
           />
-          <div>
+          <div className="pt-40 lg:pt-48">
             <h2 className="text-5xl font-semibold text-white drop-shadow-lg">
               The Smarter Way to <br /> Manage Your Projects
             </h2>
