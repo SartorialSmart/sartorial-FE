@@ -76,8 +76,13 @@ const OrganizationRegister = () => {
         className="hidden md:flex w-1/2 bg-cover bg-center border-[20px] border-white rounded-lg"
         style={{ backgroundImage: `url(${registerBg})` }}
       >
-        <div className="bg-black bg-opacity-40 w-full h-full flex flex-col justify-between p-16 ">
-          <img src={Logo} alt="Sartorial" className="h-40 lg:h-48 w-auto mb-6 invert" style={{ transform: 'scale(0.85)' }} />
+        <div className="bg-black bg-opacity-40 w-full h-full flex flex-col justify-between pt-0 px-6 pb-16 relative">
+          <img
+            src={Logo}
+            alt="Sartorial"
+            className="absolute left-0 top-4 h-40 lg:h-48 w-auto mb-6 invert"
+            style={{ transform: 'scale(0.85)', zIndex: 10 }}
+          />
 
           <div>
             <h2 className="text-5xl md:text-5xl font-semibold text-white drop-shadow-lg mb-11">
