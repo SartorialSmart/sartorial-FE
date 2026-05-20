@@ -139,10 +139,10 @@ const Login = () => {
           <img
             src={Logo}
             alt="Sartorial"
-            className="absolute left-0 top-4 h-40 lg:h-48 w-auto mb-6 invert"
-            style={{ transform: 'translate(-18px,-18px) scale(0.85)', zIndex: 10 }}
+            className="absolute left-0 top-2 h-40 lg:h-48 w-auto mb-6 invert"
+            style={{ transform: 'translate(-56px,-28px) scale(0.85)', zIndex: 10 }}
           />
-          <div className="pt-64 lg:pt-72">
+          <div className="mt-auto pb-12 px-6" style={{ transform: 'translateY(100px)' }}>
             <h2 className="text-5xl font-semibold text-white drop-shadow-lg">
               The Smarter Way to <br /> Manage Your Projects
             </h2>
