@@ -80,15 +80,15 @@ const OrganizationRegister = () => {
           <img
             src={Logo}
             alt="Sartorial"
-            className="absolute left-0 top-4 h-40 lg:h-48 w-auto mb-6 invert"
-            style={{ transform: 'translate(-18px,-18px) scale(0.85)', zIndex: 10 }}
+            className="absolute left-0 top-2 h-40 lg:h-48 w-auto mb-6 invert"
+            style={{ transform: 'translate(-36px,-28px) scale(0.85)', zIndex: 10 }}
           />
 
-          <div className="pt-64 lg:pt-72">
-            <h2 className="text-5xl md:text-5xl font-semibold text-white drop-shadow-lg mb-11">
+          <div className="mt-auto pb-12 px-6" style={{ transform: 'translateY(-100px)' }}>
+            <h2 className="text-5xl font-semibold text-white drop-shadow-lg">
               The Smarter Way to <br /> Manage Your Projects
             </h2>
-            <p className="text-white text-2xl leading-relaxed">
+            <p className="text-white text-sm leading-relaxed">
               All the resources you need to ensure collaboration and timely
               delivery of your fashion projects.
             </p>
