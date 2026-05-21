@@ -28,7 +28,7 @@ const Navbar = () => {
     const location = useLocation();
     const isDashboard = location.pathname === "/dashboard" || location.pathname.startsWith("/dashboard");
   const navPadding = isDashboard ? "py-0 px-3" : "p-3";
-  const navHeight = isDashboard ? "h-16" : "h-12";
+  const navHeight = isDashboard ? "h-20" : "h-12";
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -59,12 +59,12 @@ const Navbar = () => {
   }, []);
 
   return (
-  <nav className={`flex justify-between items-center ${navPadding} border-b shadow-sm bg-white`}>
+  <nav className={`flex justify-between items-center ${navPadding} ${navHeight} border-b shadow-sm bg-white`}>
       <div className="flex items-center space-x-1">
       <img
         src={logo}
         alt="logo"
-        className={isDashboard ? "h-10 w-auto" : "h-8 w-auto"}
+        className={isDashboard ? "h-12 w-auto" : "h-8 w-auto"}
         style={{ objectFit: 'contain' }}
       />
       </div>
