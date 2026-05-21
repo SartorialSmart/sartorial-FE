@@ -19,7 +19,8 @@ const Sidebar = ({ isOpen, toggleSidebar, sidebarItems }) => {
           <img
             src={LOGO}
             alt="Sartorial Logo"
-            className={`transition-all duration-300 ${isOpen ? "w-[120px] h-[60px]" : "w-10 h-10"}`}
+            className={`transition-all duration-300 ${isOpen ? "h-24 w-auto" : "w-10 h-10"}`}
+            style={{ objectFit: 'contain' }}
           />
         </div>
         <button
