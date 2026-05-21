@@ -64,7 +64,7 @@ const Navbar = () => {
       <img
         src={logo}
         alt="logo"
-        className={isDashboard ? "h-12 w-auto" : "h-8 w-auto"}
+        className={isDashboard ? "h-24 w-auto" : "h-16 w-auto"}
         style={{ objectFit: 'contain' }}
       />
       </div>
