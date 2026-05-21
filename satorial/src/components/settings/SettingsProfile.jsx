@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import OrganizationProfile from "./OrganizationProfile";
+import UserProfile from "./UserProfile";
 import DepartmentsManagement from "./DepartmentsManagement";
 import InvoiceContent from "./InvoiceContent";
 import FabricsContent from "./FabricsContent";
@@ -12,6 +13,7 @@ const SettingsProfile = () => {
   const [activeTab, setActiveTab] = useState("Profile");
 
   const tabs = [
+    { id: "Account", label: "Account" },
     { id: "Profile", label: "Organization Profile" },
     { id: "Departments", label: "Departments" },
     { id: "Invoice", label: "Invoice Settings" },
@@ -21,6 +23,8 @@ const SettingsProfile = () => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case "Account":
+        return <UserProfile />;
       case "Profile":
         return <OrganizationProfile />;
       case "Departments":

@@ -4,6 +4,7 @@ export const API = {
       LOGIN: "/users/login/",
       REGISTER_ORGANIZATION: "/users/register-organization/",
       DETAIL: "/users/me/",
+      UPDATE: "/users/me/",
       FORGOT_PASSWORD: "/users/forgot-password/",
       RESET_PASSWORD: "/users/reset-password/",
     },

@@ -54,7 +54,35 @@ const Sidebar = ({ isOpen, toggleSidebar, sidebarItems }) => {
       {/* Navigation Items */}
       <nav className="flex-1 space-y-1 overflow-y-auto">
         {sidebarItems.map((item, index) => {
-          const isActive = location.pathname === item.path;
+          const isActive = item.path && location.pathname === item.path;
+          
+          if (item.onClick) {
+            return (
+              <button
+                key={index}
+                onClick={item.onClick}
+                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 group ${
+                  isActive
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-600 hover:bg-gray-100"
+                } ${!isOpen && "justify-center"}`}
+              >
+                <div className={`flex-shrink-0 ${
+                  isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"
+                }`}>
+                  {item.icon}
+                </div>
+                {isOpen && (
+                  <span className={`text-sm font-medium truncate ${
+                    isActive ? "text-white" : "text-gray-700 group-hover:text-gray-900"
+                  }`}>
+                    {item.label}
+                  </span>
+                )}
+              </button>
+            );
+          }
+          
           return (
             <Link
               key={index}
