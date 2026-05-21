@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { Bell, X, Clock, AlertTriangle, Package, Cake, Gauge } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import Avatar from "../avatar/Avatar";
@@ -24,6 +25,8 @@ const NOTIFICATION_COLORS = {
 
 const Navbar = () => {
   const { user } = useAuth();
+    const location = useLocation();
+    const isDashboard = location.pathname === "/dashboard" || location.pathname.startsWith("/dashboard");
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -56,7 +59,11 @@ const Navbar = () => {
   return (
     <nav className="flex justify-between items-center p-4 border-b shadow-sm bg-white">
       <div className="flex items-center space-x-2">
-        <img src={logo} alt="logo" className="w-[120px] h-[60px]" />
+        <img
+          src={logo}
+          alt="logo"
+          className={isDashboard ? "w-[240px] h-[120px]" : "w-[120px] h-[60px]"}
+        />
       </div>
 
       <div className="flex items-center space-x-4">
