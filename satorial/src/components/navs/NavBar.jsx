@@ -27,7 +27,7 @@ const Navbar = () => {
   const { user } = useAuth();
     const location = useLocation();
     const isDashboard = location.pathname === "/dashboard" || location.pathname.startsWith("/dashboard");
-    const navPadding = isDashboard ? "py-2 px-4" : "p-4";
+    const navPadding = isDashboard ? "py-0 px-4" : "p-4";
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
