@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Bell, Search, ChevronDown, User, Settings, LogOut, Menu, Package, Clock, AlertTriangle, X, Cake, Gauge } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import NotificationService from "../../../services/NotificationService";
 
@@ -64,9 +65,12 @@ const Header = ({ toggleSidebar }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const navigate = useNavigate();
+
   const handleLogout = async () => {
     try {
       await logout();
+      navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
     }

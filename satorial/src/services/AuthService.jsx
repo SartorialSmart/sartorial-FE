@@ -69,6 +69,14 @@ const AuthService = {
       throw error;
     }
   },
+  
+  updateAuthenticatedUser: async (payload) => {
+    const response = await axiosInstance.patch(
+      API.USER_MANAGEMENT.AUTH.UPDATE,
+      payload
+    );
+    return response.data;
+  },
 };
 
 export default AuthService;

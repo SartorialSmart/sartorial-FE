@@ -110,13 +110,16 @@ const AuthProviderComponent = ({ children }) => {
   };
 
   const logout = () => {
-    showLoading('Signing out...');
-    setTimeout(() => {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      setUser(null);
-      hideLoading();
-    }, 500);
+    return new Promise((resolve) => {
+      showLoading('Signing out...');
+      setTimeout(() => {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        setUser(null);
+        hideLoading();
+        resolve();
+      }, 500);
+    });
   };
 
   useEffect(() => {
