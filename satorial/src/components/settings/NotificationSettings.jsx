@@ -16,6 +16,7 @@ const NotificationSettings = () => {
     sms_notifications_enabled: false,
     notification_phone: "",
     due_order_reminder_days: "3",
+    due_order_email_notifications_enabled: false,
     order_status_notifications: true,
     payment_notifications: true,
     birthday_notifications_enabled: false,
@@ -41,6 +42,7 @@ const NotificationSettings = () => {
           sms_notifications_enabled: profile.sms_notifications_enabled ?? prev.sms_notifications_enabled,
           notification_phone: profile.notification_phone || profile.business_phone || "",
           due_order_reminder_days: profile.due_order_reminder_days != null ? String(profile.due_order_reminder_days) : prev.due_order_reminder_days,
+          due_order_email_notifications_enabled: profile.due_order_email_notifications_enabled ?? prev.due_order_email_notifications_enabled,
           order_status_notifications: profile.order_status_notifications ?? prev.order_status_notifications,
           payment_notifications: profile.payment_notifications ?? prev.payment_notifications,
           birthday_notifications_enabled: profile.birthday_notifications_enabled ?? prev.birthday_notifications_enabled,
@@ -122,6 +124,7 @@ const NotificationSettings = () => {
         sms_notifications_enabled: settings.sms_notifications_enabled,
         notification_phone: settings.notification_phone,
         due_order_reminder_days: Number(settings.due_order_reminder_days),
+        due_order_email_notifications_enabled: settings.due_order_email_notifications_enabled,
         order_status_notifications: settings.order_status_notifications,
         payment_notifications: settings.payment_notifications,
         birthday_notifications_enabled: settings.birthday_notifications_enabled,
@@ -285,7 +288,7 @@ const NotificationSettings = () => {
             )}
           </div>
         </FormSection>
-      </motion.div>
+</motion.div>
 
       {/* Due Order Reminders */}
       <motion.div
@@ -298,25 +301,35 @@ const NotificationSettings = () => {
           description="Set when to be notified about upcoming order deadlines"
         >
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Clock size={14} className="inline mr-2" />
-                Remind me before order due date
-              </label>
-              <select
-                name="due_order_reminder_days"
-                value={settings.due_order_reminder_days}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="1">1 day before</option>
-                <option value="2">2 days before</option>
-                <option value="3">3 days before</option>
-                <option value="5">5 days before</option>
-                <option value="7">7 days before</option>
-                <option value="14">14 days before</option>
-              </select>
-            </div>
+            <Toggle
+              enabled={settings.due_order_email_notifications_enabled}
+              onToggle={() => handleToggle("due_order_email_notifications_enabled")}
+              label="Email Notification for Due Orders"
+              description="Receive an email when orders are approaching their due date"
+            />
+            {settings.due_order_email_notifications_enabled && (
+              <div className="pl-4 border-l-2 border-blue-200 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Clock size={14} className="inline mr-2" />
+                    Remind me before order due date
+                  </label>
+                  <select
+                    name="due_order_reminder_days"
+                    value={settings.due_order_reminder_days}
+                    onChange={handleChange}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="1">1 day before</option>
+                    <option value="2">2 days before</option>
+                    <option value="3">3 days before</option>
+                    <option value="5">5 days before</option>
+                    <option value="7">7 days before</option>
+                    <option value="14">14 days before</option>
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
         </FormSection>
       </motion.div>
