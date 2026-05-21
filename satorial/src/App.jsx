@@ -129,6 +129,7 @@ const protectedRoutes = [
   { path: "/subscriptions/pricing/plan", element: <PricingPlansDisplay /> },
 
   { path: "/settings", element: <ProfileSettingsDisplay /> },
+  { path: "/profile", element: <ProfileSettingsDisplay /> },
 
   { path: "/help-centre", element: <GetHelpDisplay /> },
 ];
