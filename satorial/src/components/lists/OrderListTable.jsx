@@ -11,6 +11,7 @@ import OrderService from "../../services/OrderService";
 import TrackOrderStatusModal from "../modals/formModals/TrackOrderStatusModal";
 import OrderInvoiceModal from "../modals/formModals/OrderInvoiceModal";
 import AssignOrderModal from "../allocationModals/AssignOrderModal";
+import AddOrderFormModal from "../modals/formModals/AddOrderFormModal";
 
 const columns = [
   { key: "client_full_name", label: "Client", sortable: true, icon: Users },
@@ -100,6 +101,7 @@ const getStatusClass = (status) => {
 };
 
 const OrderListTable = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   // Data states
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -535,13 +537,13 @@ const OrderListTable = () => {
               <Download size={16} />
               Export
             </button>
-            <Link
-              to="/order/create"
+            <button
+              onClick={() => setIsModalOpen(true)}
               className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl flex items-center gap-2"
             >
               <Plus size={18} />
               New Order
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -1145,6 +1147,13 @@ const OrderListTable = () => {
             order={selectedOrder}
             mode={modalMode}
             onAssign={handleAssign}
+          />
+        )}
+
+        {isModalOpen && (
+          <AddOrderFormModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
           />
         )}
       </div>

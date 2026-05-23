@@ -1,11 +1,8 @@
 import { useState } from "react";
-import { Calendar, Filter, Plus } from "lucide-react";
+import { Calendar, Filter } from "lucide-react";
 import PropTypes from "prop-types";
-import AddButton from "../buttons/AddButton";
-import AddOrderFormModal from "../modals/formModals/AddOrderFormModal";
 
 const ToolbarWithDateFilter_1 = ({ onFilterChange, onDateFilterChange }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All Time");
   const [showCustomDate, setShowCustomDate] = useState(false);
   const [customDateRange, setCustomDateRange] = useState({
@@ -51,7 +48,7 @@ const ToolbarWithDateFilter_1 = ({ onFilterChange, onDateFilterChange }) => {
       <nav className="flex items-center text-sm text-gray-600 mb-4">
         <span className="text-blue-600 hover:text-blue-700 cursor-pointer transition-colors">Dashboard</span>
         <span className="mx-2 text-gray-400">/</span>
-        <span className="text-gray-900 font-medium">Orders</span>
+        <span className="text-gray-900 font-medium">Order Management</span>
       </nav>
 
       {/* Main Toolbar */}
@@ -60,7 +57,7 @@ const ToolbarWithDateFilter_1 = ({ onFilterChange, onDateFilterChange }) => {
         <div className="flex items-center gap-3">
           <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Order Management</h1>
             <p className="text-sm text-gray-500 mt-1">Manage and track all customer orders</p>
           </div>
         </div>
@@ -138,13 +135,6 @@ const ToolbarWithDateFilter_1 = ({ onFilterChange, onDateFilterChange }) => {
             )}
           </div>
 
-          {/* Create Order Button */}
-          <AddButton 
-            text="Create Order" 
-            onClick={() => setIsModalOpen(true)}
-            icon={<Plus size={18} />}
-            className="bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all rounded-md p-2 text-white"
-          />
         </div>
       </div>
 
@@ -171,7 +161,6 @@ const ToolbarWithDateFilter_1 = ({ onFilterChange, onDateFilterChange }) => {
         </div>
       )}
 
-      {isModalOpen && <AddOrderFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />}
     </div>
   );
 };

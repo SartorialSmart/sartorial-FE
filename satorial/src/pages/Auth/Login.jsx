@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import MessageModal from "../../components/modals/MessageModal";
 import loginBg from "../../assets/images/bg-2.jpg";
-import Logo from "../../assets/images/Logo.png";
+import Logo from "../../assets/images/Logo-2.png";
 import { useNavigate, Link } from "react-router-dom";
 import googleIcon from "../../assets/images/google-logo.svg";
 import twitterIcon from "../../assets/images/twitter-logo.svg";
@@ -139,7 +139,7 @@ const Login = () => {
           <img
             src={Logo}
             alt="Sartorial"
-            className="absolute left-0 top-2 h-40 lg:h-48 w-auto mb-6 invert"
+            className="absolute left-0 top-2 h-40 lg:h-48 w-auto mb-6"
             style={{ transform: 'translate(-56px,-28px) scale(0.85)', zIndex: 10 }}
           />
           <div className="mt-auto pb-12 px-6" style={{ transform: 'translateY(100px)' }}>

@@ -114,7 +114,7 @@ const ToolbarWithDateFilter_2 = ({
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
-            <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Order Management</h1>
           </div>
 
           {/* Status Filter */}

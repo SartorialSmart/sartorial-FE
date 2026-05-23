@@ -3,7 +3,7 @@ import AuthService from "../../services/AuthService";
 import { useNavigate, Link } from "react-router-dom";
 import MessageModal from "../../components/modals/MessageModal";
 import registerBg from "../../assets/images/bg-2.jpg";
-import Logo from "../../assets/images/Logo.png";
+import Logo from "../../assets/images/Logo-2.png";
 import { extractErrorMessage } from "../../../utils/errorUtils";
 import SuccessModal from "../../components/modals/SuccessModal";
 
@@ -80,7 +80,7 @@ const OrganizationRegister = () => {
           <img
             src={Logo}
             alt="Sartorial"
-            className="absolute left-0 top-2 h-40 lg:h-48 w-auto mb-6 invert"
+            className="absolute left-0 top-2 h-40 lg:h-48 w-auto mb-6"
             style={{ transform: 'translate(-36px,-28px) scale(0.85)', zIndex: 10 }}
           />
 
