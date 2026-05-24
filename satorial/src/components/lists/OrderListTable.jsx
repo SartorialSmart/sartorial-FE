@@ -4,7 +4,7 @@ import {
   MoreVertical, Search, Filter, Download, Eye, Edit, Truck, FileText,
   Calendar, User, ChevronDown, X, Check, Loader2, SlidersHorizontal,
   Plus, Users, CreditCard, Package, AlertCircle, BarChart3, RefreshCw,
-  ShoppingBag, Clock, CheckCircle, XCircle, TrendingUp, Bell, UserCheck
+  ShoppingBag, Clock, CheckCircle, XCircle, TrendingUp, Bell
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import OrderService from "../../services/OrderService";
@@ -15,11 +15,10 @@ import AddOrderFormModal from "../modals/formModals/AddOrderFormModal";
 
 const columns = [
   { key: "client_full_name", label: "Client", sortable: true, icon: Users },
-  { key: "order_title", label: "Order Details", sortable: true, icon: ShoppingBag },
+  { key: "order_title", label: "Details", sortable: true, icon: ShoppingBag },
   { key: "order_price", label: "Amount", sortable: true, icon: CreditCard },
   { key: "ordered_at", label: "Date", sortable: true, icon: Calendar },
   { key: "order_status", label: "Status", sortable: true, icon: BarChart3 },
-  { key: "assignment_status", label: "Assignment", sortable: false, icon: UserCheck },
 ];
 
 const formatAmount = (amount = 0) => `₦${Number(amount).toLocaleString()}`;
@@ -41,7 +40,7 @@ const formatDate = (dateString) => {
   });
 };
 
-const formatCurrencyDisplay = (amount = 0) => `NGN ${Number(amount).toLocaleString()}`;
+const formatCurrencyDisplay = (amount = 0) => `${Number(amount).toLocaleString()}`;
 
 const formatDisplayDate = (dateString) => {
   if (!dateString) return "No date";
@@ -477,8 +476,7 @@ const OrderListTable = () => {
         `"${order.order_title}"`,
         order.order_price,
         `"${formatDisplayDate(order.ordered_at)}"`,
-        `"${order.order_status}"`,
-        `"${order.assignment_status || 'Not Assigned'}"`
+        `"${order.order_status}"`
       ].join(","))
     ].join("\n");
 
@@ -511,141 +509,141 @@ const OrderListTable = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50 min-h-screen">
+    <div className="p-3 sm:p-4 bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Orders Management
             </h1>
-            <p className="text-gray-600 mt-1">Manage and track all your orders efficiently</p>
+            <p className="text-sm text-gray-500 mt-0.5">Manage and track all your orders efficiently</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={refreshOrders}
               disabled={isRefreshing}
-              className="p-2.5 hover:bg-white rounded-xl transition-all disabled:opacity-50 border border-gray-200 shadow-sm"
+              className="p-2 hover:bg-white rounded-lg transition-all disabled:opacity-50 border border-gray-200 shadow-sm"
               title="Refresh orders"
             >
-              <RefreshCw size={20} className={`text-gray-600 ${isRefreshing ? "animate-spin" : ""}`} />
+              <RefreshCw size={16} className={`text-gray-600 ${isRefreshing ? "animate-spin" : ""}`} />
             </button>
             <button
               onClick={handleExport}
-              className="hidden sm:flex items-center gap-2 px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-white hover:border-gray-400 transition-all shadow-sm font-medium"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-white hover:border-gray-400 transition-all shadow-sm text-sm font-medium"
             >
-              <Download size={16} />
+              <Download size={14} />
               Export
             </button>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl flex items-center gap-2"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow hover:shadow-lg flex items-center gap-1.5 text-sm"
             >
-              <Plus size={18} />
+              <Plus size={16} />
               New Order
             </button>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-2xl p-5 shadow-md border border-gray-100 hover:shadow-lg transition-all">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm font-medium">Total Orders</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalOrders}</p>
+                <p className="text-gray-500 text-xs font-medium">Total Orders</p>
+                <p className="text-2xl font-bold text-gray-900 mt-0.5">{stats.totalOrders}</p>
               </div>
-              <div className="p-3 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shadow-sm">
-                <ShoppingBag className="text-blue-600" size={24} />
+              <div className="p-2.5 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg">
+                <ShoppingBag className="text-blue-600" size={20} />
               </div>
             </div>
-            <div className="mt-3 text-sm text-gray-600">
+            <div className="mt-2 text-xs text-gray-600">
               <span className="font-semibold text-blue-600">{stats.filterCount}</span> shown with filters
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-md border border-gray-100 hover:shadow-lg transition-all">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm font-medium">Total Value</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">₦{(stats.totalAmount / 1000).toFixed(0)}K</p>
+                <p className="text-gray-500 text-xs font-medium">Total Value</p>
+                <p className="text-2xl font-bold text-gray-900 mt-0.5">{(stats.totalAmount / 1000).toFixed(0)}K</p>
               </div>
-              <div className="p-3 bg-gradient-to-br from-green-100 to-green-200 rounded-xl shadow-sm">
-                <CreditCard className="text-green-600" size={24} />
+              <div className="p-2.5 bg-gradient-to-br from-green-100 to-green-200 rounded-lg">
+                <CreditCard className="text-green-600" size={20} />
               </div>
             </div>
-            <div className="mt-3 text-sm text-gray-600">
-              ₦{Math.round(stats.avgOrderValue).toLocaleString()} average
+            <div className="mt-2 text-xs text-gray-600">
+              {Math.round(stats.avgOrderValue).toLocaleString()} average
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-md border border-gray-100 hover:shadow-lg transition-all">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm font-medium">Pending</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{stats.pendingOrders}</p>
+                <p className="text-gray-500 text-xs font-medium">Pending</p>
+                <p className="text-2xl font-bold text-gray-900 mt-0.5">{stats.pendingOrders}</p>
               </div>
-              <div className="p-3 bg-gradient-to-br from-amber-100 to-amber-200 rounded-xl shadow-sm">
-                <Clock className="text-amber-600" size={24} />
+              <div className="p-2.5 bg-gradient-to-br from-amber-100 to-amber-200 rounded-lg">
+                <Clock className="text-amber-600" size={20} />
               </div>
             </div>
-            <div className="mt-3 text-sm text-gray-600">
+            <div className="mt-2 text-xs text-gray-600">
               {stats.totalOrders > 0 ? Math.round((stats.pendingOrders / stats.totalOrders) * 100) : 0}% of total
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-md border border-gray-100 hover:shadow-lg transition-all">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm font-medium">Completed</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{stats.completedOrders}</p>
+                <p className="text-gray-500 text-xs font-medium">Completed</p>
+                <p className="text-2xl font-bold text-gray-900 mt-0.5">{stats.completedOrders}</p>
               </div>
-              <div className="p-3 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl shadow-sm">
-                <CheckCircle className="text-emerald-600" size={24} />
+              <div className="p-2.5 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-lg">
+                <CheckCircle className="text-emerald-600" size={20} />
               </div>
             </div>
-            <div className="mt-3 text-sm text-gray-600">
+            <div className="mt-2 text-xs text-gray-600">
               {stats.totalOrders > 0 ? Math.round((stats.completedOrders / stats.totalOrders) * 100) : 0}% success rate
             </div>
           </div>
         </div>
 
         {/* Search and Filter Bar */}
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-5 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+          <div className="flex flex-col lg:flex-row gap-3">
             {/* Search Input */}
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                 <input
                   type="text"
-                  placeholder="Search orders by client name, order title, status, ID..."
+                  placeholder="Search orders..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  className="w-full pl-9 pr-9 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    <X size={18} />
+                    <X size={16} />
                   </button>
                 )}
               </div>
             </div>
 
             {/* Filter Buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className={`px-5 py-3 rounded-xl flex items-center gap-2 transition-all font-medium shadow-sm ${
+                className={`px-4 py-2 rounded-lg flex items-center gap-1.5 transition-all text-sm font-medium ${
                   showAdvancedFilters || statusFilter !== "all" || dateFilter !== "all" || amountFilter !== "all" || selectedTags.length > 0
-                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md"
+                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-sm"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
-                <SlidersHorizontal size={18} />
+                <SlidersHorizontal size={16} />
                 <span className="hidden sm:inline">Filters</span>
                 {(statusFilter !== "all" || dateFilter !== "all" || amountFilter !== "all" || selectedTags.length > 0) && (
                   <span className="bg-white text-blue-600 text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
@@ -658,38 +656,38 @@ const OrderListTable = () => {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="appearance-none bg-white border-2 border-gray-200 text-gray-700 px-5 py-3 rounded-xl hover:border-gray-300 transition-all pr-10 outline-none cursor-pointer min-w-40 font-medium shadow-sm"
+                  className="appearance-none bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:border-gray-300 transition-all pr-8 outline-none cursor-pointer min-w-36 text-sm font-medium"
                 >
                   {statusOptions.map(option => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400" size={18} />
+                <ChevronDown className="absolute right-2.5 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400" size={15} />
               </div>
 
               <button
                 onClick={handleExport}
-                className="sm:hidden px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-white transition-all shadow-sm"
+                className="sm:hidden px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white transition-all shadow-sm"
               >
-                <Download size={18} />
+                <Download size={16} />
               </button>
             </div>
           </div>
 
           {/* Advanced Filters Panel */}
           {showAdvancedFilters && (
-            <div ref={filterRef} className="mt-5 p-5 border-t-2 border-gray-100 animate-fadeIn bg-gray-50 rounded-xl">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div ref={filterRef} className="mt-3 p-4 border-t border-gray-100 animate-fadeIn bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Date Filter */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    <Calendar size={16} className="inline mr-2" />
+                  <label className="block text-xs font-semibold text-gray-700 mb-2">
+                    <Calendar size={13} className="inline mr-1.5" />
                     Date Range
                   </label>
                   <select
                     value={dateFilter}
                     onChange={(e) => setDateFilter(e.target.value)}
-                    className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium"
+                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     {dateOptions.map(option => (
                       <option key={option.value} value={option.value}>
@@ -701,14 +699,14 @@ const OrderListTable = () => {
 
                 {/* Amount Filter */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    <CreditCard size={16} className="inline mr-2" />
+                  <label className="block text-xs font-semibold text-gray-700 mb-2">
+                    <CreditCard size={13} className="inline mr-1.5" />
                     Order Amount
                   </label>
                   <select
                     value={amountFilter}
                     onChange={(e) => setAmountFilter(e.target.value)}
-                    className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium"
+                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     {amountOptions.map(option => (
                       <option key={option.value} value={option.value}>
@@ -720,76 +718,64 @@ const OrderListTable = () => {
 
                 {/* Tags Filter */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    <FileText size={16} className="inline mr-2" />
-                    Order Tags
+                  <label className="block text-xs font-semibold text-gray-700 mb-2">
+                    <Package size={13} className="inline mr-1.5" />
+                    Tags
                   </label>
-                  <div className="flex flex-wrap gap-2">
-                    {tagOptions.slice(0, 3).map(tag => (
+                  <div className="flex flex-wrap gap-1.5">
+                    {tagOptions.map(tag => (
                       <button
-                        key={tag}
-                        onClick={() => toggleTag(tag)}
-                        className={`px-3 py-1.5 rounded-full text-xs transition-all font-medium ${
-                          selectedTags.includes(tag)
-                            ? "bg-blue-600 text-white shadow-md"
-                            : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                        key={tag.value}
+                        onClick={() => toggleTag(tag.value)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                          selectedTags.includes(tag.value)
+                            ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600"
                         }`}
                       >
-                        {selectedTags.includes(tag) && <Check size={12} className="inline mr-1" />}
-                        {tag}
+                        {tag.label}
                       </button>
                     ))}
                   </div>
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Active Filters Display */}
-              {(statusFilter !== "all" || dateFilter !== "all" || amountFilter !== "all" || selectedTags.length > 0) && (
-                <div className="mt-6 pt-5 border-t-2 border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-wrap gap-2">
-                      {statusFilter !== "all" && (
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                          Status: {statusOptions.find(s => s.value === statusFilter)?.label}
-                          <button onClick={() => setStatusFilter("all")} className="hover:bg-blue-200 rounded-full p-0.5">
-                            <X size={14} />
-                          </button>
-                        </span>
-                      )}
-                      {dateFilter !== "all" && (
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-                          Date: {dateOptions.find(d => d.value === dateFilter)?.label}
-                          <button onClick={() => setDateFilter("all")} className="hover:bg-purple-200 rounded-full p-0.5">
-                            <X size={14} />
-                          </button>
-                        </span>
-                      )}
-                      {amountFilter !== "all" && (
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                          Amount: {amountOptions.find(a => a.value === amountFilter)?.label}
-                          <button onClick={() => setAmountFilter("all")} className="hover:bg-green-200 rounded-full p-0.5">
-                            <X size={14} />
-                          </button>
-                        </span>
-                      )}
-                      {selectedTags.map(tag => (
-                        <span key={tag} className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
-                          {tag}
-                          <button onClick={() => toggleTag(tag)} className="hover:bg-indigo-200 rounded-full p-0.5">
-                            <X size={14} />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <button
-                      onClick={clearAllFilters}
-                      className="text-sm text-gray-600 hover:text-gray-800 font-medium underline"
-                    >
-                      Clear all
+          {(dateFilter !== "all" || amountFilter !== "all" || selectedTags.length > 0) && (
+            <div className="flex items-center gap-2 mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex flex-wrap gap-2">
+                {dateFilter !== "all" && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                    Date: {dateOptions.find(d => d.value === dateFilter)?.label}
+                    <button onClick={() => setDateFilter("all")} className="hover:bg-purple-200 rounded-full p-0.5">
+                      <X size={12} />
                     </button>
-                  </div>
-                </div>
-              )}
+                  </span>
+                )}
+                {amountFilter !== "all" && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                    Amount: {amountOptions.find(a => a.value === amountFilter)?.label}
+                    <button onClick={() => setAmountFilter("all")} className="hover:bg-green-200 rounded-full p-0.5">
+                      <X size={12} />
+                    </button>
+                  </span>
+                )}
+                {selectedTags.map(tag => (
+                  <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
+                    {tag}
+                    <button onClick={() => toggleTag(tag)} className="hover:bg-indigo-200 rounded-full p-0.5">
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <button
+                onClick={clearAllFilters}
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium shrink-0"
+              >
+                Clear all
+              </button>
             </div>
           )}
         </div>
@@ -817,31 +803,31 @@ const OrderListTable = () => {
         </div>
 
         {/* Table Container */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {loading ? (
-            <div className="p-16 text-center">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
-              <p className="text-gray-600 mt-6 font-medium text-lg">Loading orders...</p>
+            <div className="p-10 text-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-3 border-blue-600 mx-auto"></div>
+              <p className="text-gray-500 mt-4 text-sm">Loading orders...</p>
             </div>
           ) : error ? (
-            <div className="p-16 text-center">
-              <AlertCircle className="w-20 h-20 text-red-400 mx-auto mb-6" />
-              <p className="text-gray-900 font-semibold text-xl mb-2">Failed to load orders</p>
-              <p className="text-gray-600 mb-8">{error}</p>
+            <div className="p-10 text-center">
+              <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+              <p className="text-gray-900 font-semibold text-base mb-1">Failed to load orders</p>
+              <p className="text-sm text-gray-500 mb-5">{error}</p>
               <button
                 onClick={refreshOrders}
-                className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 transition-all shadow-md font-medium"
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all shadow text-sm font-medium"
               >
                 Retry
               </button>
             </div>
           ) : filteredOrders.length === 0 ? (
-            <div className="p-16 text-center">
-              <Search className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
+            <div className="p-10 text-center">
+              <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
                 {orders.length === 0 ? "No orders created yet" : "No orders found"}
               </h3>
-              <p className="text-gray-600 mb-8">
+              <p className="text-sm text-gray-500 mb-6">
                 {orders.length === 0 
                   ? "Get started by creating your first order." 
                   : "Try adjusting your search or filters to find what you're looking for."}
@@ -849,7 +835,7 @@ const OrderListTable = () => {
               {(searchQuery || statusFilter !== "all" || dateFilter !== "all") && (
                 <button
                   onClick={clearAllFilters}
-                  className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 transition-all shadow-md font-medium"
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all shadow text-sm font-medium"
                 >
                   Clear All Filters
                 </button>
@@ -860,24 +846,24 @@ const OrderListTable = () => {
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                   <tr>
-                    <th className="p-4 w-12">
+                    <th className="p-3 w-10">
                       <input
                         type="checkbox"
                         checked={selectedRows.size === filteredOrders.length && filteredOrders.length > 0}
                         onChange={selectAllRows}
-                        className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                       />
                     </th>
                     {columns.map((col) => (
                       <th
                         key={col.key}
-                        className="p-4 text-left text-sm font-bold text-gray-900"
+                        className="p-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider"
                       >
                         <button
                           onClick={() => col.sortable && handleSort(col.key)}
-                          className={`flex items-center gap-2 ${col.sortable ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''}`}
+                          className={`flex items-center gap-1 ${col.sortable ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''}`}
                         >
-                          {col.icon && <col.icon size={16} className="text-gray-500" />}
+                          {col.icon && <col.icon size={13} className="text-gray-500" />}
                           {col.label}
                           {col.sortable && (
                             <span className="text-gray-400 font-normal">
@@ -890,7 +876,7 @@ const OrderListTable = () => {
                         </button>
                       </th>
                     ))}
-                    <th className="p-4 text-sm font-bold text-gray-900">Actions</th>
+                    <th className="p-3 text-xs font-bold text-gray-900 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -901,116 +887,66 @@ const OrderListTable = () => {
                         selectedRows.has(order.id) ? 'bg-blue-50/70' : ''
                       }`}
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-2.5">
                         <input
                           type="checkbox"
                           checked={selectedRows.has(order.id)}
                           onChange={() => toggleRowSelection(order.id)}
-                          className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                         />
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3 min-w-56">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-sm text-sm">
+                      <td className="px-3 py-2.5">
+                        <div className="flex items-center gap-2.5 min-w-44">
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">
                             {getInitials(getClientName(order))}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold text-gray-900 truncate">{getClientName(order)}</p>
+                            <p className="text-sm font-semibold text-gray-900 truncate">{getClientName(order)}</p>
                             {order.client_email && (
                               <p className="text-xs text-gray-500 truncate">{order.client_email}</p>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <div>
-                          <p className="font-semibold text-gray-900">{order.order_title}</p>
-                          {order.order_description && (
-                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                              {order.order_description}
-                            </p>
-                          )}
+                      <td className="px-3 py-2.5">
+                        <p className="text-sm font-medium text-gray-900 truncate max-w-40">{order.order_title}</p>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <CreditCard size={13} className="text-gray-400 shrink-0" />
+                          <span className="text-sm font-semibold text-gray-900">{formatCurrencyDisplay(order.order_price)}</span>
+                        </div>
+                        {(() => {
+                          const payment = getPaymentState(order);
+                          return (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border mt-1 ${payment.className}`}>
+                              <payment.Icon size={10} />
+                              {payment.label}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar size={13} className="text-gray-400 shrink-0" />
+                          <span className="text-sm text-gray-700">{formatDisplayDate(order.end_date || order.ordered_at)}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <CreditCard size={15} className="text-gray-400" />
-                            <p className="font-bold text-gray-900">{formatCurrencyDisplay(order.order_price)}</p>
-                          </div>
-                          {(() => {
-                            const payment = getPaymentState(order);
-                            return (
-                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${payment.className}`}>
-                                <payment.Icon size={11} />
-                                {payment.label}
-                              </span>
-                            );
-                          })()}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <Calendar size={16} className="text-gray-400" />
-                          <div>
-                            <p className="text-gray-700 font-medium">{formatDisplayDate(order.end_date || order.ordered_at)}</p>
-                            <p className="text-xs text-gray-500">
-                              Created {formatDisplayDate(order.ordered_at)} {formatDisplayTime(order.ordered_at)}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold border shadow-sm ${getStatusClass(order.order_status)}`}>
+                      <td className="px-3 py-2.5">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusClass(order.order_status)}`}>
                           {order.order_status}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-between gap-3 min-w-64">
-                          {order.assignment_status === "Assigned" ? (
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-green-500 rounded-full shadow-sm"></div>
-                              <span className="text-sm text-gray-700 font-medium">Assigned</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                              <span className="text-sm text-gray-500">Not Assigned</span>
-                            </div>
-                          )}
-                          
-                          {/* CRITICAL FIX: Assign button only for Pending orders */}
-                          {!order.assignment_status && order.order_status === "Pending" && (
-                            <button
-                              onClick={() => handleAssignClick(order)}
-                              className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-all shadow-sm font-medium flex items-center gap-1.5"
-                            >
-                              <UserCheck size={14} />
-                              Assign
-                            </button>
-                          )}
-                          
-                          {/* CRITICAL FIX: Reassign button for all other statuses except Cancelled */}
-                          {order.assignment_status && order.order_status !== "Cancelled" && (
-                            <button
-                              onClick={() => handleReassignClick(order)}
-                              className="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-all shadow-sm font-medium flex items-center gap-1.5"
-                            >
-                              <RefreshCw size={14} />
-                              Reassign
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
+
+                      <td className="px-3 py-2.5">
                         <button
                           ref={(el) => (buttonRefs.current[index] = el)}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700 relative border border-gray-200"
+                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700 border border-gray-200"
                           onClick={() => toggleDropdown(index)}
                         >
-                          <MoreVertical size={18} />
+                          <MoreVertical size={15} />
                           {index === activeDropdown && (
-                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse"></span>
+                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
                           )}
                         </button>
                       </td>
@@ -1086,38 +1022,7 @@ const OrderListTable = () => {
                   </div>
                 </button>
               </li>
-              {!filteredOrders[activeDropdown]?.assignment_status && filteredOrders[activeDropdown]?.order_status === "Pending" && (
-                <li className="border-t-2 border-gray-100">
-                  <button
-                    onClick={() => handleAssignClick(filteredOrders[activeDropdown])}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer w-full text-left transition-all"
-                  >
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <UserCheck size={16} className="text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">Assign Staff</p>
-                      <p className="text-xs text-gray-500">Allocate to team member</p>
-                    </div>
-                  </button>
-                </li>
-              )}
-              {filteredOrders[activeDropdown]?.assignment_status && filteredOrders[activeDropdown]?.order_status !== "Cancelled" && (
-                <li className="border-t-2 border-gray-100">
-                  <button
-                    onClick={() => handleReassignClick(filteredOrders[activeDropdown])}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer w-full text-left transition-all"
-                  >
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <RefreshCw size={16} className="text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">Reassign Staff</p>
-                      <p className="text-xs text-gray-500">Change team member</p>
-                    </div>
-                  </button>
-                </li>
-              )}
+
             </ul>
           </div>
         )}
