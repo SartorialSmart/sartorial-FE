@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import OrderService from "../../../services/OrderService";
+import SettingsService from "../../../services/settings";
+import { getLogoUrl, getLocalInvoiceSettings } from "../../../utils/localImageService";
 import {
   Download,
   Share2,
@@ -36,7 +38,21 @@ const OrderInvoice = ({ onClose, order }) => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
   const [activeTab, setActiveTab] = useState("preview");
+  const [invoiceLayout, setInvoiceLayout] = useState("layout1");
   const invoiceRef = useRef(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await SettingsService.Invoice.getSettings();
+        setInvoiceLayout(data.selected_layout || "layout1");
+      } catch {
+        const local = getLocalInvoiceSettings();
+        if (local?.selectedLayout) setInvoiceLayout(local.selectedLayout);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -454,202 +470,227 @@ Thank you for your business! 🙏`;
                   {/* Left Column - Invoice Preview */}
                   <div className="lg:col-span-2">
                     <div id="invoice-content" ref={invoiceRef} className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
-                      {/* Invoice Header */}
-                      <div className="flex justify-between items-start mb-8 pb-6 border-b border-gray-200">
-                        <div>
-                          <div className="flex items-center gap-3 mb-2">
-                            {orderData.business_profile?.logo_url ? (
-                              <img
-                                src={orderData.business_profile.logo_url}
-                                alt="Business Logo"
-                                className="w-10 h-10 object-contain rounded-lg"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                                <Building className="text-white" size={20} />
-                              </div>
-                            )}
+                      {invoiceLayout === "layout1" ? (
+                        /* ========== LAYOUT 1: CLASSIC ========== */
+                        <>
+                          <div className="flex justify-between items-start mb-8 pb-6 border-b border-gray-200">
                             <div>
-                              <h1 className="text-2xl font-bold text-gray-900">INVOICE</h1>
-                              <p className="text-sm text-gray-600">{invoiceNumber}</p>
-                            </div>
-                          </div>
-                          <p className="text-gray-500 text-sm">Issued by {orderData.business_profile?.business_name || "Your Business"}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-blue-600 mb-1">{formatAmount(total)}</div>
-                          <div className={`px-3 py-1 rounded-full text-sm font-medium inline-block ${
-                            paymentStatus === "Paid" 
-                              ? "bg-emerald-100 text-emerald-800" 
-                              : "bg-amber-100 text-amber-800"
-                          }`}>
-                            {paymentStatus}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Invoice Details Grid */}
-                      <div className="grid md:grid-cols-2 gap-8 mb-8">
-                        <div>
-                          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Bill From</h3>
-                          <div className="space-y-2">
-                            <p className="font-semibold text-gray-900">{orderData.business_profile?.business_name || "Your Business"}</p>
-                            {orderData.business_profile?.business_email && (
-                              <p className="text-gray-600">{orderData.business_profile.business_email}</p>
-                            )}
-                            {orderData.business_profile?.business_phone && (
-                              <p className="text-gray-600">{orderData.business_profile.business_phone}</p>
-                            )}
-                            {orderData.business_profile?.address && (
-                              <p className="text-gray-600 text-sm">{orderData.business_profile.address}</p>
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Bill To</h3>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <p className="font-semibold text-gray-900">{orderData.client_full_name || "Customer"}</p>
-                              <button
-                                onClick={() => copyToClipboard(orderData.client_full_name, "clientName")}
-                                className="p-1 hover:bg-gray-100 rounded"
-                                title="Copy name"
-                              >
-                                {copiedField === "clientName" ? (
-                                  <Check size={14} className="text-green-600" />
+                              <div className="flex items-center gap-3 mb-2">
+                                {getLogoUrl(orderData.business_profile?.logo_url) ? (
+                                  <img src={getLogoUrl(orderData.business_profile?.logo_url)} alt="Business Logo" className="w-10 h-10 object-contain rounded-lg" />
                                 ) : (
-                                  <Copy size={14} className="text-gray-400" />
-                                )}
-                              </button>
-                            </div>
-                            {orderData.client_email && (
-                              <div className="flex items-center justify-between">
-                                <p className="text-gray-600">{orderData.client_email}</p>
-                                <button
-                                  onClick={() => copyToClipboard(orderData.client_email, "clientEmail")}
-                                  className="p-1 hover:bg-gray-100 rounded"
-                                  title="Copy email"
-                                >
-                                  {copiedField === "clientEmail" ? (
-                                    <Check size={14} className="text-green-600" />
-                                  ) : (
-                                    <Copy size={14} className="text-gray-400" />
-                                  )}
-                                </button>
-                              </div>
-                            )}
-                            {orderData.client_phone && (
-                              <div className="flex items-center justify-between">
-                                <p className="text-gray-600">{orderData.client_phone}</p>
-                                <button
-                                  onClick={() => copyToClipboard(orderData.client_phone, "clientPhone")}
-                                  className="p-1 hover:bg-gray-100 rounded"
-                                  title="Copy phone"
-                                >
-                                  {copiedField === "clientPhone" ? (
-                                    <Check size={14} className="text-green-600" />
-                                  ) : (
-                                    <Copy size={14} className="text-gray-400" />
-                                  )}
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Dates Section */}
-                      <div className="grid grid-cols-3 gap-4 mb-8 p-4 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="text-sm text-gray-500 mb-1">Issue Date</p>
-                          <p className="font-medium text-gray-900">{formatDate(orderData.ordered_at || orderData.created_at)}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500 mb-1">Due Date</p>
-                          <p className="font-medium text-gray-900">{calculateDueDate(orderData.ordered_at || orderData.created_at)}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500 mb-1">Payment Terms</p>
-                          <p className="font-medium text-gray-900">12 days</p>
-                        </div>
-                      </div>
-
-                      {/* Order Items */}
-                      <div className="mb-8">
-                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Order Details</h3>
-                        <div className="overflow-hidden border border-gray-200 rounded-lg">
-                          <table className="w-full">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Description</th>
-                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Amount</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                              <tr>
-                                <td className="px-4 py-3">
-                                  <div>
-                                    <p className="font-medium text-gray-900">{orderData.order_title || "Order"}</p>
-                                    {orderData.order_description && (
-                                      <p className="text-sm text-gray-500 mt-1">{orderData.order_description}</p>
-                                    )}
+                                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                                    <Building className="text-white" size={20} />
                                   </div>
-                                </td>
-                                <td className="px-4 py-3 text-right font-medium text-gray-900">
-                                  {formatAmount(subtotal)}
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-
-                      {/* Summary */}
-                      <div className="border-t border-gray-200 pt-6">
-                        <div className="max-w-xs ml-auto space-y-3">
-                          <div className="flex justify-between text-gray-600">
-                            <span>Subtotal</span>
-                            <span className="font-medium">{formatAmount(subtotal)}</span>
-                          </div>
-                          <div className="flex justify-between text-gray-600">
-                            <span>VAT (7.5%)</span>
-                            <span className="font-medium">{formatAmount(vat)}</span>
-                          </div>
-                          {paidAmount > 0 && (
-                            <div className="flex justify-between text-gray-600">
-                              <span>Amount Paid</span>
-                              <span className="font-medium text-green-600">-{formatAmount(paidAmount)}</span>
+                                )}
+                                <div>
+                                  <h1 className="text-2xl font-bold text-gray-900">INVOICE</h1>
+                                  <p className="text-sm text-gray-600">{invoiceNumber}</p>
+                                </div>
+                              </div>
+                              <p className="text-gray-500 text-sm">Issued by {orderData.business_profile?.business_name || "Your Business"}</p>
                             </div>
-                          )}
-                          <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                            <span className="font-bold text-gray-900">Total</span>
-                            <span className="text-xl font-bold text-gray-900">{formatAmount(balanceDue > 0 ? balanceDue : total)}</span>
-                          </div>
-                          {balanceDue > 0 && (
-                            <div className="flex justify-between items-center pt-2">
-                              <span className="text-sm text-gray-500">Balance Due</span>
-                              <span className="text-lg font-bold text-amber-600">{formatAmount(balanceDue)}</span>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-blue-600 mb-1">{formatAmount(total)}</div>
+                              <div className={`px-3 py-1 rounded-full text-sm font-medium inline-block ${paymentStatus === "Paid" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
+                                {paymentStatus}
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      </div>
+                          </div>
 
-                      {/* Footer */}
-                      <div className="mt-8 pt-6 border-t border-gray-200">
-                        <div className="flex items-center justify-between text-sm text-gray-500">
-                          <div className="flex items-center gap-4">
-                            <span className="flex items-center gap-1">
-                              <Shield size={14} />
-                              Terms & Conditions Apply
-                            </span>
-                            <span>•</span>
-                            <span>Thank you for your business!</span>
+                          <div className="grid md:grid-cols-2 gap-8 mb-8">
+                            <div>
+                              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Bill From</h3>
+                              <div className="space-y-2">
+                                <p className="font-semibold text-gray-900">{orderData.business_profile?.business_name || "Your Business"}</p>
+                                {orderData.business_profile?.business_email && <p className="text-gray-600">{orderData.business_profile.business_email}</p>}
+                                {orderData.business_profile?.business_phone && <p className="text-gray-600">{orderData.business_profile.business_phone}</p>}
+                                {orderData.business_profile?.address && <p className="text-gray-600 text-sm">{orderData.business_profile.address}</p>}
+                              </div>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Bill To</h3>
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <p className="font-semibold text-gray-900">{orderData.client_full_name || "Customer"}</p>
+                                  <button onClick={() => copyToClipboard(orderData.client_full_name, "clientName")} className="p-1 hover:bg-gray-100 rounded" title="Copy name">
+                                    {copiedField === "clientName" ? <Check size={14} className="text-green-600" /> : <Copy size={14} className="text-gray-400" />}
+                                  </button>
+                                </div>
+                                {orderData.client_email && (
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-gray-600">{orderData.client_email}</p>
+                                    <button onClick={() => copyToClipboard(orderData.client_email, "clientEmail")} className="p-1 hover:bg-gray-100 rounded" title="Copy email">
+                                      {copiedField === "clientEmail" ? <Check size={14} className="text-green-600" /> : <Copy size={14} className="text-gray-400" />}
+                                    </button>
+                                  </div>
+                                )}
+                                {orderData.client_phone && (
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-gray-600">{orderData.client_phone}</p>
+                                    <button onClick={() => copyToClipboard(orderData.client_phone, "clientPhone")} className="p-1 hover:bg-gray-100 rounded" title="Copy phone">
+                                      {copiedField === "clientPhone" ? <Check size={14} className="text-green-600" /> : <Copy size={14} className="text-gray-400" />}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-xs">Generated on {formatDateTime(new Date().toISOString())}</p>
+
+                          <div className="grid grid-cols-3 gap-4 mb-8 p-4 bg-gray-50 rounded-lg">
+                            <div>
+                              <p className="text-sm text-gray-500 mb-1">Issue Date</p>
+                              <p className="font-medium text-gray-900">{formatDate(orderData.ordered_at || orderData.created_at)}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500 mb-1">Due Date</p>
+                              <p className="font-medium text-gray-900">{calculateDueDate(orderData.ordered_at || orderData.created_at)}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500 mb-1">Payment Terms</p>
+                              <p className="font-medium text-gray-900">12 days</p>
+                            </div>
+                          </div>
+
+                          <div className="mb-8">
+                            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Order Details</h3>
+                            <div className="overflow-hidden border border-gray-200 rounded-lg">
+                              <table className="w-full">
+                                <thead className="bg-gray-50">
+                                  <tr>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Description</th>
+                                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Amount</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                  <tr>
+                                    <td className="px-4 py-3">
+                                      <div>
+                                        <p className="font-medium text-gray-900">{orderData.order_title || "Order"}</p>
+                                        {orderData.order_description && <p className="text-sm text-gray-500 mt-1">{orderData.order_description}</p>}
+                                      </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-medium text-gray-900">{formatAmount(subtotal)}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-gray-200 pt-6">
+                            <div className="max-w-xs ml-auto space-y-3">
+                              <div className="flex justify-between text-gray-600"><span>Subtotal</span><span className="font-medium">{formatAmount(subtotal)}</span></div>
+                              <div className="flex justify-between text-gray-600"><span>VAT (7.5%)</span><span className="font-medium">{formatAmount(vat)}</span></div>
+                              {paidAmount > 0 && <div className="flex justify-between text-gray-600"><span>Amount Paid</span><span className="font-medium text-green-600">-{formatAmount(paidAmount)}</span></div>}
+                              <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                                <span className="font-bold text-gray-900">Total</span>
+                                <span className="text-xl font-bold text-gray-900">{formatAmount(balanceDue > 0 ? balanceDue : total)}</span>
+                              </div>
+                              {balanceDue > 0 && (
+                                <div className="flex justify-between items-center pt-2">
+                                  <span className="text-sm text-gray-500">Balance Due</span>
+                                  <span className="text-lg font-bold text-amber-600">{formatAmount(balanceDue)}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="mt-8 pt-6 border-t border-gray-200">
+                            <div className="flex items-center justify-between text-sm text-gray-500">
+                              <div className="flex items-center gap-4">
+                                <span className="flex items-center gap-1"><Shield size={14} /> Terms & Conditions Apply</span>
+                                <span>•</span>
+                                <span>Thank you for your business!</span>
+                              </div>
+                              <div className="text-right"><p className="text-xs">Generated on {formatDateTime(new Date().toISOString())}</p></div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        /* ========== LAYOUT 2: MODERN ========== */
+                        <div className="flex">
+                          <div className="w-56 bg-gradient-to-b from-blue-900 to-blue-800 text-white p-6 rounded-l-lg shrink-0">
+                            <div className="mb-8">
+                              {getLogoUrl(orderData.business_profile?.logo_url) ? (
+                                <img src={getLogoUrl(orderData.business_profile?.logo_url)} alt="Business Logo" className="w-14 h-14 object-contain rounded-lg bg-white p-1" />
+                              ) : (
+                                <div className="w-14 h-14 bg-white/20 rounded-lg flex items-center justify-center"><Building className="text-white" size={24} /></div>
+                              )}
+                              <h2 className="text-lg font-bold mt-3">{orderData.business_profile?.business_name || "Your Business"}</h2>
+                            </div>
+                            <div className="space-y-4 text-sm text-blue-100">
+                              {orderData.business_profile?.business_email && <p>{orderData.business_profile.business_email}</p>}
+                              {orderData.business_profile?.business_phone && <p>{orderData.business_profile.business_phone}</p>}
+                              {orderData.business_profile?.address && <p className="text-xs">{orderData.business_profile.address}</p>}
+                            </div>
+                            <div className="mt-8 pt-6 border-t border-blue-700">
+                              <p className="text-xs text-blue-300 uppercase tracking-wider mb-2">Issued</p>
+                              <p className="text-sm font-medium">{formatDate(orderData.ordered_at || orderData.created_at)}</p>
+                              <p className="text-xs text-blue-300 uppercase tracking-wider mt-4 mb-2">Due</p>
+                              <p className="text-sm font-medium">{calculateDueDate(orderData.ordered_at || orderData.created_at)}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex-1 p-6">
+                            <div className="flex justify-between items-start mb-6">
+                              <div>
+                                <h1 className="text-3xl font-bold text-gray-900">INVOICE</h1>
+                                <p className="text-sm text-gray-500">{invoiceNumber}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm text-gray-500 mb-1">Amount Due</p>
+                                <p className="text-2xl font-bold text-gray-900">{formatAmount(balanceDue > 0 ? balanceDue : total)}</p>
+                                <div className={`mt-1 px-3 py-1 rounded-full text-xs font-medium inline-block ${paymentStatus === "Paid" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
+                                  {paymentStatus}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Bill To</p>
+                              <p className="font-semibold text-gray-900">{orderData.client_full_name || "Customer"}</p>
+                              {orderData.client_email && <p className="text-sm text-gray-600">{orderData.client_email}</p>}
+                              {orderData.client_phone && <p className="text-sm text-gray-600">{orderData.client_phone}</p>}
+                            </div>
+
+                            <div className="mb-6">
+                              <table className="w-full">
+                                <thead>
+                                  <tr className="border-b-2 border-gray-200">
+                                    <th className="py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th className="py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr className="border-b border-gray-100">
+                                    <td className="py-4">
+                                      <p className="font-medium text-gray-900">{orderData.order_title || "Order"}</p>
+                                      {orderData.order_description && <p className="text-sm text-gray-500 mt-0.5">{orderData.order_description}</p>}
+                                    </td>
+                                    <td className="py-4 text-right font-medium text-gray-900">{formatAmount(subtotal)}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+
+                            <div className="border-t border-gray-200 pt-4">
+                              <div className="max-w-xs ml-auto space-y-2">
+                                <div className="flex justify-between text-sm text-gray-600"><span>Subtotal</span><span>{formatAmount(subtotal)}</span></div>
+                                <div className="flex justify-between text-sm text-gray-600"><span>VAT (7.5%)</span><span>{formatAmount(vat)}</span></div>
+                                {paidAmount > 0 && <div className="flex justify-between text-sm text-gray-600"><span>Amount Paid</span><span className="text-green-600">-{formatAmount(paidAmount)}</span></div>}
+                                <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                                  <span className="font-bold text-gray-900">Total Due</span>
+                                  <span className="text-xl font-bold text-gray-900">{formatAmount(balanceDue > 0 ? balanceDue : total)}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-8 pt-4 border-t border-gray-200 text-xs text-gray-400 text-center">
+                              Generated on {formatDateTime(new Date().toISOString())} &mdash; Terms & Conditions Apply
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
 

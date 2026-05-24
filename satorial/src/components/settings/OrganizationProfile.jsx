@@ -26,6 +26,7 @@ import {
   FileUpload,
 } from "../common/FormComponents";
 import SuccessModal from "../modals/SuccessModal";
+import { saveImageLocally, getLocalImage, saveProfileLocally, getLocalProfile, STORAGE_KEYS } from "../../utils/localImageService";
 
 const OrganizationProfile = () => {
   const [loading, setLoading] = useState(false);
@@ -76,11 +77,21 @@ const OrganizationProfile = () => {
     try {
       setLoading(true);
       const data = await SettingsService.Profile.getProfile();
-      setProfile(data);
-      setLogoPreview(data.logo_url);
+      const localLogo = getLocalImage(STORAGE_KEYS.LOGO);
+      const profileData = { ...data, logo_url: localLogo || data.logo_url };
+      setProfile(profileData);
+      setLogoPreview(localLogo || data.logo_url);
+      saveProfileLocally(profileData);
     } catch (error) {
       console.error("Error fetching profile:", error);
-      message.error("Failed to load profile");
+      const localProfile = getLocalProfile();
+      if (localProfile) {
+        const localLogo = getLocalImage(STORAGE_KEYS.LOGO);
+        setProfile({ ...localProfile, logo_url: localLogo || localProfile.logo_url || "" });
+        setLogoPreview(localLogo || localProfile.logo_url || null);
+      } else {
+        message.error("Failed to load profile");
+      }
     } finally {
       setLoading(false);
     }
@@ -92,11 +103,12 @@ const OrganizationProfile = () => {
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const handleLogoChange = (e) => {
+  const handleLogoChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setProfile((prev) => ({ ...prev, logo: file }));
       setLogoPreview(URL.createObjectURL(file));
+      await saveImageLocally(file, STORAGE_KEYS.LOGO);
     }
   };
 
@@ -129,8 +141,10 @@ const OrganizationProfile = () => {
 
     try {
       setSaving(true);
+      const { logo: profileLogo, ...profileForLocal } = profile;
+      saveProfileLocally(profileForLocal);
 
-      if (profile.logo && typeof profile.logo !== "string") {
+      if (profileLogo && typeof profileLogo !== "string") {
         const formData = new FormData();
         Object.entries(profile).forEach(([key, value]) => {
           if (value !== null && value !== undefined && value !== "") {
@@ -140,7 +154,7 @@ const OrganizationProfile = () => {
 
         await SettingsService.Profile.updateProfile(formData, true);
       } else {
-        const { logo, logo_url, ...updateData } = profile;
+        const { logo: _logo, logo_url, ...updateData } = profile;
         await SettingsService.Profile.updateProfile(updateData);
       }
 
@@ -152,9 +166,15 @@ const OrganizationProfile = () => {
       fetchProfile();
     } catch (error) {
       console.error("Error updating profile:", error);
-      message.error(
-        error.response?.data?.detail || "Failed to update profile"
-      );
+      if (import.meta.env.DEV || location.hostname === "localhost") {
+        setSuccessModal({
+          title: "Profile Saved Locally",
+          message: "Could not reach the server, but your data has been saved locally for preview.",
+          buttonText: "Done",
+        });
+      } else {
+        message.error(error.response?.data?.detail || "Failed to update profile");
+      }
     } finally {
       setSaving(false);
     }

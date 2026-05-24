@@ -9,6 +9,7 @@ import OrderService from "../../../services/OrderService";
 import SettingsService from "../../../services/settings";
 import AddPaymentModal from "../../modals/formModals/AddOrderPaymentFormModal";
 import TrackOrderStatusModal from "../../modals/formModals/TrackOrderStatusModal";
+import { getLogoUrl, getLocalProfile, getLocalInvoiceSettings } from "../../../utils/localImageService";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
@@ -20,6 +21,7 @@ const OrderDetail = () => {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
   const [orgProfile, setOrgProfile] = useState(null);
+  const [invoiceLayout, setInvoiceLayout] = useState("layout1");
 
   // Define all possible statuses in order (Completed before On Delivery)
   const STATUS_FLOW = [
@@ -50,12 +52,37 @@ const OrderDetail = () => {
         setOrgProfile(profile);
       } catch (err) {
         console.error("Error fetching org profile:", err);
+        const localProfile = getLocalProfile();
+        if (localProfile) setOrgProfile(localProfile);
       }
     };
 
     fetchOrderDetails();
     fetchOrgProfile();
   }, [orderId]);
+
+  useEffect(() => {
+    const fetchInvoiceLayout = async () => {
+      try {
+        const settings = await SettingsService.Invoice.getSettings();
+        if (settings?.selected_layout) {
+          setInvoiceLayout(settings.selected_layout);
+          return;
+        }
+        const local = getLocalInvoiceSettings();
+        if (local?.selectedLayout) {
+          setInvoiceLayout(local.selectedLayout);
+        }
+      } catch (err) {
+        console.error("Error fetching invoice layout:", err);
+        const local = getLocalInvoiceSettings();
+        if (local?.selectedLayout) {
+          setInvoiceLayout(local.selectedLayout);
+        }
+      }
+    };
+    fetchInvoiceLayout();
+  }, []);
 
   const handleSavePayment = async () => {
     // AddPaymentForm already called PaymentService.createPayment — just refresh order state
@@ -142,11 +169,15 @@ const OrderDetail = () => {
       const businessAddress = orgProfile ? [orgProfile.address_line1, orgProfile.address_line2, orgProfile.city, orgProfile.state, orgProfile.country].filter(Boolean).join(", ") : "";
       const businessPhone = orgProfile?.business_phone || "";
       const businessEmail = orgProfile?.business_email || "";
-      const businessLogo = orgProfile?.logo_url || "";
+      const businessLogo = getLogoUrl(orgProfile?.logo_url) || "";
 
-      // Build the invoice HTML
-      invoiceContainer.innerHTML = `
-        <div style="font-family: Arial, sans-serif; color: #333;">
+      // Compute payment status
+      const paymentStatus = order.order_status === "Completed" ? "Paid" : "Pending";
+      const paidAmount = order.payments ? order.payments.reduce((sum, p) => sum + Number(p.amount || 0), 0) : 0;
+      const balanceDue = Math.max(0, total - paidAmount);
+
+      const layout1HTML = `
+        <div style="font-family: Arial, sans-serif; color: #333; max-width: 720px; margin: 0 auto;">
           <div style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #2563eb; padding-bottom: 20px;">
             <div>
               ${businessLogo ? `<img src="${businessLogo}" style="max-height: 60px; max-width: 200px; margin-bottom: 10px;" crossorigin="anonymous" />` : ""}
@@ -229,8 +260,95 @@ const OrderDetail = () => {
               </div>
             ` : ''}
           </div>
+
+          <div style="text-align: center; font-size: 11px; color: #999; margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee;">
+            Generated on ${formatDate(new Date().toISOString())} &mdash; Terms &amp; Conditions Apply
+          </div>
         </div>
       `;
+
+      const layout2HTML = `
+        <div style="font-family: Arial, sans-serif; color: #333; max-width: 720px; margin: 0 auto; display: flex;">
+          <div style="width: 180px; background: linear-gradient(180deg, #1e3a5f, #1e40af); color: #fff; padding: 24px; flex-shrink: 0;">
+            ${businessLogo ? `<img src="${businessLogo}" style="width: 48px; height: 48px; object-fit: contain; background: #fff; padding: 4px; border-radius: 8px; margin-bottom: 12px;" crossorigin="anonymous" />` : `
+              <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; margin-bottom: 12px;">B</div>
+            `}
+            <h2 style="font-size: 16px; font-weight: bold; margin: 0 0 16px 0;">${businessName}</h2>
+            ${businessEmail ? `<p style="font-size: 11px; color: #bfdbfe; margin: 0 0 4px 0;">${businessEmail}</p>` : ""}
+            ${businessPhone ? `<p style="font-size: 11px; color: #bfdbfe; margin: 0 0 4px 0;">${businessPhone}</p>` : ""}
+            ${businessAddress ? `<p style="font-size: 10px; color: #bfdbfe; margin: 0;">${businessAddress}</p>` : ""}
+            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.2);">
+              <p style="font-size: 10px; color: #93c5fd; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 4px 0;">Issued</p>
+              <p style="font-size: 13px; font-weight: 500; margin: 0 0 12px 0;">${formatDate(order.ordered_at || order.created_at)}</p>
+              <p style="font-size: 10px; color: #93c5fd; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 4px 0;">Due</p>
+              <p style="font-size: 13px; font-weight: 500; margin: 0;">${calculateDueDate(order.ordered_at || order.created_at)}</p>
+            </div>
+          </div>
+
+          <div style="flex: 1; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+              <div>
+                <h1 style="font-size: 28px; font-weight: bold; margin: 0; color: #111;">Invoice</h1>
+                <p style="font-size: 14px; color: #666; margin: 2px 0 0 0;">${invoiceNumber}</p>
+              </div>
+              <div style="text-align: right;">
+                <p style="font-size: 12px; color: #666; margin: 0 0 4px 0;">Amount Due</p>
+                <p style="font-size: 22px; font-weight: bold; margin: 0; color: #111;">${formatAmount(balanceDue > 0 ? balanceDue : total)}</p>
+                <p style="font-size: 11px; margin: 6px 0 0 0; display: inline-block; padding: 2px 10px; border-radius: 10px; background-color: ${paymentStatus === "Paid" ? "#d1fae5" : "#fef3c7"}; color: ${paymentStatus === "Paid" ? "#065f46" : "#92400e"};">${paymentStatus}</p>
+              </div>
+            </div>
+
+            <div style="background-color: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+              <p style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 4px 0;">Bill To</p>
+              <p style="font-weight: 600; margin: 0; color: #111;">${order.client_full_name || order.client_name || "Customer"}</p>
+              ${order.client_email ? `<p style="font-size: 13px; color: #666; margin: 2px 0 0 0;">${order.client_email}</p>` : ""}
+              ${order.client_phone ? `<p style="font-size: 13px; color: #666; margin: 1px 0 0 0;">${order.client_phone}</p>` : ""}
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="border-bottom: 2px solid #e5e7eb;">
+                  <th style="padding: 10px 0; text-align: left; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Description</th>
+                  <th style="padding: 10px 0; text-align: right; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                  <td style="padding: 14px 0;">
+                    <p style="font-weight: 600; margin: 0; color: #111;">${order.order_title || order.order_name || "Order"}</p>
+                    ${order.order_description ? `<p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">${order.order_description}</p>` : ""}
+                  </td>
+                  <td style="padding: 14px 0; text-align: right; font-weight: 600; color: #111;">${formatAmount(subtotal)}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div style="border-top: 1px solid #e5e7eb; margin-top: 16px; padding-top: 16px;">
+              <div style="max-width: 260px; margin-left: auto;">
+                <div style="display: flex; justify-content: space-between; font-size: 13px; color: #666; padding: 4px 0;">
+                  <span>Subtotal</span><span>${formatAmount(subtotal)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; color: #666; padding: 4px 0;">
+                  <span>VAT (7.5%)</span><span>${formatAmount(vat)}</span>
+                </div>
+                ${paidAmount > 0 ? `
+                <div style="display: flex; justify-content: space-between; font-size: 13px; color: #16a34a; padding: 4px 0;">
+                  <span>Amount Paid</span><span>-${formatAmount(paidAmount)}</span>
+                </div>` : ""}
+                <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; color: #111; padding: 10px 0 0 0; margin-top: 8px; border-top: 1px solid #e5e7eb;">
+                  <span>Total Due</span><span>${formatAmount(balanceDue > 0 ? balanceDue : total)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="text-align: center; font-size: 11px; color: #999; margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee;">
+              Generated on ${formatDate(new Date().toISOString())} &mdash; Terms &amp; Conditions Apply
+            </div>
+          </div>
+        </div>
+      `;
+
+      invoiceContainer.innerHTML = invoiceLayout === "layout2" ? layout2HTML : layout1HTML;
 
       // Convert to canvas and then to PDF
       const canvas = await html2canvas(invoiceContainer, {
@@ -318,7 +436,7 @@ const OrderDetail = () => {
       const rcptBusinessAddress = orgProfile ? [orgProfile.address_line1, orgProfile.address_line2, orgProfile.city, orgProfile.state, orgProfile.country].filter(Boolean).join(", ") : "";
       const rcptBusinessPhone = orgProfile?.business_phone || "";
       const rcptBusinessEmail = orgProfile?.business_email || "";
-      const rcptBusinessLogo = orgProfile?.logo_url || "";
+      const rcptBusinessLogo = getLogoUrl(orgProfile?.logo_url) || "";
 
       // Build receipt HTML
       receiptContainer.innerHTML = `
@@ -604,41 +722,41 @@ const OrderDetail = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2 flex-nowrap">
               <button 
                 onClick={handleTrackOrder}
-                className="px-4 py-2.5 border-2 border-blue-600 text-blue-600 rounded-xl hover:bg-blue-50 transition-all font-medium shadow-sm hover:shadow-md"
+                className="px-3 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-all text-sm font-medium whitespace-nowrap"
               >
-                <Truck className="inline mr-2" size={16} />
+                <Truck className="inline mr-1.5" size={14} />
                 Track Order
               </button>
               <button 
                 onClick={handleGenerateInvoice}
                 disabled={isGeneratingInvoice}
-                className="px-4 py-2.5 border-2 border-purple-600 text-purple-600 rounded-xl hover:bg-purple-50 transition-all font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition-all text-sm font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isGeneratingInvoice ? (
                   <>
-                    <Loader2 className="inline mr-2 animate-spin" size={16} />
+                    <Loader2 className="inline mr-1.5 animate-spin" size={14} />
                     Generating...
                   </>
                 ) : (
                   <>
-                    <FileText className="inline mr-2" size={16} />
+                    <FileText className="inline mr-1.5" size={14} />
                     Invoice
                   </>
                 )}
               </button>
               <button
                 onClick={() => setShowPaymentModal(true)}
-                className="px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all font-medium shadow-md hover:shadow-lg"
+                className="px-3 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all text-sm font-medium whitespace-nowrap"
               >
-                <CreditCard className="inline mr-2" size={16} />
+                <CreditCard className="inline mr-1.5" size={14} />
                 Add Payment
               </button>
               <Link to={`/order/edit/${orderId}`}>
-                <button className="px-4 py-2.5 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl hover:from-gray-800 hover:to-gray-700 transition-all font-medium flex items-center gap-2 shadow-md hover:shadow-lg">
-                  <EditIcon size={16} />
+                <button className="px-3 py-2 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-lg hover:from-gray-800 hover:to-gray-700 transition-all text-sm font-medium flex items-center gap-1.5 whitespace-nowrap">
+                  <EditIcon size={14} />
                   Edit Order
                 </button>
               </Link>

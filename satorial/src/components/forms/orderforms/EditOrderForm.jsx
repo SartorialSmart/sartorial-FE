@@ -32,52 +32,59 @@ const EditOrderForm = () => {
     fileName: "",
   });
 
+  const ALLOWED_FIELDS = ["client", "client_email", "order_title", "order_category", "order_description", "start_date", "end_date", "order_price", "order_type", "initial_deposit", "balance", "assigned_to"];
+
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchOrder = async () => {
       try {
         const data = await OrderService.getOrderById(orderId);
-        if (!data) {
-          throw new Error("Order not found");
-        }
+        if (cancelled) return;
+        if (!data) throw new Error("Order not found");
         setOrder(data);
         setFormData((prev) => ({
           ...prev,
-          ...data,
+          ...Object.fromEntries(ALLOWED_FIELDS.map(k => [k, data[k] ?? ""])),
           start_date: data.start_date ? formatDate(data.start_date) : "",
           end_date: data.end_date ? formatDate(data.end_date) : "",
           fileName: data.order_payment_receipt || "",
         }));
       } catch (error) {
         console.error("Error fetching order:", error);
-        setError({ title: "Error", message: error.message || "Failed to fetch order details." });
+        if (!cancelled) setError({ title: "Error", message: error.message || "Failed to fetch order details." });
       }
     };
 
     const fetchCategories = async () => {
       try {
         const categoryData = await OrderCategoryService.getCategories();
-        setCategories(categoryData);
+        if (!cancelled) setCategories(Array.isArray(categoryData) ? categoryData : []);
       } catch (error) {
         console.error("Error fetching categories:", error);
-        setError({ title: "Error", message: "Failed to fetch categories." });
+        if (!cancelled) setCategories([]);
       }
     };
 
     const fetchClients = async () => {
       try {
         const response = await ClientService.getClients();
-        setClients(Array.isArray(response) ? response : []);
+        if (!cancelled) setClients(Array.isArray(response) ? response : []);
       } catch (error) {
         console.error("Error fetching clients:", error);
-        setError({ title: "Error", message: "Failed to fetch clients." });
+        if (!cancelled) setClients([]);
       }
     };
 
-    fetchOrder();
-    fetchCategories();
-    fetchClients();
+    Promise.all([fetchOrder(), fetchCategories(), fetchClients()]).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    return () => { cancelled = true; };
   }, [orderId]);
 
   const formatDate = (dateString) => {
@@ -127,10 +134,18 @@ const EditOrderForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (saving) return;
+    setSaving(true);
     try {
       const formDataToSend = new FormData();
-      for (const key in formData) {
-        formDataToSend.append(key, formData[key]);
+      for (const key of ALLOWED_FIELDS) {
+        const val = formData[key];
+        if (val !== undefined && val !== null && val !== "") {
+          formDataToSend.append(key, val);
+        }
+      }
+      if (formData.order_payment_receipt instanceof File) {
+        formDataToSend.append("order_payment_receipt", formData.order_payment_receipt);
       }
 
       await OrderService.updateOrder(orderId, formDataToSend);
@@ -141,6 +156,8 @@ const EditOrderForm = () => {
         title: "Error",
         message: "Failed to update order. Please try again.",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -155,8 +172,18 @@ const EditOrderForm = () => {
     }
   };
 
-  if (!order || categories.length === 0 || clients.length === 0) {
+  if (loading && !order) {
     return <p>Loading order details...</p>;
+  }
+
+  if (!order && error) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-red-600 font-medium mb-2">Failed to load order</p>
+        <p className="text-gray-500 text-sm">{error.message}</p>
+        <Link to="/order/orders-list" className="text-blue-500 hover:underline mt-4 inline-block">Back to Orders</Link>
+      </div>
+    );
   }
 
   return (
@@ -439,9 +466,18 @@ const EditOrderForm = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="bg-blue-600 text-white px-6 py-2 rounded-md"
+            disabled={saving}
+            className="bg-blue-600 text-white px-6 py-2 rounded-md disabled:opacity-50 flex items-center gap-2"
           >
-            Save
+            {saving ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Saving...
+              </>
+            ) : "Save"}
           </button>
         </form>
       </div>
