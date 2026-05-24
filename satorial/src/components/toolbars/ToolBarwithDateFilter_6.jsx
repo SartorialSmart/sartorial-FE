@@ -8,6 +8,7 @@ const ToolbarWithDateFilter_6 = ({
   searchQuery = "",
   onSearchChange = () => {},
   onStaffCreated = () => {},
+  title = "Dashboard",
 }) => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,7 +18,7 @@ const ToolbarWithDateFilter_6 = ({
   return (
     <div className="flex items-center justify-between py-4 px-6 rounded-lg shadow-sm">
       <div>
-        <h2 className="text-2xl font-semibold mb-8">Dashboard</h2>
+        <h2 className="text-2xl font-semibold mb-8">{title}</h2>
         <button className="flex items-center gap-2 px-4 py-2 border rounded-lg bg-white border-gray-300">
           Status <ChevronDown size={16} />
         </button>
@@ -51,6 +52,7 @@ ToolbarWithDateFilter_6.propTypes = {
   searchQuery: PropTypes.string,
   onSearchChange: PropTypes.func,
   onStaffCreated: PropTypes.func,
+  title: PropTypes.string,
 };
 
 export default ToolbarWithDateFilter_6;

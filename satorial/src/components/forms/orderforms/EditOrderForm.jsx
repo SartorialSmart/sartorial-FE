@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import OrderService from "../../../services/OrderService";
 import ClientService from "../../../services/ClientService";
 import OrderCategoryService from "../../../services/OrderCategoryService";
+import StaffService from "../../../services/staffServices/StaffService";
 import SuccessModal from "../../modals/SuccessModal";
 import AddPaymentModal from "../../modals/formModals/AddOrderPaymentFormModal";
 
@@ -13,6 +14,7 @@ const EditOrderForm = () => {
   const [order, setOrder] = useState(null);
   const [categories, setCategories] = useState([]);
   const [clients, setClients] = useState([]);
+  const [staffList, setStaffList] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -80,7 +82,17 @@ const EditOrderForm = () => {
       }
     };
 
-    Promise.all([fetchOrder(), fetchCategories(), fetchClients()]).finally(() => {
+    const fetchStaff = async () => {
+      try {
+        const data = await StaffService.listStaff();
+        setStaffList(Array.isArray(data.results) ? data.results : []);
+      } catch (error) {
+        console.error("Error fetching staff:", error);
+        if (!cancelled) setStaffList([]);
+      }
+    };
+
+    Promise.all([fetchOrder(), fetchCategories(), fetchClients(), fetchStaff()]).finally(() => {
       if (!cancelled) setLoading(false);
     });
 
@@ -454,13 +466,22 @@ const EditOrderForm = () => {
             <label className="text-gray-600 text-sm font-medium">
               Assigned To *
             </label>
-            <input
-              type="text"
+            <select
               name="assigned_to"
               value={formData.assigned_to}
               onChange={handleChange}
               className="w-full border p-2 rounded-md"
-            />
+              required
+            >
+              <option value="">Select Staff</option>
+              {staffList
+                .filter((s) => !s.is_exited)
+                .map((staff) => (
+                  <option key={staff.id || staff.slug} value={staff.id || staff.slug}>
+                    {staff.first_name} {staff.last_name} — {staff.staff_role}
+                  </option>
+                ))}
+            </select>
           </div>
 
           {/* Submit Button */}
