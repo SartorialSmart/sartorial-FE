@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  User,
-  Mail,
   CheckCircle,
   Hourglass,
   ClipboardList,
@@ -11,8 +9,6 @@ import {
   Package,
   AlertCircle
 } from "lucide-react";
-import PropTypes from "prop-types";
-import AddButton from "@/components/buttons/AddButton";
 import ClientFormModal from "../modals/formModals/ClientFormModal";
 import ClientService from "../../services/ClientService";
 
@@ -145,14 +141,10 @@ const ClientDashboardOverview = () => {
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
         <div className="mb-4 lg:mb-0">
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Client Dashboard</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Clients Management</h1>
           <p className="text-gray-600 mt-2">Overview of clients and order statistics</p>
         </div>
-        <AddButton 
-          text="New Client" 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all rounded-md p-3 text-white flex align-middle justify-center"
-        />
+
       </div>
 
       {/* Summary Stats */}
@@ -231,45 +223,6 @@ const ClientDashboardOverview = () => {
             )}
           </div>
         ))}
-      </div>
-
-      {/* Additional Insights Section */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Distribution</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Allocated Orders</span>
-              <span className="font-semibold text-gray-900">{dashboardData.allocated_orders}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Unallocated Orders</span>
-              <span className="font-semibold text-gray-900">{dashboardData.unallocated_orders}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Completion Rate</span>
-              <span className="font-semibold text-green-600">{completionRate}%</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="space-y-3">
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className="w-full text-left p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors text-blue-700 font-medium"
-            >
-              + Add New Client
-            </button>
-            <button className="w-full text-left p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors text-green-700 font-medium">
-              📊 View Reports
-            </button>
-            <button className="w-full text-left p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors text-purple-700 font-medium">
-              👥 Manage Clients
-            </button>
-          </div>
-        </div>
       </div>
 
       <ClientFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />

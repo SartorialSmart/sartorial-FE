@@ -31,6 +31,7 @@ import EditOrderFormDisplay from "./pages/orderPages/EditOrderFormDisplay";
 
 import StaffListDisplay from "./pages/staffPages/StaffListDisplay";
 import StaffDetailDisplay from "./pages/staffPages/StaffDetailDisplay";
+import StaffEditDisplay from "./pages/staffPages/StaffEditDisplay";
 import ExitedStaffsListDisplay from "./pages/staffPages/ExitedStaffsListDisplay";
 import PayrollListDisplay from "./pages/staffPages/PayrollListDisplay";
 import GeneratePayrollListDisplay from "./pages/staffPages/GeneratePayrollListDisplay";
@@ -97,6 +98,7 @@ const protectedRoutes = [
 
   { path: "/staff/staff-list", element: <StaffListDisplay /> },
   { path: "/staff/staff-detail/:slug", element: <StaffDetailDisplay /> },
+  { path: "/staff/edit/:slug", element: <StaffEditDisplay /> },
   { path: "/staff/exited-staffs-list", element: <ExitedStaffsListDisplay /> },
   { path: "/staff/payroll-list", element: <PayrollListDisplay /> },
   { path: "/staff/generate-payroll", element: <GeneratePayrollListDisplay /> },

@@ -11,6 +11,7 @@ const StaffListDisplay = () => {
     <StaffSideABrLayout>
       <div className="space-y-6">
         <ToolbarWithDateFilter_6
+          title="Staff Management"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onStaffCreated={() => staffListTableRef.current?.refresh()}
