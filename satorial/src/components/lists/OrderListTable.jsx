@@ -1058,7 +1058,7 @@ const OrderListTable = () => {
         {isModalOpen && (
           <AddOrderFormModal
             isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
+            onClose={() => { setIsModalOpen(false); fetchOrders(); }}
           />
         )}
       </div>
