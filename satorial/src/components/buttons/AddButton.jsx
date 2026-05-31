@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { User } from "lucide-react";
 import PropTypes from "prop-types";
 
 const AddButton = ({ text, onClick, className }) => {
@@ -7,7 +7,7 @@ const AddButton = ({ text, onClick, className }) => {
       onClick={onClick}
       className={`flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm hover:shadow ${className || ""}`}
     >
-      <Plus size={16} />
+      <User size={16} />
       {text}
     </button>
   );
