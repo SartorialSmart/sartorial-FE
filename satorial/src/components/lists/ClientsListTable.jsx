@@ -1,5 +1,5 @@
 import React from "react";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, forwardRef, useImperativeHandle } from "react";
 import PropTypes from "prop-types";
 import { 
   MoreVertical, 
@@ -12,23 +12,19 @@ import {
   MapPin, 
   Loader2, 
   Search, 
-  Filter, 
   AlertCircle,
   ChevronDown,
   Calendar,
   Building,
-  Globe,
   FileText,
   Edit,
-  Download,
-  Upload,
   Check,
   SlidersHorizontal
 } from "lucide-react";
 import ClientService from "../../services/ClientService";
 import { useClient } from "../../contexts/ClientContext";
 
-const ClientsList = () => {
+const ClientsList = forwardRef((_props, ref) => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -36,7 +32,11 @@ const ClientsList = () => {
   const [loading, setLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
+  useImperativeHandle(ref, () => ({
+    handleExport,
+  }));
+
   // Search and Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [filterBy, setFilterBy] = useState("all");
@@ -315,29 +315,12 @@ const ClientsList = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-      <div className="max-w-7xl mx-auto">
+    <div>
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Clients</h1>
             <p className="text-gray-600 mt-1">Manage your client database</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleExport}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
-            >
-              <Download size={16} />
-              Export
-            </button>
-            <a
-              href="/add-client"
-              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-md hover:shadow-lg flex items-center gap-2"
-            >
-              <User size={18} />
-              Add Client
-            </a>
           </div>
         </div>
 
@@ -399,12 +382,6 @@ const ClientsList = () => {
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none" size={18} />
               </div>
 
-              <button
-                onClick={handleExport}
-                className="sm:hidden px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
-              >
-                <Download size={18} />
-              </button>
             </div>
           </div>
 
@@ -539,14 +516,14 @@ const ClientsList = () => {
         </div>
 
         {/* Main Content Card */}
-        <div className="bg-white rounded-2xl shadow-lg border overflow-hidden">
+        <div className={`bg-white rounded-2xl shadow-lg border ${activeDropdown !== null ? '' : 'overflow-hidden'}`}>
           {/* Table Header */}
           <div className="px-6 py-4 border-b">
             <h2 className="text-lg font-semibold text-gray-800">Client List</h2>
           </div>
 
           {/* Table Container */}
-          <div className="overflow-x-auto">
+          <div className={activeDropdown !== null ? 'overflow-visible' : 'overflow-x-auto'}>
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b">
@@ -822,7 +799,6 @@ const ClientsList = () => {
             </div>
           </div>
         )}
-      </div>
 
       <style>{`
         @keyframes fadeIn {
@@ -848,7 +824,7 @@ const ClientsList = () => {
       `}</style>
     </div>
   );
-};
+});
 
 ClientsList.propTypes = {};
 
