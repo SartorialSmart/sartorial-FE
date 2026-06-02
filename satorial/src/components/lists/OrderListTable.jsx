@@ -519,30 +519,6 @@ const OrderListTable = () => {
             </h1>
             <p className="text-sm text-gray-500 mt-0.5">Manage and track all your orders efficiently</p>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={refreshOrders}
-              disabled={isRefreshing}
-              className="p-2 hover:bg-white rounded-lg transition-all disabled:opacity-50 border border-gray-200 shadow-sm"
-              title="Refresh orders"
-            >
-              <RefreshCw size={16} className={`text-gray-600 ${isRefreshing ? "animate-spin" : ""}`} />
-            </button>
-            <button
-              onClick={handleExport}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-white hover:border-gray-400 transition-all shadow-sm text-sm font-medium"
-            >
-              <Download size={14} />
-              Export
-            </button>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow hover:shadow-lg flex items-center gap-1.5 text-sm"
-            >
-              <Plus size={16} />
-              New Order
-            </button>
-          </div>
         </div>
 
         {/* Stats Cards */}

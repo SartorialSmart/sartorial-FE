@@ -11,6 +11,7 @@ const Toolbar_1 = ({
   onFilterChange = () => {},
   filterOptions,
   onExport,
+  hideExport,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -42,17 +43,19 @@ const Toolbar_1 = ({
 
         {/* Actions */}
         <div className="flex items-center gap-3">
-          <button
-            className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-            onClick={onExport}
-          >
-            <Download size={16} />
-            Export
-          </button>
           <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
             <Upload size={16} />
             Upload Clients
           </button>
+          {!hideExport && (
+            <button
+              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+              onClick={onExport}
+            >
+              <Download size={16} />
+              Export
+            </button>
+          )}
           <AddButton text="Add Client" onClick={() => setIsModalOpen(true)} />
         </div>
       </div>
@@ -103,6 +106,7 @@ Toolbar_1.propTypes = {
       label: PropTypes.string,
     })
   ),
+  hideExport: PropTypes.bool,
 };
 
 export default Toolbar_1;
