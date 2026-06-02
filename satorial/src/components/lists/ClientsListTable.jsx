@@ -13,13 +13,8 @@ import {
   Loader2, 
   Search, 
   AlertCircle,
-  ChevronDown,
-  Calendar,
   Building,
-  FileText,
-  Edit,
-  Check,
-  SlidersHorizontal
+  Edit
 } from "lucide-react";
 import ClientService from "../../services/ClientService";
 import { useClient } from "../../contexts/ClientContext";
@@ -41,27 +36,12 @@ const ClientsList = forwardRef((_props, ref) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterBy, setFilterBy] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
-  const [showFilters, setShowFilters] = useState(false);
   const [selectedTags, setSelectedTags] = useState([]);
   const [sortBy, setSortBy] = useState("name");
 
   const { clients, setClients, needsRefresh, clearRefreshFlag } = useClient();
 
   const dropdownRefs = useRef({});
-  const filterRef = useRef(null);
-
-  // Available filter tags
-  const availableTags = ["VIP", "Corporate", "Active", "Inactive", "Prospect", "Recurring"];
-
-  // Date filter options
-  const dateOptions = [
-    { value: "all", label: "All Time" },
-    { value: "today", label: "Today" },
-    { value: "week", label: "This Week" },
-    { value: "month", label: "This Month" },
-    { value: "quarter", label: "This Quarter" },
-    { value: "year", label: "This Year" },
-  ];
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -86,7 +66,6 @@ const ClientsList = forwardRef((_props, ref) => {
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Close dropdowns
       if (
         activeDropdown !== null &&
         dropdownRefs.current[activeDropdown] &&
@@ -95,18 +74,13 @@ const ClientsList = forwardRef((_props, ref) => {
       ) {
         setActiveDropdown(null);
       }
-
-      // Close filter panel
-      if (showFilters && filterRef.current && !filterRef.current.contains(event.target)) {
-        setShowFilters(false);
-      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [activeDropdown, showFilters]);
+  }, [activeDropdown]);
 
   const handleDropdownClick = async (index, clientId) => {
     const newActive = activeDropdown === index ? null : index;
@@ -142,15 +116,6 @@ const ClientsList = forwardRef((_props, ref) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Toggle tag selection
-  const toggleTag = (tag) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
   };
 
   // Clear all filters
@@ -316,192 +281,6 @@ const ClientsList = forwardRef((_props, ref) => {
 
   return (
     <div>
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Clients</h1>
-            <p className="text-gray-600 mt-1">Manage your client database</p>
-          </div>
-        </div>
-
-        {/* Search and Filter Bar */}
-        <div className="bg-white rounded-2xl shadow-sm border p-4 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search Input */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  placeholder="Search clients by name, email, phone, company, or address..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={18} />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Filter Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`px-4 py-3 rounded-lg flex items-center gap-2 transition-all ${
-                  showFilters || filterBy !== "all" || dateFilter !== "all" || selectedTags.length > 0
-                    ? "bg-blue-100 text-blue-700 border border-blue-300"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                <SlidersHorizontal size={18} />
-                <span className="hidden sm:inline">Filters</span>
-                {(filterBy !== "all" || dateFilter !== "all" || selectedTags.length > 0) && (
-                  <span className="bg-blue-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                    {[filterBy !== "all", dateFilter !== "all", selectedTags.length > 0].filter(Boolean).length}
-                  </span>
-                )}
-              </button>
-
-              <div className="relative">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-all pr-10 outline-none cursor-pointer"
-                >
-                  <option value="name">Sort by Name</option>
-                  <option value="email">Sort by Email</option>
-                  <option value="recent">Most Recent</option>
-                  <option value="oldest">Oldest First</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none" size={18} />
-              </div>
-
-            </div>
-          </div>
-
-          {/* Advanced Filters Panel */}
-          {showFilters && (
-            <div ref={filterRef} className="mt-4 p-4 border-t border-gray-200 animate-fadeIn">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Address Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <MapPin size={16} className="inline mr-2" />
-                    Address Filter
-                  </label>
-                  <div className="space-y-2">
-                    {["all", "withAddress", "withoutAddress"].map((option) => (
-                      <label key={option} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="addressFilter"
-                          checked={filterBy === option}
-                          onChange={() => setFilterBy(option)}
-                          className="text-blue-600"
-                        />
-                        <span className="text-sm">
-                          {option === "all" && "All Clients"}
-                          {option === "withAddress" && "With Address"}
-                          {option === "withoutAddress" && "Without Address"}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Date Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Calendar size={16} className="inline mr-2" />
-                    Date Added
-                  </label>
-                  <select
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {dateOptions.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Tags Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <FileText size={16} className="inline mr-2" />
-                    Client Tags
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {availableTags.map(tag => (
-                      <button
-                        key={tag}
-                        onClick={() => toggleTag(tag)}
-                        className={`px-3 py-1.5 rounded-full text-sm transition-all ${
-                          selectedTags.includes(tag)
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
-                      >
-                        {selectedTags.includes(tag) && <Check size={12} className="inline mr-1" />}
-                        {tag}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Active Filters Display */}
-              {(filterBy !== "all" || dateFilter !== "all" || selectedTags.length > 0) && (
-                <div className="mt-6 pt-4 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-wrap gap-2">
-                      {filterBy !== "all" && (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                          {filterBy === "withAddress" ? "With Address" : "Without Address"}
-                          <button onClick={() => setFilterBy("all")}>
-                            <X size={12} />
-                          </button>
-                        </span>
-                      )}
-                      {dateFilter !== "all" && (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                          {dateOptions.find(d => d.value === dateFilter)?.label}
-                          <button onClick={() => setDateFilter("all")}>
-                            <X size={12} />
-                          </button>
-                        </span>
-                      )}
-                      {selectedTags.map(tag => (
-                        <span key={tag} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                          {tag}
-                          <button onClick={() => toggleTag(tag)}>
-                            <X size={12} />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <button
-                      onClick={clearFilters}
-                      className="text-sm text-gray-600 hover:text-gray-800"
-                    >
-                      Clear all
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
         {/* Results Summary */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-gray-600">
@@ -516,14 +295,14 @@ const ClientsList = forwardRef((_props, ref) => {
         </div>
 
         {/* Main Content Card */}
-        <div className={`bg-white rounded-2xl shadow-lg border ${activeDropdown !== null ? '' : 'overflow-hidden'}`}>
+        <div className="bg-white rounded-2xl shadow-lg border">
           {/* Table Header */}
           <div className="px-6 py-4 border-b">
             <h2 className="text-lg font-semibold text-gray-800">Client List</h2>
           </div>
 
           {/* Table Container */}
-          <div className={activeDropdown !== null ? 'overflow-visible' : 'overflow-x-auto'}>
+          <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b">
