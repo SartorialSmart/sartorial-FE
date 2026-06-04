@@ -29,7 +29,6 @@ axiosInstance.interceptors.response.use(
       if (!refreshToken) {
         console.error('No refresh token found, logging out');
         localStorage.removeItem('accessToken');
-        window.location.href = '/login';
         return Promise.reject(error);
       }
 
@@ -49,7 +48,6 @@ axiosInstance.interceptors.response.use(
         console.error('Token refresh failed:', refreshError.response?.data || refreshError.message);
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }
