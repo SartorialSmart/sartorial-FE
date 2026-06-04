@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import OrderService from "../../../services/OrderService";
 import SettingsService from "../../../services/settings";
 import { getLogoUrl, getLocalInvoiceSettings } from "../../../utils/localImageService";
+import { toast } from "react-toastify";
 import {
   Download,
   Share2,
@@ -204,11 +205,10 @@ const OrderInvoice = ({ onClose, order }) => {
           : "INV-0000";
         pdf.save(`Invoice_${invoiceNumber}_${new Date().toISOString().split('T')[0]}.pdf`);
         
-        // Show success notification
-        showNotification("PDF downloaded successfully!", "success");
+        toast.success("PDF downloaded successfully!");
       }
     } catch (error) {
-      showNotification(error.message, "error");
+      toast.error(error.message);
     }
   };
 
@@ -297,31 +297,10 @@ Thank you for your business! 🙏`;
       }
 
       setShowShareModal(false);
-      showNotification(`Invoice shared via ${method === "email" ? "Email" : "WhatsApp"}!`, "success");
+      toast.success(`Invoice shared via ${method === "email" ? "Email" : "WhatsApp"}!`);
     } catch (error) {
-      showNotification("Failed to share invoice", "error");
+      toast.error("Failed to share invoice");
     }
-  };
-
-  const showNotification = (message, type = "info") => {
-    // Create notification element
-    const notification = document.createElement("div");
-    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 animate-slideIn ${
-      type === "success" ? "bg-emerald-500 text-white" :
-      type === "error" ? "bg-red-500 text-white" :
-      "bg-blue-500 text-white"
-    }`;
-    notification.innerHTML = `
-      <div class="flex items-center gap-3">
-        ${type === "success" ? '<CheckCircle size={20} />' : '<AlertCircle size={20} />'}
-        <span>${message}</span>
-      </div>
-    `;
-    document.body.appendChild(notification);
-    setTimeout(() => {
-      notification.classList.add("animate-slideOut");
-      setTimeout(() => document.body.removeChild(notification), 300);
-    }, 3000);
   };
 
   // Invoice data calculations
@@ -940,26 +919,6 @@ Thank you for your business! 🙏`;
       )}
 
       <style>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateX(100%);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        @keyframes slideOut {
-          from {
-            opacity: 1;
-            transform: translateX(0);
-          }
-          to {
-            opacity: 0;
-            transform: translateX(100%);
-          }
-        }
         @keyframes slideUp {
           from {
             opacity: 0;
@@ -973,12 +932,6 @@ Thank you for your business! 🙏`;
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
-        }
-        .animate-slideIn {
-          animation: slideIn 0.3s ease-out;
-        }
-        .animate-slideOut {
-          animation: slideOut 0.3s ease-out;
         }
         .animate-slideUp {
           animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);

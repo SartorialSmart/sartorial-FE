@@ -55,6 +55,7 @@ import SubscriptionPanelDisplay from "./pages/subscriptionPages/SubscriptionPane
 import PricingPlansDisplay from "./pages/subscriptionPages/PricingPlansDisplay";
 import AddVendorFormDisplay from "./pages/orderPages/AddVendorFormDisplay";
 
+import NotificationsListDisplay from "./pages/notificationPages/NotificationsListDisplay";
 import ProfileSettingsDisplay from "./pages/settingsPages/ProfileSettingsDisplay";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
@@ -129,6 +130,8 @@ const protectedRoutes = [
 
   { path: "/subscriptions/panel", element: <SubscriptionPanelDisplay /> },
   { path: "/subscriptions/pricing/plan", element: <PricingPlansDisplay /> },
+
+  { path: "/notifications", element: <NotificationsListDisplay /> },
 
   { path: "/settings", element: <ProfileSettingsDisplay /> },
   { path: "/profile", element: <ProfileSettingsDisplay /> },
