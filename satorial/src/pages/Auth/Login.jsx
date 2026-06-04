@@ -29,7 +29,9 @@ const Login = () => {
 
   // Aggressive state clearing on mount and unmount
   useEffect(() => {
-    // Clear everything on mount
+    // Clear stale auth tokens so they don't interfere with login
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     setShowModal(false);
     setErrorMessage("");
     setSuccessMessage("");

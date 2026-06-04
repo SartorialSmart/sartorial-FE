@@ -7,11 +7,15 @@ const axiosInstance = axios.create({
   },
 });
 
+const PUBLIC_ENDPOINTS = ['/users/login/', '/users/register-organization/', '/users/forgot-password/', '/users/reset-password/'];
+
 axiosInstance.interceptors.request.use(
   async (config) => {
-    let token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (!PUBLIC_ENDPOINTS.some((ep) => config.url.includes(ep))) {
+      let token = localStorage.getItem('accessToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
