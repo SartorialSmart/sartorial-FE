@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { toast } from "react-toastify";
 import { X, Calendar, Upload } from "lucide-react";
 import ClientService from "../../../services/ClientService";
 import SuccessModal from "../../modals/SuccessModal";
@@ -155,6 +157,7 @@ const AddClientForm = ({ onNext, onClose }) => {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
+      toast.warning("Please fill in all required fields or fix invalid entries (highlighted in red).");
       return;
     }
     setLoading(true);
@@ -166,7 +169,9 @@ const AddClientForm = ({ onNext, onClose }) => {
         }
       });
 
+      console.log("[AddClientForm] Sending FormData keys:", [...formDataToSend.keys()]);
       const createdClient = await ClientService.createClient(formDataToSend);
+      console.log("[AddClientForm] Response:", createdClient);
 
       if (createdClient?.id) {
         // setClientId(createdClient.id); // clientId is not used
@@ -213,6 +218,7 @@ const AddClientForm = ({ onNext, onClose }) => {
 
       refreshClients();
     } catch (err) {
+      console.error("[AddClientForm] Error:", err);
       const message = extractErrorMessage(err, "Failed to create client. Please try again.");
       setModalData({ title: "Error!", message, buttonText: "Close" });
     } finally {
@@ -222,8 +228,9 @@ const AddClientForm = ({ onNext, onClose }) => {
 
   return (
     <>
-      {modalData && (
-        <SuccessModal {...modalData} onClose={() => setModalData(null)} />
+      {modalData && createPortal(
+        <SuccessModal {...modalData} onClose={() => setModalData(null)} />,
+        document.body
       )}
 
       <div className="w-full">

@@ -3,17 +3,13 @@ import { API } from "../../api/apiEndpoints";
 
 const ExpensesService = {
   createExpense: (payload) =>
-    apiPost(API.EXPENSE_MANAGEMENT.EXPENSES.CREATE, payload, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
+    apiPost(API.EXPENSE_MANAGEMENT.EXPENSES.CREATE, payload),
 
   getExpenseById: (expenseId) =>
     apiGet(API.EXPENSE_MANAGEMENT.EXPENSES.DETAIL(expenseId)),
 
   updateExpense: (expenseId, payload) =>
-    apiPut(API.EXPENSE_MANAGEMENT.EXPENSES.UPDATE(expenseId), payload, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
+    apiPut(API.EXPENSE_MANAGEMENT.EXPENSES.UPDATE(expenseId), payload),
 
   deleteExpense: (expenseId) =>
     apiDelete(API.EXPENSE_MANAGEMENT.EXPENSES.DELETE(expenseId)),

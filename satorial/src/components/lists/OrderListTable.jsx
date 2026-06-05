@@ -15,6 +15,7 @@ import AddOrderFormModal from "../modals/formModals/AddOrderFormModal";
 
 const columns = [
   { key: "client_full_name", label: "Client", sortable: true, icon: Users },
+  { key: "invoice_number", label: "Invoice #", sortable: true, icon: FileText },
   { key: "order_title", label: "Details", sortable: true, icon: ShoppingBag },
   { key: "order_price", label: "Amount", sortable: true, icon: CreditCard },
   { key: "ordered_at", label: "Date", sortable: true, icon: Calendar },
@@ -99,7 +100,7 @@ const getStatusClass = (status) => {
   return statusMap[status] || "bg-gray-50 text-gray-800 border-gray-200";
 };
 
-const OrderListTable = () => {
+const OrderListTable = ({ showAddButton = true, showEditAction = true }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   // Data states
   const [orders, setOrders] = useState([]);
@@ -519,6 +520,15 @@ const OrderListTable = () => {
             </h1>
             <p className="text-sm text-gray-500 mt-0.5">Manage and track all your orders efficiently</p>
           </div>
+          {showAddButton && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm hover:shadow"
+            >
+              <Plus size={16} />
+              Add Order
+            </button>
+          )}
         </div>
 
         {/* Stats Cards */}
@@ -885,6 +895,9 @@ const OrderListTable = () => {
                         </div>
                       </td>
                       <td className="px-3 py-2.5">
+                        <span className="text-sm font-mono font-semibold text-gray-700">{order.invoice_number || "—"}</span>
+                      </td>
+                      <td className="px-3 py-2.5">
                         <p className="text-sm font-medium text-gray-900 truncate max-w-40">{order.order_title}</p>
                       </td>
                       <td className="px-3 py-2.5">
@@ -956,20 +969,22 @@ const OrderListTable = () => {
                   </div>
                 </Link>
               </li>
-              <li>
-                <Link
-                  to={`/order/edit/${filteredOrders[activeDropdown]?.id}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer transition-all"
-                >
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Edit size={16} className="text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Edit Order</p>
-                    <p className="text-xs text-gray-500">Modify order details</p>
-                  </div>
-                </Link>
-              </li>
+              {showEditAction && (
+                <li>
+                  <Link
+                    to={`/order/edit/${filteredOrders[activeDropdown]?.id}`}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer transition-all"
+                  >
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <Edit size={16} className="text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Edit Order</p>
+                      <p className="text-xs text-gray-500">Modify order details</p>
+                    </div>
+                  </Link>
+                </li>
+              )}
               <li>
                 <button
                   onClick={() => handleTrackOrder(filteredOrders[activeDropdown])}
@@ -1058,6 +1073,9 @@ const OrderListTable = () => {
   );
 };
 
-OrderListTable.propTypes = {};
+OrderListTable.propTypes = {
+  showAddButton: PropTypes.bool,
+  showEditAction: PropTypes.bool,
+};
 
 export default OrderListTable;

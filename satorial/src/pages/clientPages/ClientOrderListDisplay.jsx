@@ -24,6 +24,8 @@ const ClientOrderListDisplay = () => {
           ]}
         />
         <OrderListTable
+          showAddButton={false}
+          showEditAction={false}
           searchTerm={searchQuery}
           statusFilter={statusFilter}
           dateFilter={"All Time"}
