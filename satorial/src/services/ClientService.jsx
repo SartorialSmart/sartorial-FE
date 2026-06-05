@@ -8,9 +8,7 @@ const ClientService = {
     apiGet(API.CLIENT_MANAGEMENT.CLIENTS.DETAIL(clientId)),
 
   createClient: (clientData) =>
-    apiPost(API.CLIENT_MANAGEMENT.CLIENTS.CREATE, clientData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
+    apiPost(API.CLIENT_MANAGEMENT.CLIENTS.CREATE, clientData),
 
   updateClient: (clientId, clientData, isMultipart = false) =>
     apiPut(
@@ -54,9 +52,7 @@ const ClientService = {
     apiDelete(API.CLIENT_MANAGEMENT.MEASUREMENTS.DETAIL(measurementId)),
 
   uploadStyleImage: (imageData) =>
-    apiPost(API.CLIENT_MANAGEMENT.STYLE_IMAGES.CREATE, imageData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
+    apiPost(API.CLIENT_MANAGEMENT.STYLE_IMAGES.CREATE, imageData),
 
   getStyleImages: () => apiGet(API.CLIENT_MANAGEMENT.STYLE_IMAGES.LIST),
 

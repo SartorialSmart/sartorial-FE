@@ -31,11 +31,7 @@ const FabricsService = {
    * @returns {Promise} Created fabric
    */
   createFabric: (payload) => {
-    const config =
-      payload instanceof FormData
-        ? { headers: { "Content-Type": "multipart/form-data" } }
-        : {};
-    return apiPost(API.SETTINGS.FABRICS.CREATE, payload, config);
+    return apiPost(API.SETTINGS.FABRICS.CREATE, payload);
   },
 
   /**
@@ -45,11 +41,7 @@ const FabricsService = {
    * @returns {Promise} Updated fabric
    */
   updateFabric: (fabricId, payload) => {
-    const config =
-      payload instanceof FormData
-        ? { headers: { "Content-Type": "multipart/form-data" } }
-        : {};
-    return apiPut(API.SETTINGS.FABRICS.UPDATE(fabricId), payload, config);
+    return apiPut(API.SETTINGS.FABRICS.UPDATE(fabricId), payload);
   },
 
   /**

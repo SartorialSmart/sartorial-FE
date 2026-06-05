@@ -17,10 +17,7 @@ const OrganizationProfileService = {
    * @returns {Promise} Updated profile data
    */
   updateProfile: (payload, isFormData = false) => {
-    const config = isFormData
-      ? { headers: { "Content-Type": "multipart/form-data" } }
-      : {};
-    return apiPut(API.SETTINGS.PROFILE.UPDATE, payload, config);
+    return apiPut(API.SETTINGS.PROFILE.UPDATE, payload);
   },
 
   /**
@@ -31,9 +28,7 @@ const OrganizationProfileService = {
   updateLogo: (logoFile) => {
     const formData = new FormData();
     formData.append("logo", logoFile);
-    return apiPut(API.SETTINGS.PROFILE.UPDATE, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    return apiPut(API.SETTINGS.PROFILE.UPDATE, formData);
   },
 
   /**
