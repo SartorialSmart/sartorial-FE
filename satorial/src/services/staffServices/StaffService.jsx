@@ -3,7 +3,10 @@ import { API } from "../../api/apiEndpoints";
 
 const StaffService = {
   // List all staff members
-  listStaff: () => apiGet(API.STAFF_MANAGEMENT.STAFF.LIST),
+  listStaff: (params = {}) => {
+    const config = Object.keys(params).length ? { params } : {};
+    return apiGet(API.STAFF_MANAGEMENT.STAFF.LIST, config);
+  },
 
   // Get single staff detail
   getStaffDetail: (slug) => apiGet(API.STAFF_MANAGEMENT.STAFF.DETAIL(slug)),

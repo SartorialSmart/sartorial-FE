@@ -1,23 +1,28 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { 
   EditIcon, ChevronRight, CheckCircle, Calendar, Clock, Truck, Package, 
   UserCheck, XCircle, Loader2, User, Mail, FileText, ShoppingBag, 
-  CreditCard, BarChart3, Tag 
+  CreditCard, BarChart3, Tag, UserPlus, Repeat
 } from "lucide-react";
 import OrderService from "../../../services/OrderService";
 import SettingsService from "../../../services/settings";
 import AddPaymentModal from "../../modals/formModals/AddOrderPaymentFormModal";
 import TrackOrderStatusModal from "../../modals/formModals/TrackOrderStatusModal";
+import AssignOrderModal from "../../allocationModals/AssignOrderModal";
 import { getLogoUrl, getLocalProfile, getLocalInvoiceSettings } from "../../../utils/localImageService";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
+  const [searchParams] = useSearchParams();
+  const isClientView = searchParams.get("clientView") === "1";
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showTrackOrderModal, setShowTrackOrderModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignMode, setAssignMode] = useState("assign");
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
   const [orgProfile, setOrgProfile] = useState(null);
@@ -93,6 +98,12 @@ const OrderDetail = () => {
     } catch (err) {
       console.error("Failed to refresh order after payment:", err);
     }
+  };
+
+  const handleAssignOrder = async (payload) => {
+    await OrderService.assignOrder(payload);
+    const updatedOrder = await OrderService.getOrderById(orderId);
+    setOrder(updatedOrder);
   };
 
   const handleStatusUpdate = async (newStatus) => {
@@ -701,14 +712,14 @@ const OrderDetail = () => {
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header Section */}
         <div className="bg-gradient-to-r from-white to-blue-50/50 rounded-2xl shadow-sm border border-gray-100 p-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shrink-0">
                 {order.order_title?.charAt(0) || 'O'}
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{order.order_title}</h1>
-                <div className="flex items-center gap-3 mt-1">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl font-bold text-gray-900 break-words">{order.order_title}</h1>
+                <div className="flex flex-wrap items-center gap-3 mt-1">
                   <p className="text-sm text-gray-600">Order ID: <span className="font-mono font-semibold">{order.slug}</span></p>
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                     isCancelled 
@@ -718,11 +729,38 @@ const OrderDetail = () => {
                     {order.order_status}
                   </span>
                 </div>
+                {order.order_description && (
+                  <p className="text-sm text-gray-500 mt-1.5">{order.order_description}</p>
+                )}
+                {order.current_allocation && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 bg-gray-50 rounded-lg px-3 py-1.5 inline-flex">
+                    <UserCheck size={14} className="text-green-600 shrink-0" />
+                    <span>Assigned to <strong>{order.current_allocation.staff_name}</strong> ({order.current_allocation.department})</span>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-2 flex-nowrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              {!isClientView && order.order_status === "Pending" && !order.current_allocation && (
+                <button
+                  onClick={() => { setAssignMode("assign"); setShowAssignModal(true); }}
+                  className="px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all text-sm font-medium whitespace-nowrap flex items-center gap-1.5 shadow-sm"
+                >
+                  <UserPlus size={14} />
+                  Assign Tailor
+                </button>
+              )}
+              {!isClientView && order.current_allocation && (
+                <button
+                  onClick={() => { setAssignMode("reassign"); setShowAssignModal(true); }}
+                  className="px-3 py-2 border border-amber-500 text-amber-600 rounded-lg hover:bg-amber-50 transition-all text-sm font-medium whitespace-nowrap flex items-center gap-1.5"
+                >
+                  <Repeat size={14} />
+                  Reassign
+                </button>
+              )}
               <button 
                 onClick={handleTrackOrder}
                 className="px-3 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-all text-sm font-medium whitespace-nowrap"
@@ -747,19 +785,23 @@ const OrderDetail = () => {
                   </>
                 )}
               </button>
-              <button
-                onClick={() => setShowPaymentModal(true)}
-                className="px-3 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all text-sm font-medium whitespace-nowrap"
-              >
-                <CreditCard className="inline mr-1.5" size={14} />
-                Add Payment
-              </button>
-              <Link to={`/order/edit/${orderId}`}>
-                <button className="px-3 py-2 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-lg hover:from-gray-800 hover:to-gray-700 transition-all text-sm font-medium flex items-center gap-1.5 whitespace-nowrap">
-                  <EditIcon size={14} />
-                  Edit Order
+              {!isClientView && (
+                <button
+                  onClick={() => setShowPaymentModal(true)}
+                  className="px-3 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all text-sm font-medium whitespace-nowrap"
+                >
+                  <CreditCard className="inline mr-1.5" size={14} />
+                  Add Payment
                 </button>
-              </Link>
+              )}
+              {!isClientView && (
+                <Link to={`/order/edit/${orderId}`}>
+                  <button className="px-3 py-2 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-lg hover:from-gray-800 hover:to-gray-700 transition-all text-sm font-medium flex items-center gap-1.5 whitespace-nowrap">
+                    <EditIcon size={14} />
+                    Edit Order
+                  </button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -1376,6 +1418,16 @@ const OrderDetail = () => {
           orderId={orderId}
         />
       )}
+
+      {/* Assign / Reassign Modal */}
+      <AssignOrderModal
+        isOpen={showAssignModal}
+        onClose={() => setShowAssignModal(false)}
+        order={order}
+        mode={assignMode}
+        showDepartmentFilter={true}
+        onAssign={handleAssignOrder}
+      />
     </div>
   );
 };
