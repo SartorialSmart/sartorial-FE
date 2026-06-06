@@ -100,7 +100,7 @@ const getStatusClass = (status) => {
   return statusMap[status] || "bg-gray-50 text-gray-800 border-gray-200";
 };
 
-const OrderListTable = ({ showAddButton = true, showEditAction = true }) => {
+const OrderListTable = ({ showAddButton = true, showEditAction = true, title = "Orders Management", clientView = false }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   // Data states
   const [orders, setOrders] = useState([]);
@@ -439,6 +439,19 @@ const OrderListTable = ({ showAddButton = true, showEditAction = true }) => {
     setActiveDropdown(null);
   };
 
+  const handleStatusClick = (order) => {
+    if (clientView) return;
+    if (order.order_status === "Pending" && !order.assignment_status) {
+      setSelectedOrder(order);
+      setModalMode("assign");
+      setShowAssignModal(true);
+    } else if (order.assignment_status === "Assigned") {
+      setSelectedOrder(order);
+      setModalMode("reassign");
+      setShowAssignModal(true);
+    }
+  };
+
   const handleAssign = async (payload) => {
     try {
       await OrderService.assignOrder(payload);
@@ -516,9 +529,9 @@ const OrderListTable = ({ showAddButton = true, showEditAction = true }) => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Orders Management
+              {title}
             </h1>
-            <p className="text-sm text-gray-500 mt-0.5">Manage and track all your orders efficiently</p>
+            <p className="text-sm text-gray-500 mt-0.5">{clientView ? "View orders placed by this client" : "Manage and track all your orders efficiently"}</p>
           </div>
           {showAddButton && (
             <button
@@ -922,9 +935,19 @@ const OrderListTable = ({ showAddButton = true, showEditAction = true }) => {
                         </div>
                       </td>
                       <td className="px-3 py-2.5">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusClass(order.order_status)}`}>
-                          {order.order_status}
-                        </span>
+                        {!clientView && (order.order_status === "Pending" || order.assignment_status === "Assigned") ? (
+                          <button
+                            onClick={() => handleStatusClick(order)}
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-blue-400 transition-all ${getStatusClass(order.order_status)}`}
+                            title={order.assignment_status === "Assigned" ? "Click to reassign" : "Click to assign"}
+                          >
+                            {order.order_status}
+                          </button>
+                        ) : (
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusClass(order.order_status)}`}>
+                            {order.order_status}
+                          </span>
+                        )}
                       </td>
 
                       <td className="px-3 py-2.5">
@@ -957,7 +980,7 @@ const OrderListTable = ({ showAddButton = true, showEditAction = true }) => {
             <ul className="text-sm">
               <li>
                 <Link
-                  to={`/order/detail/${filteredOrders[activeDropdown]?.id}`}
+                  to={`/order/detail/${filteredOrders[activeDropdown]?.id}${clientView ? '?clientView=1' : ''}`}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer transition-all"
                 >
                   <div className="p-2 bg-blue-100 rounded-lg">
@@ -1076,6 +1099,8 @@ const OrderListTable = ({ showAddButton = true, showEditAction = true }) => {
 OrderListTable.propTypes = {
   showAddButton: PropTypes.bool,
   showEditAction: PropTypes.bool,
+  title: PropTypes.string,
+  clientView: PropTypes.bool,
 };
 
 export default OrderListTable;
