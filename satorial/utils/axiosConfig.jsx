@@ -7,11 +7,15 @@ const axiosInstance = axios.create({
   },
 });
 
+const PUBLIC_ENDPOINTS = ['/users/login/', '/users/register-organization/', '/users/forgot-password/', '/users/reset-password/'];
+
 axiosInstance.interceptors.request.use(
   async (config) => {
-    let token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (!PUBLIC_ENDPOINTS.some((ep) => config.url.includes(ep))) {
+      let token = localStorage.getItem('accessToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -29,7 +33,6 @@ axiosInstance.interceptors.response.use(
       if (!refreshToken) {
         console.error('No refresh token found, logging out');
         localStorage.removeItem('accessToken');
-        window.location.href = '/login';
         return Promise.reject(error);
       }
 
@@ -49,7 +52,6 @@ axiosInstance.interceptors.response.use(
         console.error('Token refresh failed:', refreshError.response?.data || refreshError.message);
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }

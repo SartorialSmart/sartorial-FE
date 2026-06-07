@@ -15,6 +15,7 @@ import AddOrderFormModal from "../modals/formModals/AddOrderFormModal";
 
 const columns = [
   { key: "client_full_name", label: "Client", sortable: true, icon: Users },
+  { key: "invoice_number", label: "Invoice #", sortable: true, icon: FileText },
   { key: "order_title", label: "Details", sortable: true, icon: ShoppingBag },
   { key: "order_price", label: "Amount", sortable: true, icon: CreditCard },
   { key: "ordered_at", label: "Date", sortable: true, icon: Calendar },
@@ -99,7 +100,7 @@ const getStatusClass = (status) => {
   return statusMap[status] || "bg-gray-50 text-gray-800 border-gray-200";
 };
 
-const OrderListTable = () => {
+const OrderListTable = ({ showAddButton = true, showEditAction = true, title = "Orders Management", clientView = false }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   // Data states
   const [orders, setOrders] = useState([]);
@@ -438,6 +439,19 @@ const OrderListTable = () => {
     setActiveDropdown(null);
   };
 
+  const handleStatusClick = (order) => {
+    if (clientView) return;
+    if (order.order_status === "Pending" && !order.assignment_status) {
+      setSelectedOrder(order);
+      setModalMode("assign");
+      setShowAssignModal(true);
+    } else if (order.assignment_status === "Assigned") {
+      setSelectedOrder(order);
+      setModalMode("reassign");
+      setShowAssignModal(true);
+    }
+  };
+
   const handleAssign = async (payload) => {
     try {
       await OrderService.assignOrder(payload);
@@ -515,34 +529,19 @@ const OrderListTable = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Orders Management
+              {title}
             </h1>
-            <p className="text-sm text-gray-500 mt-0.5">Manage and track all your orders efficiently</p>
+            <p className="text-sm text-gray-500 mt-0.5">{clientView ? "View orders placed by this client" : "Manage and track all your orders efficiently"}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={refreshOrders}
-              disabled={isRefreshing}
-              className="p-2 hover:bg-white rounded-lg transition-all disabled:opacity-50 border border-gray-200 shadow-sm"
-              title="Refresh orders"
-            >
-              <RefreshCw size={16} className={`text-gray-600 ${isRefreshing ? "animate-spin" : ""}`} />
-            </button>
-            <button
-              onClick={handleExport}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-white hover:border-gray-400 transition-all shadow-sm text-sm font-medium"
-            >
-              <Download size={14} />
-              Export
-            </button>
+          {showAddButton && (
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow hover:shadow-lg flex items-center gap-1.5 text-sm"
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm hover:shadow"
             >
               <Plus size={16} />
-              New Order
+              Add Order
             </button>
-          </div>
+          )}
         </div>
 
         {/* Stats Cards */}
@@ -909,6 +908,9 @@ const OrderListTable = () => {
                         </div>
                       </td>
                       <td className="px-3 py-2.5">
+                        <span className="text-sm font-mono font-semibold text-gray-700">{order.invoice_number || "—"}</span>
+                      </td>
+                      <td className="px-3 py-2.5">
                         <p className="text-sm font-medium text-gray-900 truncate max-w-40">{order.order_title}</p>
                       </td>
                       <td className="px-3 py-2.5">
@@ -933,9 +935,19 @@ const OrderListTable = () => {
                         </div>
                       </td>
                       <td className="px-3 py-2.5">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusClass(order.order_status)}`}>
-                          {order.order_status}
-                        </span>
+                        {!clientView && (order.order_status === "Pending" || order.assignment_status === "Assigned") ? (
+                          <button
+                            onClick={() => handleStatusClick(order)}
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-blue-400 transition-all ${getStatusClass(order.order_status)}`}
+                            title={order.assignment_status === "Assigned" ? "Click to reassign" : "Click to assign"}
+                          >
+                            {order.order_status}
+                          </button>
+                        ) : (
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusClass(order.order_status)}`}>
+                            {order.order_status}
+                          </span>
+                        )}
                       </td>
 
                       <td className="px-3 py-2.5">
@@ -968,7 +980,7 @@ const OrderListTable = () => {
             <ul className="text-sm">
               <li>
                 <Link
-                  to={`/order/detail/${filteredOrders[activeDropdown]?.id}`}
+                  to={`/order/detail/${filteredOrders[activeDropdown]?.id}${clientView ? '?clientView=1' : ''}`}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer transition-all"
                 >
                   <div className="p-2 bg-blue-100 rounded-lg">
@@ -980,20 +992,22 @@ const OrderListTable = () => {
                   </div>
                 </Link>
               </li>
-              <li>
-                <Link
-                  to={`/order/edit/${filteredOrders[activeDropdown]?.id}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer transition-all"
-                >
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Edit size={16} className="text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Edit Order</p>
-                    <p className="text-xs text-gray-500">Modify order details</p>
-                  </div>
-                </Link>
-              </li>
+              {showEditAction && (
+                <li>
+                  <Link
+                    to={`/order/edit/${filteredOrders[activeDropdown]?.id}`}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer transition-all"
+                  >
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <Edit size={16} className="text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Edit Order</p>
+                      <p className="text-xs text-gray-500">Modify order details</p>
+                    </div>
+                  </Link>
+                </li>
+              )}
               <li>
                 <button
                   onClick={() => handleTrackOrder(filteredOrders[activeDropdown])}
@@ -1082,6 +1096,11 @@ const OrderListTable = () => {
   );
 };
 
-OrderListTable.propTypes = {};
+OrderListTable.propTypes = {
+  showAddButton: PropTypes.bool,
+  showEditAction: PropTypes.bool,
+  title: PropTypes.string,
+  clientView: PropTypes.bool,
+};
 
 export default OrderListTable;

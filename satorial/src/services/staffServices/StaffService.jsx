@@ -3,7 +3,10 @@ import { API } from "../../api/apiEndpoints";
 
 const StaffService = {
   // List all staff members
-  listStaff: () => apiGet(API.STAFF_MANAGEMENT.STAFF.LIST),
+  listStaff: (params = {}) => {
+    const config = Object.keys(params).length ? { params } : {};
+    return apiGet(API.STAFF_MANAGEMENT.STAFF.LIST, config);
+  },
 
   // Get single staff detail
   getStaffDetail: (slug) => apiGet(API.STAFF_MANAGEMENT.STAFF.DETAIL(slug)),
@@ -25,16 +28,11 @@ const StaffService = {
       }
     });
 
-    return apiPost(API.STAFF_MANAGEMENT.STAFF.ADD, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    return apiPost(API.STAFF_MANAGEMENT.STAFF.ADD, formData);
   },
 
   updateStaff: (slug, updatedData, isFormData = false) => {
-    const config = isFormData
-      ? { headers: { "Content-Type": "multipart/form-data" } }
-      : {};
-    return apiPut(API.STAFF_MANAGEMENT.STAFF.UPDATE(slug), updatedData, config);
+    return apiPut(API.STAFF_MANAGEMENT.STAFF.UPDATE(slug), updatedData);
   },
 
   deleteStaff: (slug) => apiDelete(API.STAFF_MANAGEMENT.STAFF.DELETE(slug)),
