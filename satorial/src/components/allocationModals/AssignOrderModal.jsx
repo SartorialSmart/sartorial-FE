@@ -1,7 +1,8 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
-import { X, Search } from "lucide-react";
+import { X, Search, ChevronDown } from "lucide-react";
 import StaffService from "../../services/staffServices/StaffService";
+import SettingsService from "../../services/settings";
 import Avatar from "../avatar/Avatar";
 
 const AssignOrderModal = ({
@@ -11,8 +12,11 @@ const AssignOrderModal = ({
   mode = "assign",
   onSuccess,
   onAssign,
+  showDepartmentFilter = false,
 }) => {
   const [staffList, setStaffList] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [role, setRole] = useState("");
   const [department, setDepartment] = useState("");
@@ -25,18 +29,26 @@ const AssignOrderModal = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    // Reset states when modal opens
     setSelectedStaff(null);
     setRole("");
     setDepartment("");
     setReason("");
     setSearchQuery("");
+    setSelectedDepartment("");
     setError("");
     setIsLoadingStaff(true);
 
+    if (showDepartmentFilter) {
+      SettingsService.Departments.getDepartments()
+        .then((data) => {
+          const deptData = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+          setDepartments(deptData);
+        })
+        .catch(() => setDepartments([]));
+    }
+
     StaffService.listStaff()
       .then((data) => {
-        // Handle different response formats safely
         const staffData = Array.isArray(data)
           ? data
           : Array.isArray(data?.results)
@@ -52,11 +64,11 @@ const AssignOrderModal = ({
       .finally(() => {
         setIsLoadingStaff(false);
       });
-  }, [isOpen]);
+  }, [isOpen, showDepartmentFilter]);
 
   useEffect(() => {
     if (selectedStaff) {
-      setRole(selectedStaff.role || "");
+      setRole(selectedStaff.staff_role || selectedStaff.role || "");
       setDepartment(selectedStaff.department || "");
     } else {
       setRole("");
@@ -64,19 +76,29 @@ const AssignOrderModal = ({
     }
   }, [selectedStaff]);
 
-  // Filter staff based on search query
   const filteredStaff = useMemo(() => {
-    if (!searchQuery) return staffList;
+    let result = staffList;
 
-    const query = searchQuery.toLowerCase();
-    return staffList.filter(
-      (staff) =>
-        (staff.name && staff.name.toLowerCase().includes(query)) ||
-        (staff.email && staff.email.toLowerCase().includes(query)) ||
-        (staff.role && staff.role.toLowerCase().includes(query)) ||
-        (staff.department && staff.department.toLowerCase().includes(query))
-    );
-  }, [staffList, searchQuery]);
+    if (selectedDepartment) {
+      result = result.filter(
+        (s) => s.department?.toLowerCase() === selectedDepartment.toLowerCase()
+      );
+    }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (staff) =>
+          (staff.first_name && staff.first_name.toLowerCase().includes(query)) ||
+          (staff.last_name && staff.last_name.toLowerCase().includes(query)) ||
+          (staff.email && staff.email.toLowerCase().includes(query)) ||
+          (staff.staff_role && staff.staff_role.toLowerCase().includes(query)) ||
+          (staff.department && staff.department.toLowerCase().includes(query))
+      );
+    }
+
+    return result;
+  }, [staffList, selectedDepartment, searchQuery]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -100,7 +122,6 @@ const AssignOrderModal = ({
         reason: mode === "reassign" ? reason : undefined,
         is_reassigned: mode === "reassign",
       };
-      // Remove undefined fields
       Object.keys(payload).forEach(
         (k) => payload[k] === undefined && delete payload[k]
       );
@@ -123,7 +144,7 @@ const AssignOrderModal = ({
         <div className="p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">
-              {mode === "assign" ? "Assign project" : "Reassign project"}
+              {mode === "assign" ? "Assign to Tailor" : "Reassign Order"}
             </h2>
             <button
               onClick={onClose}
@@ -136,16 +157,38 @@ const AssignOrderModal = ({
         </div>
 
         <div className="flex-1 overflow-hidden flex flex-col">
-          <div className="p-6 pb-0 flex-shrink-0">
-            {/* Search input */}
-            <div className="mb-4 relative">
+          <div className="p-6 pb-0 flex-shrink-0 space-y-3">
+            {showDepartmentFilter && departments.length > 0 && (
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Select Department
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedDepartment}
+                    onChange={(e) => { setSelectedDepartment(e.target.value); setSelectedStaff(null); }}
+                    className="w-full border rounded-md px-3 py-2 appearance-none bg-white pr-8"
+                  >
+                    <option value="">All Departments</option>
+                    {departments.map((dept) => (
+                      <option key={dept.id} value={dept.name}>
+                        {dept.name} {dept.staff_count != null ? `(${dept.staff_count})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" />
+                </div>
+              </div>
+            )}
+
+            <div className="relative">
               <Search
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                 size={18}
               />
               <input
                 type="text"
-                placeholder="Search staff by name, email, role or department"
+                placeholder="Search staff by name, email or role"
                 className="w-full border rounded-md pl-10 pr-3 py-2"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -162,7 +205,7 @@ const AssignOrderModal = ({
               <div className="mb-6">
                 {filteredStaff.length === 0 ? (
                   <div className="text-center py-4 text-gray-500">
-                    {searchQuery
+                    {searchQuery || selectedDepartment
                       ? "No staff members found"
                       : "No staff members available"}
                   </div>
@@ -170,26 +213,25 @@ const AssignOrderModal = ({
                   filteredStaff.map((staff) => (
                     <label
                       key={staff.id || staff.email}
-                      className="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 px-2 rounded"
+                      className="flex items-center gap-3 py-2.5 cursor-pointer hover:bg-gray-50 px-2 rounded border-b border-gray-50 last:border-0"
                     >
                       <input
                         type="radio"
                         name="staff"
                         checked={selectedStaff?.id === staff.id}
                         onChange={() => setSelectedStaff(staff)}
-                        className="accent-blue-600"
+                        className="accent-blue-600 shrink-0"
                       />
-                      <Avatar src={staff.avatar_url} alt={staff.name} />
+                      <Avatar src={staff.avatar_url} alt={staff.first_name + " " + staff.last_name} />
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">
-                          {staff.first_name + " " + staff.last_name ||
-                            "Unknown"}
+                          {(staff.first_name || "") + " " + (staff.last_name || "") || "Unknown"}
                         </div>
                         <div className="text-gray-500 text-sm truncate">
                           {staff.email || "No email"}
                         </div>
                         <div className="text-xs text-gray-400 flex gap-2">
-                          {staff.role && <span>{staff.role}</span>}
+                          {staff.staff_role && <span>{staff.staff_role}</span>}
                           {staff.department && (
                             <span>• {staff.department}</span>
                           )}
@@ -204,57 +246,63 @@ const AssignOrderModal = ({
 
           <div className="p-6 border-t border-gray-200 flex-shrink-0">
             <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block mb-1 font-medium">
-                  Role <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="w-full border rounded-md px-3 py-2"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  required
-                  disabled={!selectedStaff}
-                  placeholder="Select role"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-1 font-medium">
-                  Department <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="w-full border rounded-md px-3 py-2"
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  required
-                  disabled={!selectedStaff}
-                  placeholder="Select department"
-                />
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Role <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full border rounded-md px-3 py-2 text-sm"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    required
+                    disabled={!selectedStaff}
+                    placeholder="Role"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Department <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full border rounded-md px-3 py-2 text-sm"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    required
+                    disabled={!selectedStaff}
+                    placeholder="Department"
+                  />
+                </div>
               </div>
               {mode === "reassign" && (
                 <div className="mb-4">
-                  <label className="block mb-1 font-medium">
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
                     Reason for reassigning{" "}
                     <span className="text-red-500">*</span>
                   </label>
                   <textarea
-                    className="w-full border rounded-md px-3 py-2"
+                    className="w-full border rounded-md px-3 py-2 text-sm"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     required
                     rows={3}
-                    placeholder="Enter reason"
+                    placeholder="Explain why this order is being reassigned..."
                   />
                 </div>
               )}
-              {error && <div className="mb-2 text-red-600">{error}</div>}
+              {error && <div className="mb-2 text-sm text-red-600">{error}</div>}
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-2 rounded-md mt-2 disabled:opacity-50"
+                className="w-full bg-blue-600 text-white py-2.5 rounded-md mt-1 disabled:opacity-50 font-medium"
                 disabled={loading || !selectedStaff}
               >
-                {loading ? "Assigning..." : "Assign"}
+                {loading
+                  ? "Assigning..."
+                  : mode === "assign"
+                  ? "Assign Tailor"
+                  : "Reassign"}
               </button>
             </form>
           </div>
@@ -273,6 +321,7 @@ AssignOrderModal.propTypes = {
   mode: PropTypes.oneOf(["assign", "reassign"]),
   onSuccess: PropTypes.func,
   onAssign: PropTypes.func.isRequired,
+  showDepartmentFilter: PropTypes.bool,
 };
 
 export default AssignOrderModal;

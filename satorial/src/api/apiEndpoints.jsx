@@ -222,7 +222,14 @@ export const API = {
   },
 
   NOTIFICATIONS: {
+    LIST: "/notifications/",
+    DETAIL: (notifId) => `/notifications/${notifId}/`,
     SUMMARY: "/notifications/summary/",
+    UNREAD_COUNT: "/notifications/unread-count/",
+    MARK_READ: (notifId) => `/notifications/${notifId}/read/`,
+    MARK_ALL_READ: "/notifications/read-all/",
+    SETTINGS: "/notifications/settings/",
+    STREAM: "/notifications/stream/",
   },
 
   SETTINGS: {

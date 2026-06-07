@@ -66,11 +66,10 @@ export default function InvoiceContent() {
       message.success("Invoice settings saved successfully");
     } catch (error) {
       console.error("Error saving invoice settings:", error);
-      if (import.meta.env.DEV || location.hostname === "localhost") {
-        message.success("Invoice settings saved locally for preview");
-      } else {
-        message.error("Failed to save invoice settings");
-      }
+      const errMsg = typeof error.response?.data === 'string'
+        ? error.response.data
+        : error.response?.data?.detail || error.response?.data?.email_delivery?.[0] || "Failed to save invoice settings";
+      message.error(errMsg);
     } finally {
       setSaving(false);
     }
@@ -288,6 +287,25 @@ export default function InvoiceContent() {
             </div>
           </div>
         </div>
+      </div>
+
+      <hr />
+
+      <div className="flex justify-end">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
+        >
+          {saving ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+              Saving...
+            </>
+          ) : (
+            "Save Settings"
+          )}
+        </button>
       </div>
     </div>
   );

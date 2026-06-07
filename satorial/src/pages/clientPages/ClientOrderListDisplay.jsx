@@ -11,6 +11,7 @@ const ClientOrderListDisplay = () => {
     <ClientSideABrLayout>
       <div className="space-y-6">
         <Toolbar_1
+          hideExport
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           filterBy={statusFilter}
@@ -23,6 +24,10 @@ const ClientOrderListDisplay = () => {
           ]}
         />
         <OrderListTable
+          showAddButton={false}
+          showEditAction={false}
+          title="Orders"
+          clientView={true}
           searchTerm={searchQuery}
           statusFilter={statusFilter}
           dateFilter={"All Time"}

@@ -10,8 +10,7 @@ import {
   Settings,
   MessageCircle,
   HelpCircle,
-  UserCog,
-  BarChart3
+  UserCog
 } from "lucide-react";
 
 const ClientSideABrLayout = ({ children }) => {
@@ -22,7 +21,6 @@ const ClientSideABrLayout = ({ children }) => {
     { icon: <Users size={20} />, label: "Clients", path: "/client/clients-list" },
     { icon: <ShoppingBag size={20} />, label: "Orders", path: "/client/orders-list" },
     { icon: <UserCog size={20} />, label: "Allocations", path: "/client/allocations-list" },
-    { icon: <BarChart3 size={20} />, label: "Reports", path: "/client/reports" },
     { icon: <MessageCircle size={20} />, label: "Messages", path: "/chat" },
     { icon: <HelpCircle size={20} />, label: "Help Centre", path: "/client/help-centre" },
     { icon: <Settings size={20} />, label: "Settings", path: "/client/settings" },

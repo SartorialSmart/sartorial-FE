@@ -25,7 +25,7 @@ import PATTERN_6 from "../../assets/images/pattern-6.svg";
 
 const dashboardItems = [
   {
-    title: "Client Management",
+    title: "Clients Management",
     description: "Manage clients and customer relationships",
     icon: <Users size={24} />,
     img: PATTERN_1,
@@ -37,7 +37,7 @@ const dashboardItems = [
     textColor: "text-blue-900"
   },
   {
-    title: "Order Management",
+    title: "Orders Management",
     description: "Track and manage all orders",
     icon: <Archive size={24} />,
     img: PATTERN_2,
