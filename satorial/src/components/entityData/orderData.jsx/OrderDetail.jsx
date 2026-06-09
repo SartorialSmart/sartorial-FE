@@ -758,7 +758,7 @@ const OrderDetail = () => {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 flex-wrap">
-              {!isClientView && !isReadyMade && (order.current_allocation?.id || order.order_status === "Assigned") ? (
+              {!isClientView && !isReadyMade && (order.current_allocation?.id || order.order_status === "Assigned" || order.order_status === "In Progress") ? (
                 <button
                   onClick={() => { setAssignMode("reassign"); setShowAssignModal(true); }}
                   className="px-3 py-2 border border-amber-500 text-amber-600 rounded-lg hover:bg-amber-50 transition-all text-sm font-medium whitespace-nowrap flex items-center gap-1.5"
