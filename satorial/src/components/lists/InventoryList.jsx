@@ -157,7 +157,7 @@ const InventoryList = () => {
       />
       {/* Header Section */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Inventory</h2>
+        <h2 className="text-xl font-semibold">Inventory Management</h2>
         <div className="flex items-center gap-3">
           {/* Add Inventory Button */}
           <button

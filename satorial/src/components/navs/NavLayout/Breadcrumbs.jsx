@@ -57,7 +57,8 @@ const formatBreadcrumbText = (text) => {
     "dashboard": "Dashboard",
     "settings": "Settings",
     "reports": "Reports",
-    "inventory": "Inventory",
+    "inventory": "Inventory Management",
+    "history": "History",
   };
 
   return customNames[text] || formattedText;

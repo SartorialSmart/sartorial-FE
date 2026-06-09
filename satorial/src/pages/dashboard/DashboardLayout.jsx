@@ -85,7 +85,7 @@ const dashboardItems = [
     textColor: "text-indigo-900"
   },
   {
-    title: "Inventory",
+    title: "Inventory Management",
     description: "Manage stock and materials",
     icon: <Box size={24} />,
     img: PATTERN_1,
