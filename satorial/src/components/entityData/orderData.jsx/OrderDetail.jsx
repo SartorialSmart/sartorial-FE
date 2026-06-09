@@ -758,7 +758,7 @@ const OrderDetail = () => {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 flex-wrap">
-              {!isClientView && !isReadyMade && order.order_status === "Pending" && !order.current_allocation && (
+              {!isClientView && !isReadyMade && !order.current_allocation?.id && (
                 <button
                   onClick={() => { setAssignMode("assign"); setShowAssignModal(true); }}
                   className="px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all text-sm font-medium whitespace-nowrap flex items-center gap-1.5 shadow-sm"
@@ -767,7 +767,7 @@ const OrderDetail = () => {
                   Assign Tailor
                 </button>
               )}
-              {!isClientView && !isReadyMade && order.current_allocation && (
+              {!isClientView && !isReadyMade && order.current_allocation?.id && (
                 <button
                   onClick={() => { setAssignMode("reassign"); setShowAssignModal(true); }}
                   className="px-3 py-2 border border-amber-500 text-amber-600 rounded-lg hover:bg-amber-50 transition-all text-sm font-medium whitespace-nowrap flex items-center gap-1.5"
