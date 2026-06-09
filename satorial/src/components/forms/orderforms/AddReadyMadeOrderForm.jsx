@@ -208,7 +208,7 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
         })
       );
 
-      await OrderService.createOrder({
+      const orderResponse = await OrderService.createOrder({
         ...formData,
         order_description: buildReadyMadeDescription(itemsSummary),
         start_date: todayDate,
@@ -216,6 +216,23 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
         order_category: null,
         ready_made_items: itemsSummary,
       });
+
+      const orderId = orderResponse?.id || orderResponse?.order_id || "";
+
+      // Auto-dispense each selected item from inventory
+      const dispensePromises = Object.values(selectedItems).map(
+        ({ item, quantity }) =>
+          InventoryService.createDispenseInventory({
+            item_name: item.id,
+            dispense_to: user?.staff_id || user?.id || "",
+            quantity_dispensed: quantity,
+            reason: orderId
+              ? `Ready Made Order - Order #${orderId}`
+              : "Ready Made Order",
+          })
+      );
+
+      await Promise.all(dispensePromises);
 
       if (onClose) onClose();
     } catch (error) {
