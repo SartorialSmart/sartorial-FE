@@ -7,6 +7,7 @@ import OrderCategoryService from "../../../services/OrderCategoryService";
 import StaffService from "../../../services/staffServices/StaffService";
 import SuccessModal from "../../modals/SuccessModal";
 import AddPaymentModal from "../../modals/formModals/AddOrderPaymentFormModal";
+import { isReadyMadeOrder } from "../../../../utils/orderUtils";
 
 const EditOrderForm = () => {
   const { orderId } = useParams();
@@ -36,6 +37,7 @@ const EditOrderForm = () => {
 
   const ALLOWED_FIELDS = ["client", "client_email", "order_title", "order_category", "order_description", "start_date", "end_date", "order_price", "order_type", "initial_deposit", "balance", "assigned_to"];
 
+  const isReadyMade = isReadyMadeOrder(order);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -290,48 +292,50 @@ const EditOrderForm = () => {
           </div>
 
           {/* Order Category */}
-          <div>
-            <label className="text-gray-600 text-sm font-medium mb-2 block">
-              Order Category *
-            </label>
-            <div className="flex gap-2">
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  className={`px-4 py-2 rounded-lg border text-sm flex items-center 
-                    ${
-                      formData.order_category === category.id
-                        ? "border-blue-500 bg-blue-100 text-blue-600"
-                        : "border-gray-300 text-gray-500"
-                    } 
-                    ${
-                      category.disabled
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-gray-100"
-                    }`}
-                  onClick={() =>
-                    !category.disabled && handleCategoryChange(category.id)
-                  }
-                  disabled={category.disabled}
-                >
-                  <span
-                    className={`w-4 h-4 border rounded-full flex items-center justify-center mr-2 
+          {!isReadyMade && (
+            <div>
+              <label className="text-gray-600 text-sm font-medium mb-2 block">
+                Order Category *
+              </label>
+              <div className="flex gap-2">
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    className={`px-4 py-2 rounded-lg border text-sm flex items-center 
                       ${
                         formData.order_category === category.id
-                          ? "border-blue-500"
-                          : "border-gray-300"
+                          ? "border-blue-500 bg-blue-100 text-blue-600"
+                          : "border-gray-300 text-gray-500"
+                      } 
+                      ${
+                        category.disabled
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-gray-100"
                       }`}
+                    onClick={() =>
+                      !category.disabled && handleCategoryChange(category.id)
+                    }
+                    disabled={category.disabled}
                   >
-                    {formData.order_category === category.id && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    )}
-                  </span>
-                  {category.name}
-                </button>
-              ))}
+                    <span
+                      className={`w-4 h-4 border rounded-full flex items-center justify-center mr-2 
+                        ${
+                          formData.order_category === category.id
+                            ? "border-blue-500"
+                            : "border-gray-300"
+                        }`}
+                    >
+                      {formData.order_category === category.id && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      )}
+                    </span>
+                    {category.name}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Order Description */}
           <div>
@@ -462,27 +466,29 @@ const EditOrderForm = () => {
           </div>
 
           {/* Assigned To */}
-          <div>
-            <label className="text-gray-600 text-sm font-medium">
-              Assigned To *
-            </label>
-            <select
-              name="assigned_to"
-              value={formData.assigned_to}
-              onChange={handleChange}
-              className="w-full border p-2 rounded-md"
-              required
-            >
-              <option value="">Select Staff</option>
-              {staffList
-                .filter((s) => !s.is_exited)
-                .map((staff) => (
-                  <option key={staff.id || staff.slug} value={staff.id || staff.slug}>
-                    {staff.first_name} {staff.last_name} — {staff.staff_role}
-                  </option>
-                ))}
-            </select>
-          </div>
+          {!isReadyMade && (
+            <div>
+              <label className="text-gray-600 text-sm font-medium">
+                Assigned To *
+              </label>
+              <select
+                name="assigned_to"
+                value={formData.assigned_to}
+                onChange={handleChange}
+                className="w-full border p-2 rounded-md"
+                required
+              >
+                <option value="">Select Staff</option>
+                {staffList
+                  .filter((s) => !s.is_exited)
+                  .map((staff) => (
+                    <option key={staff.id || staff.slug} value={staff.id || staff.slug}>
+                      {staff.first_name} {staff.last_name} — {staff.staff_role}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
 
           {/* Submit Button */}
           <button

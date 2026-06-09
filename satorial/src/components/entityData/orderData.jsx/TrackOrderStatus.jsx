@@ -1,9 +1,9 @@
-import { X, Clock, Check, Truck, Package, UserCheck, AlertCircle } from "lucide-react";
+import { X, Clock, Check, Truck, Package, UserCheck, AlertCircle, ShoppingBag } from "lucide-react";
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
-// Enhanced statuses with icons and colors
-const statuses = [
+// Full status flow for custom wear orders
+const customStatuses = [
   {
     id: 1,
     label: "Pending",
@@ -48,8 +48,34 @@ const statuses = [
   },
 ];
 
-const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
+// Simplified flow for ready-made orders
+const readyMadeStatuses = [
+  {
+    id: 1,
+    label: "Completed",
+    description: "Ready made order has been completed and is ready for pickup",
+    icon: Check,
+    color: "green"
+  },
+  {
+    id: 2,
+    label: "On Delivery",
+    description: "Order has been sent for delivery to the client",
+    icon: Truck,
+    color: "purple"
+  },
+  {
+    id: 3,
+    label: "Cancelled",
+    description: "Order has been cancelled",
+    icon: AlertCircle,
+    color: "red"
+  },
+];
+
+const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId, isReadyMade }) => {
   const [animatedIndex, setAnimatedIndex] = useState(-1);
+  const statuses = isReadyMade ? readyMadeStatuses : customStatuses;
   const currentIndex = statuses.findIndex((s) => s.label === currentStatus);
 
   // Animation effect for status progression
@@ -57,11 +83,11 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
     const timer = setTimeout(() => {
       setAnimatedIndex(currentIndex);
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, [currentIndex]);
 
-  const getStatusColor = (status, index) => {
+  const getStatusColor = (status) => {
     const colors = {
       yellow: { bg: "bg-yellow-100", border: "border-yellow-500", text: "text-yellow-700", lightBg: "bg-yellow-50" },
       blue: { bg: "bg-blue-100", border: "border-blue-500", text: "text-blue-700", lightBg: "bg-blue-50" },
@@ -70,19 +96,19 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
       green: { bg: "bg-green-100", border: "border-green-500", text: "text-green-700", lightBg: "bg-green-50" },
       red: { bg: "bg-red-100", border: "border-red-500", text: "text-red-700", lightBg: "bg-red-50" },
     };
-    
+
     return colors[status.color] || colors.blue;
   };
 
   const getCurrentStatusColor = () => {
-    const currentStatusData = statuses[currentIndex];
-    return getStatusColor(currentStatusData, currentIndex);
+    const currentStatusData = statuses[currentIndex] || statuses[0];
+    return getStatusColor(currentStatusData);
   };
 
   const StatusIcon = ({ status, index, isCurrent }) => {
     const IconComponent = status.icon;
-    const colors = getStatusColor(status, index);
-    
+    const colors = getStatusColor(status);
+
     if (index < currentIndex) {
       return (
         <div className={`w-10 h-10 flex items-center justify-center rounded-full ${colors.bg} border-2 ${colors.border} text-white`}>
@@ -90,7 +116,7 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
         </div>
       );
     }
-    
+
     if (isCurrent) {
       return (
         <div className={`w-10 h-10 flex items-center justify-center rounded-full ${colors.bg} border-2 ${colors.border} animate-pulse`}>
@@ -98,7 +124,7 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
         </div>
       );
     }
-    
+
     return (
       <div className={`w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 border-2 border-gray-300 text-gray-400`}>
         <IconComponent size={18} />
@@ -132,6 +158,12 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
               <div className="flex-1">
                 <h2 className="text-xl font-bold text-gray-900">Order Tracking</h2>
                 <p className="text-sm text-gray-500 mt-1">Tracking ID: <span className="font-mono font-medium">{orderId}</span></p>
+                {isReadyMade && (
+                  <p className="text-xs text-teal-600 font-medium mt-1">
+                    <ShoppingBag size={12} className="inline mr-1" />
+                    Ready Made Order
+                  </p>
+                )}
               </div>
               <button
                 onClick={onClose}
@@ -166,7 +198,7 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
                 <span>100%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
+                <div
                   className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${(currentIndex / (statuses.length - 1)) * 100}%` }}
                 />
@@ -181,17 +213,16 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
                 Order Journey
               </h3>
-              
+
               <div className="relative">
                 {/* Vertical Line */}
                 <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200 z-0" />
-                
+
                 <div className="space-y-8">
                   {statuses.map((status, index) => {
-                    /* eslint-disable react/prop-types */
                     const isCompleted = index <= currentIndex;
                     const isCurrent = index === currentIndex;
-                    const colors = getStatusColor(status, index);
+                    const colors = getStatusColor(status);
 
                     return (
                       <div
@@ -245,7 +276,6 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId }) => {
                         </div>
                       </div>
                     );
-                    /* eslint-enable react/prop-types */
                   })}
                 </div>
               </div>
@@ -297,6 +327,7 @@ TrackOrderStatus.propTypes = {
   currentStatus: PropTypes.string,
   onClose: PropTypes.func.isRequired,
   orderId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  isReadyMade: PropTypes.bool,
 };
 
 export default TrackOrderStatus;
