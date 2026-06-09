@@ -12,6 +12,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import ClientService from "../../../services/ClientService";
 import InventoryService from "../../../services/InventoryService";
 import OrderService from "../../../services/OrderService";
+import StaffService from "../../../services/staffServices/StaffService";
 import SuccessModal from "../../modals/SuccessModal";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
 import { buildReadyMadeDescription } from "../../../../utils/orderUtils";
@@ -56,6 +57,7 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [errorTitle, setErrorTitle] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [staffId, setStaffId] = useState("");
   const { user } = useAuth();
   const todayDate = getTodayDateString();
 
@@ -74,12 +76,27 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
   useEffect(() => {
     const init = async () => {
       try {
-        const [clientsData, itemsData] = await Promise.all([
+        const [clientsData, itemsData, staffData] = await Promise.all([
           ClientService.getClients(),
           InventoryService.listInventory(),
+          StaffService.listStaff(),
         ]);
 
         setClients(Array.isArray(clientsData) ? clientsData : []);
+
+        const staffList = Array.isArray(staffData?.results)
+          ? staffData.results
+          : Array.isArray(staffData)
+          ? staffData
+          : [];
+        const currentStaff = staffList.find(
+          (s) =>
+            s.email === user?.email ||
+            s.user?.toString() === user?.id?.toString()
+        );
+        if (currentStaff) {
+          setStaffId(currentStaff.id || currentStaff.slug);
+        }
 
         let category;
         try {
@@ -224,7 +241,7 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
         ({ item, quantity }) =>
           InventoryService.createDispenseInventory({
             item_name: item.id,
-            dispense_to: user?.staff_id || user?.id || "",
+            dispense_to: staffId,
             quantity_dispensed: quantity,
             reason: orderId
               ? `Ready Made Order - Order #${orderId}`
