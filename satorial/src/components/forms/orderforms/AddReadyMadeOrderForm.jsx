@@ -393,19 +393,43 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                           <p className="text-sm font-medium text-gray-900 truncate">
                             {item.item_name}
                           </p>
-                          <p className="text-xs text-gray-500">
-                            Stock:{" "}
-                            <span
-                              className={
-                                availableStock <= 0
-                                  ? "text-red-600 font-semibold"
-                                  : "text-gray-700"
-                              }
-                            >
-                              {availableStock}{" "}
-                              {item.unit_of_measurement || "pcs"}
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500 mt-0.5">
+                            <span>
+                              Stock:{" "}
+                              <span
+                                className={
+                                  availableStock <= 0
+                                    ? "text-red-600 font-semibold"
+                                    : "text-gray-700"
+                                }
+                              >
+                                {availableStock}{" "}
+                                {item.unit_of_measurement || "pcs"}
+                              </span>
                             </span>
-                          </p>
+                            {item.unit_cost > 0 && (
+                              <span>
+                                Cost: <span className="text-gray-700">₦{parseFloat(item.unit_cost).toLocaleString()}</span>
+                              </span>
+                            )}
+                            {item.selling_price > 0 && (
+                              <span>
+                                Price: <span className="text-gray-700">₦{parseFloat(item.selling_price).toLocaleString()}</span>
+                              </span>
+                            )}
+                            {item.unit_cost > 0 && item.selling_price > 0 && (
+                              <span>
+                                Margin:{" "}
+                                <span className={
+                                  parseFloat(item.selling_price) >= parseFloat(item.unit_cost)
+                                    ? "text-green-600 font-semibold"
+                                    : "text-red-600 font-semibold"
+                                }>
+                                  {((parseFloat(item.selling_price) - parseFloat(item.unit_cost)) / parseFloat(item.unit_cost) * 100).toFixed(0)}%
+                                </span>
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         {isSelected && (

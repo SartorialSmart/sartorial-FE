@@ -103,9 +103,13 @@ const InventoryHistoryList = () => {
           timesDispensed: 0,
           lastDispensed: null,
           lowStock: false,
+          unitCost: 0,
+          sellingPrice: 0,
         };
       }
       statsMap[name].currentStock += item.quantity || 0;
+      statsMap[name].unitCost = parseFloat(item.unit_cost) || 0;
+      statsMap[name].sellingPrice = parseFloat(item.selling_price) || 0;
       if (item.is_low_stock) {
         statsMap[name].lowStock = true;
       }
@@ -262,6 +266,9 @@ const InventoryHistoryList = () => {
               <thead>
                 <tr className="text-left text-gray-500 border-b border-gray-100">
                   <th className="pb-3 font-medium">Product</th>
+                  <th className="pb-3 font-medium">Unit Cost</th>
+                  <th className="pb-3 font-medium">Selling Price</th>
+                  <th className="pb-3 font-medium">Profit</th>
                   <th className="pb-3 font-medium">Current Stock</th>
                   <th className="pb-3 font-medium">Total Dispensed</th>
                   <th className="pb-3 font-medium">Times Dispensed</th>
@@ -286,6 +293,33 @@ const InventoryHistoryList = () => {
                           <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
                             Low
                           </span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {stat.unitCost > 0 ? (
+                          <span className="text-gray-700">₦{stat.unitCost.toLocaleString()}</span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {stat.sellingPrice > 0 ? (
+                          <span className="text-gray-700">₦{stat.sellingPrice.toLocaleString()}</span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {stat.unitCost > 0 && stat.sellingPrice > 0 ? (
+                          <span className={`font-semibold ${
+                            stat.sellingPrice >= stat.unitCost
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}>
+                            ₦{(stat.sellingPrice - stat.unitCost).toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
                         )}
                       </td>
                       <td className="py-3 pr-4">
