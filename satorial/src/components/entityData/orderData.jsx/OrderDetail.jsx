@@ -11,6 +11,7 @@ import AddPaymentModal from "../../modals/formModals/AddOrderPaymentFormModal";
 import TrackOrderStatusModal from "../../modals/formModals/TrackOrderStatusModal";
 import AssignOrderModal from "../../allocationModals/AssignOrderModal";
 import { getLogoUrl, getLocalProfile, getLocalInvoiceSettings } from "../../../utils/localImageService";
+import { isReadyMadeOrder, getCleanDescription } from "../../../../utils/orderUtils";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
@@ -37,6 +38,15 @@ const OrderDetail = () => {
     { key: 'On Delivery', label: 'On Delivery', icon: Truck, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
     { key: 'Cancelled', label: 'Cancelled', icon: XCircle, color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
   ];
+
+  const READY_MADE_STATUS_FLOW = [
+    { key: 'Completed', label: 'Completed', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
+    { key: 'On Delivery', label: 'On Delivery', icon: Truck, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
+    { key: 'Cancelled', label: 'Cancelled', icon: XCircle, color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
+  ];
+
+  const isReadyMade = isReadyMadeOrder(order);
+  const activeStatusFlow = isReadyMade ? READY_MADE_STATUS_FLOW : STATUS_FLOW;
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -645,7 +655,7 @@ const OrderDetail = () => {
   };
 
   // Get current status index
-  const currentStatusIndex = STATUS_FLOW.findIndex(status => status.key === order?.order_status);
+  const currentStatusIndex = activeStatusFlow.findIndex(status => status.key === order?.order_status);
   const isCancelled = order?.order_status === 'Cancelled';
 
   if (loading) return (
@@ -721,6 +731,11 @@ const OrderDetail = () => {
                 <h1 className="text-2xl font-bold text-gray-900 break-words">{order.order_title}</h1>
                 <div className="flex flex-wrap items-center gap-3 mt-1">
                   <p className="text-sm text-gray-600">Order ID: <span className="font-mono font-semibold">{order.slug}</span></p>
+                  {isReadyMade && (
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-teal-100 text-teal-700 border border-teal-200">
+                      Ready Made
+                    </span>
+                  )}
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                     isCancelled 
                       ? 'bg-red-100 text-red-700 border border-red-200'
@@ -743,7 +758,7 @@ const OrderDetail = () => {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 flex-wrap">
-              {!isClientView && order.order_status === "Pending" && !order.current_allocation && (
+              {!isClientView && !isReadyMade && order.order_status === "Pending" && !order.current_allocation && (
                 <button
                   onClick={() => { setAssignMode("assign"); setShowAssignModal(true); }}
                   className="px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all text-sm font-medium whitespace-nowrap flex items-center gap-1.5 shadow-sm"
@@ -752,7 +767,7 @@ const OrderDetail = () => {
                   Assign Tailor
                 </button>
               )}
-              {!isClientView && order.current_allocation && (
+              {!isClientView && !isReadyMade && order.current_allocation && (
                 <button
                   onClick={() => { setAssignMode("reassign"); setShowAssignModal(true); }}
                   className="px-3 py-2 border border-amber-500 text-amber-600 rounded-lg hover:bg-amber-50 transition-all text-sm font-medium whitespace-nowrap flex items-center gap-1.5"
@@ -823,16 +838,16 @@ const OrderDetail = () => {
                     : 'bg-gradient-to-r from-blue-500 via-purple-500 to-green-500'
                 }`}
                 style={{ 
-                  width: `${(currentStatusIndex / (STATUS_FLOW.length - 1)) * 100}%` 
+                  width: `${(currentStatusIndex / (activeStatusFlow.length - 1)) * 100}%` 
                 }}
               ></div>
             </div>
 
-            {STATUS_FLOW.map((status, index) => {
+            {activeStatusFlow.map((status, index) => {
               const IconComponent = status.icon;
               const isCompleted = index <= currentStatusIndex;
               const isCurrent = order.order_status === status.key;
-              const isClickable = index <= currentStatusIndex + 1 && !isCancelled;
+              const isClickable = !isReadyMade && index <= currentStatusIndex + 1 && !isCancelled;
               
               return (
                 <div key={status.key} className="flex flex-col items-center relative z-10">
@@ -912,7 +927,7 @@ const OrderDetail = () => {
                   {order.order_status === 'Pending' && 'Order has been created and is awaiting assignment to a staff member.'}
                   {order.order_status === 'Assigned' && 'Order has been assigned to staff and work will begin soon.'}
                   {order.order_status === 'In Progress' && 'Order is currently being worked on by our team.'}
-                  {order.order_status === 'Completed' && 'Order production has been completed.'}
+                  {order.order_status === 'Completed' && (isReadyMade ? 'Ready made order has been completed.' : 'Order production has been completed.')}
                   {order.order_status === 'On Delivery' && 'Order has been sent for delivery to the client.'}
                   {order.order_status === 'Cancelled' && 'This order has been cancelled and will not be processed further.'}
                 </p>
@@ -997,7 +1012,7 @@ const OrderDetail = () => {
             </h3>
             <div className="p-5 bg-gradient-to-br from-gray-50 to-indigo-50/30 rounded-xl border border-gray-200 min-h-[140px]">
               <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                {order.order_description || "No description provided."}
+                {getCleanDescription(order.order_description) || "No description provided."}
               </p>
             </div>
           </div>
@@ -1094,6 +1109,8 @@ const OrderDetail = () => {
               <span className={`inline-flex items-center gap-3 px-5 py-3 rounded-xl text-base font-bold shadow-sm ${
                 order.order_type === 'Bulk' 
                   ? 'bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border-2 border-purple-300' 
+                  : order.order_type === 'Ready Made'
+                  ? 'bg-gradient-to-r from-teal-100 to-teal-200 text-teal-800 border-2 border-teal-300'
                   : 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border-2 border-blue-300'
               }`}>
                 <span className="w-3 h-3 bg-current rounded-full shadow-inner"></span>
@@ -1416,18 +1433,21 @@ const OrderDetail = () => {
           onClose={() => setShowTrackOrderModal(false)}
           currentStatus={order.order_status}
           orderId={orderId}
+          isReadyMade={isReadyMade}
         />
       )}
 
       {/* Assign / Reassign Modal */}
-      <AssignOrderModal
-        isOpen={showAssignModal}
-        onClose={() => setShowAssignModal(false)}
-        order={order}
-        mode={assignMode}
-        showDepartmentFilter={true}
-        onAssign={handleAssignOrder}
-      />
+      {!isReadyMade && (
+        <AssignOrderModal
+          isOpen={showAssignModal}
+          onClose={() => setShowAssignModal(false)}
+          order={order}
+          mode={assignMode}
+          showDepartmentFilter={true}
+          onAssign={handleAssignOrder}
+        />
+      )}
     </div>
   );
 };

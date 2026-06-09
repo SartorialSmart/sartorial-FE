@@ -12,6 +12,7 @@ import TrackOrderStatusModal from "../modals/formModals/TrackOrderStatusModal";
 import OrderInvoiceModal from "../modals/formModals/OrderInvoiceModal";
 import AssignOrderModal from "../allocationModals/AssignOrderModal";
 import AddOrderFormModal from "../modals/formModals/AddOrderFormModal";
+import { isReadyMadeOrder } from "../../../utils/orderUtils";
 
 const columns = [
   { key: "client_full_name", label: "Client", sortable: true, icon: Users },
@@ -912,6 +913,9 @@ const OrderListTable = ({ showAddButton = true, showEditAction = true, title = "
                       </td>
                       <td className="px-3 py-2.5">
                         <p className="text-sm font-medium text-gray-900 truncate max-w-40">{order.order_title}</p>
+                        {order.order_type && (
+                          <p className="text-xs text-gray-400 mt-0.5">{order.order_type}</p>
+                        )}
                       </td>
                       <td className="px-3 py-2.5">
                         <div className="flex items-center gap-1.5">
@@ -935,19 +939,26 @@ const OrderListTable = ({ showAddButton = true, showEditAction = true, title = "
                         </div>
                       </td>
                       <td className="px-3 py-2.5">
-                        {!clientView && (order.order_status === "Pending" || order.assignment_status === "Assigned") ? (
-                          <button
-                            onClick={() => handleStatusClick(order)}
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-blue-400 transition-all ${getStatusClass(order.order_status)}`}
-                            title={order.assignment_status === "Assigned" ? "Click to reassign" : "Click to assign"}
-                          >
-                            {order.order_status}
-                          </button>
-                        ) : (
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusClass(order.order_status)}`}>
-                            {order.order_status}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {isReadyMadeOrder(order) && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200">
+                              Ready
+                            </span>
+                          )}
+                          {!clientView && !isReadyMadeOrder(order) && (order.order_status === "Pending" || order.assignment_status === "Assigned") ? (
+                            <button
+                              onClick={() => handleStatusClick(order)}
+                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-blue-400 transition-all ${getStatusClass(order.order_status)}`}
+                              title={order.assignment_status === "Assigned" ? "Click to reassign" : "Click to assign"}
+                            >
+                              {order.order_status}
+                            </button>
+                          ) : (
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusClass(order.order_status)}`}>
+                              {order.order_status}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="px-3 py-2.5">
@@ -1048,6 +1059,7 @@ const OrderListTable = ({ showAddButton = true, showEditAction = true, title = "
             onClose={() => setShowTrackModal(false)}
             currentStatus={selectedOrder.order_status}
             orderId={selectedOrder.id}
+            isReadyMade={isReadyMadeOrder(selectedOrder)}
           />
         )}
 
