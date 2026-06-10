@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ShoppingBag, Search, Filter, ExternalLink } from "lucide-react";
 import OrderService from "../../../services/OrderService";
 import PropTypes from "prop-types";
+import { isReadyMadeOrder } from "../../../../utils/orderUtils";
 
 export default function ClientOrderHistory({ clientId }) {
   const [orders, setOrders] = useState([]);
@@ -43,6 +44,7 @@ export default function ClientOrderHistory({ clientId }) {
     if (s === "completed" || s === "delivered") return "bg-green-100 text-green-800";
     if (s === "in_progress" || s === "in progress") return "bg-blue-100 text-blue-800";
     if (s === "pending") return "bg-amber-100 text-amber-800";
+    if (s === "on delivery") return "bg-purple-100 text-purple-800";
     if (s === "cancelled") return "bg-red-100 text-red-800";
     return "bg-gray-100 text-gray-700";
   };
@@ -51,7 +53,8 @@ export default function ClientOrderHistory({ clientId }) {
     const term = searchTerm.toLowerCase();
     return (
       (order.order_title || "").toLowerCase().includes(term) ||
-      (order.order_status || "").toLowerCase().includes(term)
+      (order.order_status || "").toLowerCase().includes(term) ||
+      (order.order_type || "").toLowerCase().includes(term)
     );
   });
 
@@ -185,13 +188,20 @@ export default function ClientOrderHistory({ clientId }) {
                     className="hover:bg-gray-50 transition-colors"
                   >
                     <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
                           <ShoppingBag size={14} className="text-emerald-600" />
                         </div>
-                        <span className="text-gray-900 font-medium">
-                          {order.order_title || "—"}
-                        </span>
+                        <div className="min-w-0">
+                          <span className="text-gray-900 font-medium block truncate">
+                            {order.order_title || "—"}
+                          </span>
+                          {isReadyMadeOrder(order) && (
+                            <span className="text-xs text-teal-600 font-medium">
+                              Ready Made
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">

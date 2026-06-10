@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import PropTypes from "prop-types";
 
-const TrackOrderStatusModal = ({ isOpen, onClose, currentStatus, orderId }) => {
+const TrackOrderStatusModal = ({ isOpen, onClose, currentStatus, orderId, isReadyMade }) => {
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -61,6 +61,7 @@ const TrackOrderStatusModal = ({ isOpen, onClose, currentStatus, orderId }) => {
                   currentStatus={currentStatus} 
                   onClose={onClose} 
                   orderId={orderId}
+                  isReadyMade={isReadyMade}
                 />
               </div>
             </motion.div>
@@ -76,6 +77,7 @@ TrackOrderStatusModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   currentStatus: PropTypes.string,
   orderId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  isReadyMade: PropTypes.bool,
 };
 
 export default TrackOrderStatusModal;

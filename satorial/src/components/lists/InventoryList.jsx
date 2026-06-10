@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MoreVertical, Search, Download, Plus, Package, AlertTriangle, CheckCircle, Layers } from "lucide-react";
+import { MoreVertical, Search, Download, Plus, Package, AlertTriangle, CheckCircle, Layers, DollarSign } from "lucide-react";
 import InventoryService from "../../services/InventoryService";
 import AddInventoryFormModal from "../modals/formModals/AddInventoryFormModal";
 import { Menu, Transition } from "@headlessui/react";
@@ -94,12 +94,16 @@ const InventoryList = () => {
   const lowStockItems = inventoryItems.filter((item) => item.is_low_stock);
   const healthyItems = totalItems - lowStockItems.length;
   const totalQuantity = inventoryItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalCost = inventoryItems.reduce(
+    (sum, item) => sum + (parseFloat(item.unit_cost) || 0) * (item.quantity || 0),
+    0
+  );
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       {/* Stock Level Summary Cards */}
       {!loading && !error && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center gap-3">
             <div className="p-2 bg-blue-50 rounded-lg">
               <Layers size={20} className="text-blue-600" />
@@ -136,6 +140,15 @@ const InventoryList = () => {
               <p className={`text-xl font-bold ${lowStockItems.length > 0 ? "text-red-700" : "text-gray-900"}`}>{lowStockItems.length}</p>
             </div>
           </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center gap-3">
+            <div className="p-2 bg-teal-50 rounded-lg">
+              <DollarSign size={20} className="text-teal-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Total Cost</p>
+              <p className="text-lg font-bold text-gray-900">₦{totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -157,7 +170,7 @@ const InventoryList = () => {
       />
       {/* Header Section */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Inventory</h2>
+        <h2 className="text-xl font-semibold">Inventory Management</h2>
         <div className="flex items-center gap-3">
           {/* Add Inventory Button */}
           <button
@@ -239,7 +252,10 @@ const InventoryList = () => {
                   "Date",
                   "Item Name",
                   "Inventory Category",
+                  "Unit Cost",
+                  "Selling Price",
                   "Qty In Stock",
+                  "Total Cost",
                   "Actions",
                 ].map((header, idx) => (
                   <th key={idx} className="p-3 font-medium">
@@ -268,12 +284,29 @@ const InventoryList = () => {
                       {categoryMap[item.category] || item.category || "-"}
                     </td>
                     <td className="p-3">
+                      <span className="font-medium text-gray-700">
+                        {item.unit_cost ? `₦${parseFloat(item.unit_cost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <span className="font-medium text-gray-700">
+                        {item.selling_price ? `₦${parseFloat(item.selling_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}
+                      </span>
+                    </td>
+                    <td className="p-3">
                       <span className="font-medium">{item.quantity ?? "-"}</span>
                       {item.is_low_stock && (
                         <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
                           Low Stock
                         </span>
                       )}
+                    </td>
+                    <td className="p-3">
+                      <span className="font-medium text-teal-700">
+                        {item.unit_cost
+                          ? `₦${((parseFloat(item.unit_cost) || 0) * (item.quantity || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                          : "-"}
+                      </span>
                     </td>
                     <td className="p-3">
                       <Menu
@@ -331,7 +364,7 @@ const InventoryList = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="p-8 text-center text-gray-500">
+                  <td colSpan="8" className="p-8 text-center text-gray-500">
                     {searchTerm.trim() || selectedFilter !== "All"
                       ? "No inventory items match your search criteria"
                       : "No inventory items found"}
