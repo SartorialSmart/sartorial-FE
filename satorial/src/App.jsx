@@ -50,6 +50,7 @@ import ExpensesCategoryListDisplay from "./pages/expensesPages/ExpensesCategoryL
 import InventoryListDisplay from "./pages/inventories/InventoryListDisplay";
 import InventoryCategoryListDisplay from "./pages/inventories/InventoryCategoryListDisplay";
 import DispenseInventoryListDisplay from "./pages/inventories/DispenseInventoryListDisplay";
+import InventoryHistoryListDisplay from "./pages/inventories/InventoryHistoryListDisplay";
 import VendorListDisplay from "./pages/orderPages/VendorListDisplay";
 import SubscriptionPanelDisplay from "./pages/subscriptionPages/SubscriptionPanelDisplay";
 import PricingPlansDisplay from "./pages/subscriptionPages/PricingPlansDisplay";
@@ -126,6 +127,10 @@ const protectedRoutes = [
   {
     path: "/inventory/dispense/list",
     element: <DispenseInventoryListDisplay />,
+  },
+  {
+    path: "/inventory/history",
+    element: <InventoryHistoryListDisplay />,
   },
 
   { path: "/subscriptions/panel", element: <SubscriptionPanelDisplay /> },
