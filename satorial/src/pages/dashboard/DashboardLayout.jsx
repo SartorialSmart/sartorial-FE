@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/navs/NavBar";
 import { useAuth } from "../../contexts/AuthContext";
@@ -22,6 +22,17 @@ import PATTERN_2 from "../../assets/images/pattern-2.svg";
 import PATTERN_3 from "../../assets/images/pattern-3.svg";
 import PATTERN_5 from "../../assets/images/pattern-5.svg";
 import PATTERN_6 from "../../assets/images/pattern-6.svg";
+
+const VIEW_KEY_MAP = {
+  "/client/client-dashboard": "clients",
+  "/order/order-dashboard": "orders",
+  "/staff/staff-list": "staff",
+  "/reports/reports/dashboard": "reports",
+  "/expenses/overview": "expenses",
+  "/inventory/list/overview": "inventory",
+  "/subscriptions/panel": "subscriptions",
+  "/settings": "settings",
+};
 
 const dashboardItems = [
   {
@@ -122,11 +133,21 @@ const dashboardItems = [
   },
 ];
 
+const ALLOWED_ROLES = ["super_admin", "admin", "organization"];
+
 const DashboardLayout = () => {
-  const { user } = useAuth();
+  const { user, fetchAuthenticatedUser } = useAuth();
+  const isAdmin = ALLOWED_ROLES.includes(user?.role?.toLowerCase());
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState("");
+  const refreshed = useRef(false);
 
+  useEffect(() => {
+    if (user && !isAdmin && !user?.staff_permissions && !refreshed.current) {
+      refreshed.current = true;
+      fetchAuthenticatedUser();
+    }
+  }, [user, isAdmin, fetchAuthenticatedUser]);
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -150,6 +171,13 @@ const DashboardLayout = () => {
   const handleCardClick = (link) => {
     navigate(link);
   };
+
+  const userPermissions = user?.staff_permissions;
+  const visibleItems = isAdmin || !userPermissions
+    ? dashboardItems
+    : dashboardItems.filter((item) =>
+        userPermissions.includes(VIEW_KEY_MAP[item.button_link])
+      );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -194,7 +222,7 @@ const DashboardLayout = () => {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {dashboardItems.map((item, index) => (
+            {visibleItems.map((item, index) => (
               <div
                 key={index}
                 onClick={() => handleCardClick(item.button_link)}
