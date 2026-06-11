@@ -4,7 +4,8 @@ import {
   MoreVertical, Search, Filter, Download, Eye, Edit, Truck, FileText,
   Calendar, User, ChevronDown, X, Check, Loader2, SlidersHorizontal,
   Plus, Users, CreditCard, Package, AlertCircle, BarChart3, RefreshCw,
-  ShoppingBag, Clock, CheckCircle, XCircle, TrendingUp, Bell
+  ShoppingBag, Clock, CheckCircle, XCircle, TrendingUp, Bell,
+  UserPlus, Repeat
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import OrderService from "../../services/OrderService";
@@ -1017,6 +1018,34 @@ const OrderListTable = ({ showAddButton = true, showEditAction = true, title = "
                       <p className="text-xs text-gray-500">Modify order details</p>
                     </div>
                   </Link>
+                </li>
+              )}
+              {!clientView && !isReadyMadeOrder(filteredOrders[activeDropdown]) && ["Pending", "Assigned", "In Progress"].includes(filteredOrders[activeDropdown]?.order_status) && (
+                <li>
+                  <button
+                    onClick={() =>
+                      filteredOrders[activeDropdown]?.order_status === "Pending"
+                        ? handleAssignClick(filteredOrders[activeDropdown])
+                        : handleReassignClick(filteredOrders[activeDropdown])
+                    }
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer w-full text-left transition-all"
+                  >
+                    <div className="p-2 bg-amber-100 rounded-lg">
+                      {filteredOrders[activeDropdown]?.order_status === "Pending" ? (
+                        <UserPlus size={16} className="text-amber-600" />
+                      ) : (
+                        <Repeat size={16} className="text-amber-600" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {filteredOrders[activeDropdown]?.order_status === "Pending" ? "Assign Tailor" : "Reassign"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {filteredOrders[activeDropdown]?.order_status === "Pending" ? "Assign to staff member" : "Change staff assignment"}
+                      </p>
+                    </div>
+                  </button>
                 </li>
               )}
               <li>
