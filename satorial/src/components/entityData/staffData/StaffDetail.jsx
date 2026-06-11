@@ -86,6 +86,7 @@ const StaffDetail = () => {
         gender: data.gender,
         employment_date: data.employment_date,
         birthday_date: data.birthday_date,
+        address: data.address || "",
       });
     } catch (error) {
       console.error("Failed to fetch staff detail:", error);
@@ -695,6 +696,21 @@ const StaffDetail = () => {
                   format="YYYY-MM-DD"
                 />
               </div>
+            </div>
+
+            {/* Address */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Address
+              </label>
+              <Input.TextArea
+                value={formData.address}
+                onChange={(e) => handleInputChange("address", e.target.value)}
+                disabled={!isEditing}
+                rows={3}
+                className="w-full"
+                placeholder="Enter staff address"
+              />
             </div>
           </div>
         </TabPane>

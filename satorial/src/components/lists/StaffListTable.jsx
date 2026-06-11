@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from "react";
 import { useNavigate } from "react-router-dom";
-import { MoreVertical, TrendingUp, TrendingDown, Award, AlertTriangle, Eye, Trash2, Edit, User, Mail, Phone } from "lucide-react";
+import { MoreVertical, TrendingUp, TrendingDown, Award, AlertTriangle, Eye, Trash2, Edit, User, Shield } from "lucide-react";
 import { Spin, Tag, Tooltip, Progress, message } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import StaffService from "../../services/staffServices/StaffService";
@@ -10,6 +10,7 @@ import StaffReportService from "../../services/staffServices/StaffReportService"
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
 import SuccessModal from "../modals/SuccessModal";
+import PermissionsModal from "../modals/PermissionsModal";
 
 const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   const [staffToDelete, setStaffToDelete] = useState(null);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [successModal, setSuccessModal] = useState(null);
+  const [permissionsModalStaff, setPermissionsModalStaff] = useState(null);
 
   const dropdownRef = useRef(null);
   const rowRefs = useRef({});
@@ -204,14 +206,17 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   };
 
   const DropdownMenu = ({ staff, anchorRef }) => {
-    const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+    const [coords, setCoords] = useState({ top: 0, left: null, right: null, width: 0 });
     
     useEffect(() => {
       if (anchorRef && anchorRef.current) {
         const rect = anchorRef.current.getBoundingClientRect();
+        const dropdownWidth = 200;
+        const fitsRight = rect.left + dropdownWidth < window.innerWidth;
         setCoords({
           top: rect.bottom + window.scrollY,
-          left: rect.left + window.scrollX,
+          left: fitsRight ? rect.left + window.scrollX : null,
+          right: !fitsRight ? (window.innerWidth - rect.right) : null,
           width: rect.width,
         });
       }
@@ -228,7 +233,8 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
             position: "absolute",
             top: coords.top,
             left: coords.left,
-            minWidth: coords.width,
+            right: coords.right,
+            minWidth: 180,
             zIndex: 9999,
           }}
           className="bg-white shadow-lg rounded-lg border overflow-hidden"
@@ -246,6 +252,17 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
           >
             <Edit size={16} />
             Edit Staff
+          </button>
+          <button
+            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPermissionsModalStaff(staff);
+              setDropdownOpen(null);
+            }}
+          >
+            <Shield size={16} />
+            Permissions
           </button>
           <button
             className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
@@ -338,9 +355,6 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
                 Staff Member
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Contact
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Department
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -405,23 +419,6 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
                     </td>
 
                     <td className="px-6 py-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-900 truncate max-w-[180px]">
-                            {staff.email}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Phone className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-500">
-                            {staff.phone_number}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
                       <Tag color="blue" className="font-medium">
                         {staff.department}
                       </Tag>
@@ -465,45 +462,6 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
 
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                        {/* Always visible action buttons */}
-                        <button
-                          onClick={(e) => handleAction("view", staff, e)}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors group/tooltip relative"
-                          title="View Details"
-                        >
-                          <Eye size={18} />
-                          <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                            View Details
-                          </span>
-                        </button>
-                        
-                        <button
-                          onClick={(e) => handleAction("edit", staff, e)}
-                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors group/tooltip relative"
-                          title="Edit"
-                        >
-                          <Edit size={18} />
-                          <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                            Edit
-                          </span>
-                        </button>
-                        
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setStaffToDelete(staff);
-                            setShowDeleteModal(true);
-                          }}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors group/tooltip relative"
-                          title="Delete"
-                        >
-                          <Trash2 size={18} />
-                          <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                            Delete
-                          </span>
-                        </button>
-
-                        {/* Additional dropdown menu for more actions */}
                         <div className="relative">
                           <button
                             onClick={(e) => handleDropdownToggle(staff.email, e)}
@@ -528,7 +486,7 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
               })
             ) : (
               <tr>
-                <td colSpan="7" className="text-center py-12">
+                <td colSpan="6" className="text-center py-12">
                   <div className="text-gray-400 space-y-2">
                     <User className="w-12 h-12 mx-auto text-gray-300" />
                     <p>{searchTerm ? "No staff found matching your search" : "No staff available"}</p>
@@ -637,6 +595,13 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
         <SuccessModal
           {...successModal}
           onClose={() => setSuccessModal(null)}
+        />
+      )}
+      {permissionsModalStaff && (
+        <PermissionsModal
+          staff={permissionsModalStaff}
+          isOpen={!!permissionsModalStaff}
+          onClose={() => setPermissionsModalStaff(null)}
         />
       )}
     </div>
