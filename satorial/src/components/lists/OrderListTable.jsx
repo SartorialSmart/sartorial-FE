@@ -102,7 +102,7 @@ const getStatusClass = (status) => {
   return statusMap[status] || "bg-gray-50 text-gray-800 border-gray-200";
 };
 
-const OrderListTable = ({ showAddButton = true, showEditAction = true, title = "Orders Management", clientView = false }) => {
+const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = true, title = "Orders Management", clientView = false }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   // Data states
   const [orders, setOrders] = useState([]);
@@ -111,6 +111,10 @@ const OrderListTable = ({ showAddButton = true, showEditAction = true, title = "
   
   // Search and Filter states
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (searchTerm !== undefined) setSearchQuery(searchTerm);
+  }, [searchTerm]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [amountFilter, setAmountFilter] = useState("all");

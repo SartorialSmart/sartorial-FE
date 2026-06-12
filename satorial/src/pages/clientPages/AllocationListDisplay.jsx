@@ -10,6 +10,7 @@ const AllocationsListDisplay = () => {
     <ClientSideABrLayout>
       <div className="space-y-6">
         <Toolbar_1
+          title="Clients Management"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           filterBy={"all"}
