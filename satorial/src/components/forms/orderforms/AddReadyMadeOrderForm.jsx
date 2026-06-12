@@ -207,15 +207,17 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
 
       // Auto-dispense each selected item from inventory
       const dispensePromises = Object.values(selectedItems).map(
-        ({ item, quantity }) =>
-          InventoryService.createDispenseInventory({
+        ({ item, quantity }) => {
+          const payload = {
             item_name: item.id,
-            dispense_to: staffId,
             quantity_dispensed: quantity,
             reason: orderId
               ? `Ready Made Order - Order #${orderId}`
               : "Ready Made Order",
-          })
+          };
+          if (staffId) payload.dispense_to = staffId;
+          return InventoryService.createDispenseInventory(payload);
+        }
       );
 
       await Promise.all(dispensePromises);
