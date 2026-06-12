@@ -112,9 +112,6 @@ const OrderDetail = () => {
 
   const handleAssignOrder = async (payload) => {
     await OrderService.assignOrder(payload);
-    if (order.order_status === "Pending") {
-      await OrderService.updateOrder(orderId, { order_status: "Assigned" });
-    }
     const updatedOrder = await OrderService.getOrderById(orderId);
     setOrder(updatedOrder);
   };
@@ -122,9 +119,20 @@ const OrderDetail = () => {
   const handleStatusUpdate = async (newStatus) => {
     if (updatingStatus || !order) return;
 
-    if (newStatus === "Assigned" && !order.current_allocation?.id) {
-      setAssignMode("assign");
-      setShowAssignModal(true);
+    if (newStatus === "Assigned") {
+      if (!order.current_allocation?.id) {
+        setAssignMode("assign");
+        setShowAssignModal(true);
+        return;
+      }
+      const name = order.current_allocation.staff_name;
+      const confirmed = window.confirm(
+        `Order is already assigned to ${name}. Do you wish to Re-Assign to another tailor?`
+      );
+      if (confirmed) {
+        setAssignMode("reassign");
+        setShowAssignModal(true);
+      }
       return;
     }
 
@@ -1437,6 +1445,7 @@ const OrderDetail = () => {
           mode={assignMode}
           showDepartmentFilter={true}
           onAssign={handleAssignOrder}
+          excludeStaffId={order?.current_allocation?.staff_id || order?.current_allocation?.staff}
         />
       )}
     </div>
