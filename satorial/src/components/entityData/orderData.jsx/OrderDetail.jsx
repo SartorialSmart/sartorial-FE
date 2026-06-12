@@ -112,13 +112,22 @@ const OrderDetail = () => {
 
   const handleAssignOrder = async (payload) => {
     await OrderService.assignOrder(payload);
+    if (order.order_status === "Pending") {
+      await OrderService.updateOrder(orderId, { order_status: "Assigned" });
+    }
     const updatedOrder = await OrderService.getOrderById(orderId);
     setOrder(updatedOrder);
   };
 
   const handleStatusUpdate = async (newStatus) => {
     if (updatingStatus || !order) return;
-    
+
+    if (newStatus === "Assigned" && !order.current_allocation?.id) {
+      setAssignMode("assign");
+      setShowAssignModal(true);
+      return;
+    }
+
     setUpdatingStatus(true);
     try {
       const updateData = {
@@ -757,24 +766,7 @@ const OrderDetail = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {!isClientView && !isReadyMade && (order.current_allocation?.id || order.order_status === "Assigned" || order.order_status === "In Progress") ? (
-                <button
-                  onClick={() => { setAssignMode("reassign"); setShowAssignModal(true); }}
-                  className="px-3 py-2 border border-amber-500 text-amber-600 rounded-lg hover:bg-amber-50 transition-all text-sm font-medium whitespace-nowrap flex items-center gap-1.5"
-                >
-                  <Repeat size={14} />
-                  Reassign
-                </button>
-              ) : !isClientView && !isReadyMade ? (
-                <button
-                  onClick={() => { setAssignMode("assign"); setShowAssignModal(true); }}
-                  className="px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all text-sm font-medium whitespace-nowrap flex items-center gap-1.5 shadow-sm"
-                >
-                  <UserPlus size={14} />
-                  Assign Tailor
-                </button>
-              ) : null}
+            <div className="flex items-center gap-2 flex-wrap justify-end">
               <button 
                 onClick={handleTrackOrder}
                 className="px-3 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-all text-sm font-medium whitespace-nowrap"
