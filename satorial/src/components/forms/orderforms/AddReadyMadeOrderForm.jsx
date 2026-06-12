@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   ShoppingBag,
   Minus,
@@ -50,6 +50,7 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
   });
 
   const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   useEffect(() => {
     const init = async () => {
@@ -87,28 +88,6 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
 
     init();
   }, []);
-
-  const getCategoryName = (catId) => {
-    const cat = categories.find(
-      (c) => c.id === catId || c.id?.toString() === catId?.toString()
-    );
-    return cat?.name || "Uncategorized";
-  };
-
-  const itemsByCategory = useMemo(() => {
-    const grouped = {};
-    inventoryItems.forEach((item) => {
-      const key = item.category?.toString() || "uncategorized";
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(item);
-    });
-    return grouped;
-  }, [inventoryItems]);
-
-  const categoryOrder = useMemo(
-    () => Object.keys(itemsByCategory),
-    [itemsByCategory]
-  );
 
   useEffect(() => {
     let total = 0;
@@ -351,121 +330,140 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                   <p className="text-gray-500">No inventory items available.</p>
                 </div>
               ) : (
-                <div className="space-y-6 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                  {categoryOrder.map((catId) => {
-                    const items = itemsByCategory[catId];
-                    return (
-                      <div key={catId}>
-                        <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">
-                          {getCategoryName(catId)}
-                        </h4>
-                        <div className="space-y-2">
-                          {items.map((item) => {
-                            const isSelected = !!selectedItems[item.id];
-                            const selected = selectedItems[item.id];
-                            const availableStock = item.quantity || 0;
+                <div>
+                  <div className="mb-3">
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md p-2.5 text-sm focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="all">All Categories</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2 max-h-72 overflow-y-auto border border-gray-200 rounded-lg p-2">
+                    {inventoryItems
+                      .filter(
+                        (item) =>
+                          selectedCategory === "all" ||
+                          item.category?.toString() === selectedCategory
+                      )
+                      .map((item) => {
+                        const isSelected = !!selectedItems[item.id];
+                        const selected = selectedItems[item.id];
+                        const availableStock = item.quantity || 0;
 
-                            return (
-                              <div
-                                key={item.id}
-                                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                                  isSelected
-                                    ? "bg-blue-50 border-blue-300"
-                                    : "border-gray-200 hover:bg-gray-50"
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() => toggleItem(item)}
-                                  disabled={loading || availableStock <= 0}
-                                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
+                        return (
+                          <div
+                            key={item.id}
+                            className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                              isSelected
+                                ? "bg-blue-50 border-blue-300"
+                                : "border-gray-200 hover:bg-gray-50"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleItem(item)}
+                              disabled={loading || availableStock <= 0}
+                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
 
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
-                                    {item.item_name}
-                                  </p>
-                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500 mt-0.5">
-                                    <span>
-                                      Stock:{" "}
-                                      <span
-                                        className={
-                                          availableStock <= 0
-                                            ? "text-red-600 font-semibold"
-                                            : "text-gray-700"
-                                        }
-                                      >
-                                        {availableStock}{" "}
-                                        {item.unit_of_measurement || "pcs"}
-                                      </span>
-                                    </span>
-                                    {item.unit_cost > 0 && (
-                                      <span>
-                                        Cost: <span className="text-gray-700">₦{parseFloat(item.unit_cost).toLocaleString()}</span>
-                                      </span>
-                                    )}
-                                    {item.selling_price > 0 && (
-                                      <span>
-                                        Price: <span className="text-gray-700">₦{parseFloat(item.selling_price).toLocaleString()}</span>
-                                      </span>
-                                    )}
-                                    {item.unit_cost > 0 && item.selling_price > 0 && (
-                                      <span>
-                                        Margin:{" "}
-                                        <span className={
-                                          parseFloat(item.selling_price) >= parseFloat(item.unit_cost)
-                                            ? "text-green-600 font-semibold"
-                                            : "text-red-600 font-semibold"
-                                        }>
-                                          {((parseFloat(item.selling_price) - parseFloat(item.unit_cost)) / parseFloat(item.unit_cost) * 100).toFixed(0)}%
-                                        </span>
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {isSelected && (
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <button
-                                      type="button"
-                                      onClick={() => adjustQty(item.id, -1)}
-                                      disabled={
-                                        loading || (selected?.quantity || 1) <= 1
-                                      }
-                                      className="p-1 rounded-md border border-gray-300 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                      <Minus size={14} />
-                                    </button>
-                                    <span className="w-8 text-center font-semibold text-sm">
-                                      {selected?.quantity || 1}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => adjustQty(item.id, 1)}
-                                      disabled={
-                                        loading ||
-                                        (selected?.quantity || 0) >= availableStock
-                                      }
-                                      className="p-1 rounded-md border border-gray-300 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                      <Plus size={14} />
-                                    </button>
-                                  </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {item.item_name}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500 mt-0.5">
+                                <span>
+                                  Stock:{" "}
+                                  <span
+                                    className={
+                                      availableStock <= 0
+                                        ? "text-red-600 font-semibold"
+                                        : "text-gray-700"
+                                    }
+                                  >
+                                    {availableStock}{" "}
+                                    {item.unit_of_measurement || "pcs"}
+                                  </span>
+                                </span>
+                                {item.unit_cost > 0 && (
+                                  <span>
+                                    Cost: <span className="text-gray-700">₦{parseFloat(item.unit_cost).toLocaleString()}</span>
+                                  </span>
                                 )}
-
-                                {availableStock <= 0 && (
-                                  <span className="text-xs text-red-600 font-medium shrink-0">
-                                    Out of stock
+                                {item.selling_price > 0 && (
+                                  <span>
+                                    Price: <span className="text-gray-700">₦{parseFloat(item.selling_price).toLocaleString()}</span>
+                                  </span>
+                                )}
+                                {item.unit_cost > 0 && item.selling_price > 0 && (
+                                  <span>
+                                    Margin:{" "}
+                                    <span className={
+                                      parseFloat(item.selling_price) >= parseFloat(item.unit_cost)
+                                        ? "text-green-600 font-semibold"
+                                        : "text-red-600 font-semibold"
+                                    }>
+                                      {((parseFloat(item.selling_price) - parseFloat(item.unit_cost)) / parseFloat(item.unit_cost) * 100).toFixed(0)}%
+                                    </span>
                                   </span>
                                 )}
                               </div>
-                            );
-                          })}
-                        </div>
+                            </div>
+
+                            {isSelected && (
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => adjustQty(item.id, -1)}
+                                  disabled={
+                                    loading || (selected?.quantity || 1) <= 1
+                                  }
+                                  className="p-1 rounded-md border border-gray-300 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <Minus size={14} />
+                                </button>
+                                <span className="w-8 text-center font-semibold text-sm">
+                                  {selected?.quantity || 1}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => adjustQty(item.id, 1)}
+                                  disabled={
+                                    loading ||
+                                    (selected?.quantity || 0) >= availableStock
+                                  }
+                                  className="p-1 rounded-md border border-gray-300 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <Plus size={14} />
+                                </button>
+                              </div>
+                            )}
+
+                            {availableStock <= 0 && (
+                              <span className="text-xs text-red-600 font-medium shrink-0">
+                                Out of stock
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    {inventoryItems.filter(
+                      (item) =>
+                        selectedCategory === "all" ||
+                        item.category?.toString() === selectedCategory
+                    ).length === 0 && (
+                      <div className="text-center py-6 text-sm text-gray-400">
+                        No items in this category.
                       </div>
-                    );
-                  })}
+                    )}
+                  </div>
                 </div>
               )}
             </div>
