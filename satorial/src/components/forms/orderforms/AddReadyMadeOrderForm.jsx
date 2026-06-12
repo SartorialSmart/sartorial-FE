@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   ShoppingBag,
   Minus,
@@ -17,34 +17,10 @@ import SuccessModal from "../../modals/SuccessModal";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
 import { buildReadyMadeDescription } from "../../../../utils/orderUtils";
 
-const READY_MADE_CATEGORY_NAME = "Ready Made Wears";
-
 const getTodayDateString = () => {
   const today = new Date();
   const timezoneOffset = today.getTimezoneOffset() * 60000;
   return new Date(today.getTime() - timezoneOffset).toISOString().split("T")[0];
-};
-
-const findOrCreateReadyMadeCategory = async () => {
-  const categoriesData = await InventoryService.listInventoryCategory();
-  const categories = Array.isArray(categoriesData) ? categoriesData : [];
-
-  let category = categories.find(
-    (cat) =>
-      cat.name?.toLowerCase() === READY_MADE_CATEGORY_NAME.toLowerCase() ||
-      cat.name?.toLowerCase().includes("ready made") ||
-      cat.name?.toLowerCase().includes("readymade")
-  );
-
-  if (!category) {
-    const created = await InventoryService.createInventoryCategory({
-      name: READY_MADE_CATEGORY_NAME,
-      description: "Pre-made clothing items available for immediate sale",
-    });
-    category = created;
-  }
-
-  return category;
 };
 
 const AddReadyMadeOrderForm = ({ onClose }) => {
@@ -73,16 +49,21 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
     order_type: "Single",
   });
 
+  const [categories, setCategories] = useState([]);
+
   useEffect(() => {
     const init = async () => {
       try {
-        const [clientsData, itemsData, staffData] = await Promise.all([
+        const [clientsData, itemsData, staffData, categoriesData] = await Promise.all([
           ClientService.getClients(),
           InventoryService.listInventory(),
           StaffService.listStaff(),
+          InventoryService.listInventoryCategory(),
         ]);
 
         setClients(Array.isArray(clientsData) ? clientsData : []);
+        setInventoryItems(Array.isArray(itemsData) ? itemsData : []);
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
 
         const staffList = Array.isArray(staffData?.results)
           ? staffData.results
@@ -97,27 +78,6 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
         if (currentStaff) {
           setStaffId(currentStaff.id || currentStaff.slug);
         }
-
-        let category;
-        try {
-          category = await findOrCreateReadyMadeCategory();
-        } catch {
-          setFetchError(
-            `Failed to create "${READY_MADE_CATEGORY_NAME}" category. Please create it manually in Inventory Categories.`
-          );
-          setPageLoading(false);
-          return;
-        }
-
-        if (category) {
-          const allItems = Array.isArray(itemsData) ? itemsData : [];
-          const filtered = allItems.filter(
-            (item) =>
-              item.category === category.id ||
-              item.category?.toString() === category.id?.toString()
-          );
-          setInventoryItems(filtered);
-        }
       } catch {
         setFetchError("Failed to load data. Please try again.");
       } finally {
@@ -127,6 +87,43 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
 
     init();
   }, []);
+
+  const getCategoryName = (catId) => {
+    const cat = categories.find(
+      (c) => c.id === catId || c.id?.toString() === catId?.toString()
+    );
+    return cat?.name || "Uncategorized";
+  };
+
+  const itemsByCategory = useMemo(() => {
+    const grouped = {};
+    inventoryItems.forEach((item) => {
+      const key = item.category?.toString() || "uncategorized";
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(item);
+    });
+    return grouped;
+  }, [inventoryItems]);
+
+  const categoryOrder = useMemo(
+    () => Object.keys(itemsByCategory),
+    [itemsByCategory]
+  );
+
+  useEffect(() => {
+    let total = 0;
+    Object.values(selectedItems).forEach(({ item, quantity }) => {
+      total += (parseFloat(item.selling_price) || 0) * quantity;
+    });
+    setFormData((prev) => {
+      const deposit = parseFloat(prev.initial_deposit) || 0;
+      return {
+        ...prev,
+        order_price: total > 0 ? total.toString() : prev.order_price,
+        balance: total > 0 ? Math.max(total - deposit, 0).toFixed(2) : prev.balance,
+      };
+    });
+  }, [selectedItems]);
 
   const handleClientChange = (e) => {
     const value = e.target.value;
@@ -177,7 +174,7 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
   };
 
   const validateForm = () => {
-    const { client, client_email, order_title, order_price } = formData;
+    const { client, client_email, order_title } = formData;
 
     if (!client || !client_email) {
       setErrorTitle("Validation Error");
@@ -196,13 +193,6 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
     if (Object.keys(selectedItems).length === 0) {
       setErrorTitle("Validation Error");
       setErrorMessage("Please select at least one inventory item.");
-      setIsErrorModalOpen(true);
-      return false;
-    }
-
-    if (!order_price || isNaN(parseFloat(order_price))) {
-      setErrorTitle("Validation Error");
-      setErrorMessage("Please enter a valid price.");
       setIsErrorModalOpen(true);
       return false;
     }
@@ -358,114 +348,121 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
               {inventoryItems.length === 0 ? (
                 <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                   <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                  <p className="text-gray-500">
-                    No ready made items in inventory.
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    Add items to the "{READY_MADE_CATEGORY_NAME}" category first.
-                  </p>
+                  <p className="text-gray-500">No inventory items available.</p>
                 </div>
               ) : (
-                <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-2">
-                  {inventoryItems.map((item) => {
-                    const isSelected = !!selectedItems[item.id];
-                    const selected = selectedItems[item.id];
-                    const availableStock = item.quantity || 0;
-
+                <div className="space-y-6 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                  {categoryOrder.map((catId) => {
+                    const items = itemsByCategory[catId];
                     return (
-                      <div
-                        key={item.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                          isSelected
-                            ? "bg-blue-50 border-blue-300"
-                            : "border-gray-200 hover:bg-gray-50"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleItem(item)}
-                          disabled={loading || availableStock <= 0}
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
+                      <div key={catId}>
+                        <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">
+                          {getCategoryName(catId)}
+                        </h4>
+                        <div className="space-y-2">
+                          {items.map((item) => {
+                            const isSelected = !!selectedItems[item.id];
+                            const selected = selectedItems[item.id];
+                            const availableStock = item.quantity || 0;
 
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {item.item_name}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500 mt-0.5">
-                            <span>
-                              Stock:{" "}
-                              <span
-                                className={
-                                  availableStock <= 0
-                                    ? "text-red-600 font-semibold"
-                                    : "text-gray-700"
-                                }
+                            return (
+                              <div
+                                key={item.id}
+                                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                                  isSelected
+                                    ? "bg-blue-50 border-blue-300"
+                                    : "border-gray-200 hover:bg-gray-50"
+                                }`}
                               >
-                                {availableStock}{" "}
-                                {item.unit_of_measurement || "pcs"}
-                              </span>
-                            </span>
-                            {item.unit_cost > 0 && (
-                              <span>
-                                Cost: <span className="text-gray-700">₦{parseFloat(item.unit_cost).toLocaleString()}</span>
-                              </span>
-                            )}
-                            {item.selling_price > 0 && (
-                              <span>
-                                Price: <span className="text-gray-700">₦{parseFloat(item.selling_price).toLocaleString()}</span>
-                              </span>
-                            )}
-                            {item.unit_cost > 0 && item.selling_price > 0 && (
-                              <span>
-                                Margin:{" "}
-                                <span className={
-                                  parseFloat(item.selling_price) >= parseFloat(item.unit_cost)
-                                    ? "text-green-600 font-semibold"
-                                    : "text-red-600 font-semibold"
-                                }>
-                                  {((parseFloat(item.selling_price) - parseFloat(item.unit_cost)) / parseFloat(item.unit_cost) * 100).toFixed(0)}%
-                                </span>
-                              </span>
-                            )}
-                          </div>
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => toggleItem(item)}
+                                  disabled={loading || availableStock <= 0}
+                                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    {item.item_name}
+                                  </p>
+                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500 mt-0.5">
+                                    <span>
+                                      Stock:{" "}
+                                      <span
+                                        className={
+                                          availableStock <= 0
+                                            ? "text-red-600 font-semibold"
+                                            : "text-gray-700"
+                                        }
+                                      >
+                                        {availableStock}{" "}
+                                        {item.unit_of_measurement || "pcs"}
+                                      </span>
+                                    </span>
+                                    {item.unit_cost > 0 && (
+                                      <span>
+                                        Cost: <span className="text-gray-700">₦{parseFloat(item.unit_cost).toLocaleString()}</span>
+                                      </span>
+                                    )}
+                                    {item.selling_price > 0 && (
+                                      <span>
+                                        Price: <span className="text-gray-700">₦{parseFloat(item.selling_price).toLocaleString()}</span>
+                                      </span>
+                                    )}
+                                    {item.unit_cost > 0 && item.selling_price > 0 && (
+                                      <span>
+                                        Margin:{" "}
+                                        <span className={
+                                          parseFloat(item.selling_price) >= parseFloat(item.unit_cost)
+                                            ? "text-green-600 font-semibold"
+                                            : "text-red-600 font-semibold"
+                                        }>
+                                          {((parseFloat(item.selling_price) - parseFloat(item.unit_cost)) / parseFloat(item.unit_cost) * 100).toFixed(0)}%
+                                        </span>
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {isSelected && (
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => adjustQty(item.id, -1)}
+                                      disabled={
+                                        loading || (selected?.quantity || 1) <= 1
+                                      }
+                                      className="p-1 rounded-md border border-gray-300 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                      <Minus size={14} />
+                                    </button>
+                                    <span className="w-8 text-center font-semibold text-sm">
+                                      {selected?.quantity || 1}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => adjustQty(item.id, 1)}
+                                      disabled={
+                                        loading ||
+                                        (selected?.quantity || 0) >= availableStock
+                                      }
+                                      className="p-1 rounded-md border border-gray-300 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                      <Plus size={14} />
+                                    </button>
+                                  </div>
+                                )}
+
+                                {availableStock <= 0 && (
+                                  <span className="text-xs text-red-600 font-medium shrink-0">
+                                    Out of stock
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
-
-                        {isSelected && (
-                          <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => adjustQty(item.id, -1)}
-                              disabled={
-                                loading || (selected?.quantity || 1) <= 1
-                              }
-                              className="p-1 rounded-md border border-gray-300 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              <Minus size={14} />
-                            </button>
-                            <span className="w-8 text-center font-semibold text-sm">
-                              {selected?.quantity || 1}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => adjustQty(item.id, 1)}
-                              disabled={
-                                loading ||
-                                (selected?.quantity || 0) >= availableStock
-                              }
-                              className="p-1 rounded-md border border-gray-300 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              <Plus size={14} />
-                            </button>
-                          </div>
-                        )}
-
-                        {availableStock <= 0 && (
-                          <span className="text-xs text-red-600 font-medium shrink-0">
-                            Out of stock
-                          </span>
-                        )}
                       </div>
                     );
                   })}
@@ -476,16 +473,15 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
-                  Total Price *
+                  Total Price (Auto-calculated)
                 </label>
                 <input
                   type="text"
                   name="order_price"
-                  placeholder="₦ Enter Amount"
+                  placeholder="₦ 0"
                   value={formData.order_price}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
-                  disabled={loading}
+                  readOnly
+                  className="w-full border border-gray-300 rounded-md p-3 bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
