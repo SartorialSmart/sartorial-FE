@@ -78,7 +78,12 @@ const AllocationListTable = ({ searchTerm }) => {
   const [selectedAllocation, setSelectedAllocation] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const effectiveSearch = typeof searchTerm === "string" ? searchTerm : search;
+
+  useEffect(() => {
+    if (searchTerm !== undefined) setSearch(searchTerm);
+  }, [searchTerm]);
+
+  const effectiveSearch = search;
 
   const fetchAllocations = async () => {
     setLoading(true);
@@ -185,7 +190,7 @@ const AllocationListTable = ({ searchTerm }) => {
                 placeholder="Search orders, staff, or status..."
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50/50"
                 value={effectiveSearch}
-                onChange={(e) => typeof searchTerm === "string" ? null : setSearch(e.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
           </div>

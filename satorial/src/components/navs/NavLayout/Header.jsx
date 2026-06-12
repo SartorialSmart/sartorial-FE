@@ -11,6 +11,7 @@ import {
 } from "../../../constants/notificationConstants";
 import { getNotificationRoute } from "../../../utils/notificationNavigation";
 import NotificationDetailModal from "../../modals/NotificationDetailModal";
+import SettingsService from "../../../services/settings";
 
 const Header = ({ toggleSidebar }) => {
   const { user, logout } = useAuth();
@@ -18,6 +19,7 @@ const Header = ({ toggleSidebar }) => {
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [isNotifOpen, setNotifOpen] = useState(false);
   const [detailNotifId, setDetailNotifId] = useState(null);
+  const [orgLogo, setOrgLogo] = useState(null);
 
   const profileRef = useRef(null);
   const notifRef = useRef(null);
@@ -43,6 +45,14 @@ const Header = ({ toggleSidebar }) => {
       markAllAsRead();
     }
   }, [isNotifOpen]);
+
+  useEffect(() => {
+    if (user?.role?.toLowerCase() === "organization") {
+      SettingsService.Profile.getProfile()
+        .then((data) => setOrgLogo(data?.logo_url || null))
+        .catch(() => {});
+    }
+  }, [user?.role]);
 
   const handleLogout = async () => {
     try {
@@ -239,8 +249,8 @@ const Header = ({ toggleSidebar }) => {
           >
             <div className="relative">
               <div className="w-8 h-8 rounded-full border border-gray-200 bg-gray-200 flex items-center justify-center overflow-hidden">
-                {user?.avatar
-                  ? <img src={user.avatar} alt="User" className="w-full h-full object-cover" />
+                {orgLogo || user?.avatar
+                  ? <img src={orgLogo || user?.avatar} alt="User" className="w-full h-full object-cover" />
                   : <User className="w-5 h-5 text-gray-500" />
                 }
               </div>
@@ -260,8 +270,8 @@ const Header = ({ toggleSidebar }) => {
               <div className="px-4 py-3 border-b border-gray-100">
                 <div className="flex items-center space-x-3">
                   <div className="w-9 h-9 rounded-full border border-gray-200 bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {user?.avatar
-                      ? <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                    {orgLogo || user?.avatar
+                      ? <img src={orgLogo || user?.avatar} alt="" className="w-full h-full object-cover" />
                       : <User className="w-5 h-5 text-gray-500" />
                     }
                   </div>

@@ -11,6 +11,7 @@ const ClientOrderListDisplay = () => {
     <ClientSideABrLayout>
       <div className="space-y-6">
         <Toolbar_1
+          title="Clients Management"
           hideExport
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}

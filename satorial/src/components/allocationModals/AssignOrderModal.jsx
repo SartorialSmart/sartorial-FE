@@ -13,6 +13,7 @@ const AssignOrderModal = ({
   onSuccess,
   onAssign,
   showDepartmentFilter = false,
+  excludeStaffId = null,
 }) => {
   const [staffList, setStaffList] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -97,8 +98,12 @@ const AssignOrderModal = ({
       );
     }
 
+    if (excludeStaffId) {
+      result = result.filter((s) => s.id !== excludeStaffId);
+    }
+
     return result;
-  }, [staffList, selectedDepartment, searchQuery]);
+  }, [staffList, selectedDepartment, searchQuery, excludeStaffId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -322,6 +327,7 @@ AssignOrderModal.propTypes = {
   onSuccess: PropTypes.func,
   onAssign: PropTypes.func.isRequired,
   showDepartmentFilter: PropTypes.bool,
+  excludeStaffId: PropTypes.string,
 };
 
 export default AssignOrderModal;
