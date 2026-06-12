@@ -1,11 +1,22 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
+import { Navigate } from "react-router-dom";
 import Header from "./NavLayout/Header";
 import Sidebar from "./NavLayout/SideBar";
-import { Users, LogOut, DollarSign, LifeBuoy, HelpCircle } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import { Users, LogOut, DollarSign, HelpCircle } from "lucide-react";
+
+const ALLOWED_ROLES = ["super_admin", "admin", "organization"];
 
 const StaffSideBarLayout = ({ children }) => {
+  const { user, loading } = useAuth();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+
+  if (loading) return null;
+
+  if (!user || !ALLOWED_ROLES.includes(user?.role?.toLowerCase())) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const sidebarItems = [
     { icon: <Users size={18} />, label: "Staffs", path: "/staff/staff-list" },

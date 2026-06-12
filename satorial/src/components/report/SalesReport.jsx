@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Search,
   Download,
@@ -11,12 +11,61 @@ import {
   Package,
   Loader2,
   ChevronDown,
-  BarChart3
+  BarChart3,
+  Printer
 } from "lucide-react";
 import PropTypes from "prop-types";
 import ReportService from "../../services/ReportService";
 import OrderService from "../../services/OrderService";
 import OrderCategoryService from "../../services/OrderCategoryService";
+import FinancialReportModal from "./FinancialReportModal";
+
+const getDateRange = (filter) => {
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(now);
+  end.setHours(23, 59, 59, 999);
+
+  switch (filter) {
+    case "Today":
+      return { startDate: start.toISOString(), endDate: end.toISOString() };
+    case "Yesterday": {
+      start.setDate(start.getDate() - 1);
+      end.setDate(end.getDate() - 1);
+      return { startDate: start.toISOString(), endDate: end.toISOString() };
+    }
+    case "This Week": {
+      const day = start.getDay();
+      start.setDate(start.getDate() - ((day + 6) % 7));
+      return { startDate: start.toISOString(), endDate: end.toISOString() };
+    }
+    case "Last Week": {
+      const day = start.getDay();
+      start.setDate(start.getDate() - ((day + 6) % 7) - 7);
+      end.setDate(start.getDate() + 6);
+      end.setHours(23, 59, 59, 999);
+      return { startDate: start.toISOString(), endDate: end.toISOString() };
+    }
+    case "This Month":
+      start.setDate(1);
+      return { startDate: start.toISOString(), endDate: end.toISOString() };
+    case "Last Month": {
+      start.setMonth(start.getMonth() - 1, 1);
+      end.setMonth(end.getMonth(), 0);
+      end.setHours(23, 59, 59, 999);
+      return { startDate: start.toISOString(), endDate: end.toISOString() };
+    }
+    case "This Quarter": {
+      const qStart = Math.floor(start.getMonth() / 3) * 3;
+      start.setMonth(qStart, 1);
+      return { startDate: start.toISOString(), endDate: end.toISOString() };
+    }
+    case "All Time":
+    default:
+      return { startDate: null, endDate: null };
+  }
+};
 
 const SalesReport = () => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
@@ -27,8 +76,8 @@ const SalesReport = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateRange, setDateRange] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [showFinancialReport, setShowFinancialReport] = useState(false);
 
   // Time filter options
   const timeFilters = [
@@ -52,6 +101,17 @@ const SalesReport = () => {
     "Completed",
     "Cancelled"
   ];
+
+  const [dateRange, setDateRange] = useState(() => {
+    const range = getDateRange("All Time");
+    return { ...range, label: "All Time" };
+  });
+
+  const handleFilterChange = useCallback((filter) => {
+    setSelectedFilter(filter);
+    const range = getDateRange(filter);
+    setDateRange({ ...range, label: filter });
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -107,8 +167,10 @@ const SalesReport = () => {
     const matchesStatus = statusFilter === "all" || 
       order.order_status === statusFilter;
 
-    // Date range filter (simplified - you can implement actual date filtering)
-    const matchesDateRange = dateRange === "all" || true; // Implement actual date logic
+    // Date range filter
+    const matchesDateRange = !dateRange.startDate || !order.ordered_at ||
+      (new Date(order.ordered_at) >= new Date(dateRange.startDate) &&
+       new Date(order.ordered_at) <= new Date(dateRange.endDate));
 
     return matchesSearch && matchesCategory && matchesStatus && matchesDateRange;
   });
@@ -233,7 +295,7 @@ const SalesReport = () => {
             {timeFilters.map((filter) => (
               <button
                 key={filter}
-                onClick={() => setSelectedFilter(filter)}
+                onClick={() => handleFilterChange(filter)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   selectedFilter === filter
                     ? "bg-blue-600 text-white shadow-sm"
@@ -333,6 +395,14 @@ const SalesReport = () => {
             >
               <Download className="w-4 h-4" />
               Export CSV
+            </button>
+            {/* Financial Report Button */}
+            <button
+              onClick={() => setShowFinancialReport(true)}
+              className="flex items-center gap-2 px-4 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-medium"
+            >
+              <Printer className="w-4 h-4" />
+              Financial Report
             </button>
           </div>
         </div>
@@ -533,6 +603,12 @@ const SalesReport = () => {
           </div>
         )}
       </div>
+      {/* Financial Report Modal */}
+      <FinancialReportModal
+        isOpen={showFinancialReport}
+        onClose={() => setShowFinancialReport(false)}
+        dateRange={dateRange}
+      />
     </div>
   );
 };

@@ -4,7 +4,8 @@ import {
   MoreVertical, Search, Filter, Download, Eye, Edit, Truck, FileText,
   Calendar, User, ChevronDown, X, Check, Loader2, SlidersHorizontal,
   Plus, Users, CreditCard, Package, AlertCircle, BarChart3, RefreshCw,
-  ShoppingBag, Clock, CheckCircle, XCircle, TrendingUp, Bell
+  ShoppingBag, Clock, CheckCircle, XCircle, TrendingUp, Bell,
+  UserPlus, Repeat
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import OrderService from "../../services/OrderService";
@@ -101,7 +102,7 @@ const getStatusClass = (status) => {
   return statusMap[status] || "bg-gray-50 text-gray-800 border-gray-200";
 };
 
-const OrderListTable = ({ showAddButton = true, showEditAction = true, title = "Orders Management", clientView = false }) => {
+const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = true, title = "Orders Management", clientView = false }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   // Data states
   const [orders, setOrders] = useState([]);
@@ -110,6 +111,10 @@ const OrderListTable = ({ showAddButton = true, showEditAction = true, title = "
   
   // Search and Filter states
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (searchTerm !== undefined) setSearchQuery(searchTerm);
+  }, [searchTerm]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [amountFilter, setAmountFilter] = useState("all");
@@ -1017,6 +1022,34 @@ const OrderListTable = ({ showAddButton = true, showEditAction = true, title = "
                       <p className="text-xs text-gray-500">Modify order details</p>
                     </div>
                   </Link>
+                </li>
+              )}
+              {!clientView && !isReadyMadeOrder(filteredOrders[activeDropdown]) && ["Pending", "Assigned", "In Progress"].includes(filteredOrders[activeDropdown]?.order_status) && (
+                <li>
+                  <button
+                    onClick={() =>
+                      filteredOrders[activeDropdown]?.order_status === "Pending"
+                        ? handleAssignClick(filteredOrders[activeDropdown])
+                        : handleReassignClick(filteredOrders[activeDropdown])
+                    }
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer w-full text-left transition-all"
+                  >
+                    <div className="p-2 bg-amber-100 rounded-lg">
+                      {filteredOrders[activeDropdown]?.order_status === "Pending" ? (
+                        <UserPlus size={16} className="text-amber-600" />
+                      ) : (
+                        <Repeat size={16} className="text-amber-600" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {filteredOrders[activeDropdown]?.order_status === "Pending" ? "Assign Tailor" : "Reassign"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {filteredOrders[activeDropdown]?.order_status === "Pending" ? "Assign to staff member" : "Change staff assignment"}
+                      </p>
+                    </div>
+                  </button>
                 </li>
               )}
               <li>

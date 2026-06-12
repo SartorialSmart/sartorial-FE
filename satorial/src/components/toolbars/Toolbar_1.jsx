@@ -5,6 +5,7 @@ import AddButton from "../buttons/AddButton";
 import ClientFormModal from "../modals/formModals/ClientFormModal";
 
 const Toolbar_1 = ({
+  title = "Clients",
   searchQuery = "",
   onSearchChange = () => {},
   filterBy = "all",
@@ -27,7 +28,7 @@ const Toolbar_1 = ({
       <nav className="flex items-center text-sm text-gray-600 mb-4">
         <span className="text-blue-600 hover:text-blue-700 cursor-pointer transition-colors">Dashboard</span>
         <span className="mx-2 text-gray-400">/</span>
-        <span className="text-gray-900 font-medium">Clients</span>
+        <span className="text-gray-900 font-medium">{title}</span>
       </nav>
 
       {/* Main Toolbar */}
@@ -36,8 +37,8 @@ const Toolbar_1 = ({
         <div className="flex items-center gap-3">
           <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
-            <p className="text-sm text-gray-500 mt-1">Manage and view all client records</p>
+            <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+            <p className="text-sm text-gray-500 mt-1">{title === "Clients Management" ? "Manage and view all client records" : `Manage and view all ${title.toLowerCase()} records`}</p>
           </div>
         </div>
 

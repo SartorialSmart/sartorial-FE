@@ -12,6 +12,7 @@ import NotificationDetailModal from "../modals/NotificationDetailModal";
 import Avatar from "../avatar/Avatar";
 import LogoutButton from "../buttons/LogoutButton";
 import logo from "../../assets/images/Logo.png";
+import SettingsService from "../../services/settings";
 
 const Navbar = () => {
   const { user } = useAuth();
@@ -23,8 +24,17 @@ const Navbar = () => {
   const navHeight = isDashboard ? "h-20" : "h-12";
   const [isOpen, setIsOpen] = useState(false);
   const [detailNotifId, setDetailNotifId] = useState(null);
+  const [orgLogo, setOrgLogo] = useState(null);
   const dropdownRef = useRef(null);
   const bellRef = useRef(null);
+
+  useEffect(() => {
+    if (user?.role?.toLowerCase() === "organization") {
+      SettingsService.Profile.getProfile()
+        .then((data) => setOrgLogo(data?.logo_url || null))
+        .catch(() => {});
+    }
+  }, [user?.role]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -179,8 +189,8 @@ const Navbar = () => {
 
         <div className="flex items-center space-x-2">
           <Avatar
-            src={user?.avatar || null}
-            alt="User"
+            src={orgLogo || user?.avatar || null}
+            alt={orgLogo ? "Organization Logo" : "User"}
           />
           <span className="text-gray-700 font-medium">
             {user?.first_name || "User"}

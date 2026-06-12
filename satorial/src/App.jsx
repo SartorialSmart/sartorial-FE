@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import ProtectedRoute from "../utils/ProtectedRoutes";
+import AdminRoute from "../utils/AdminRoute";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import OrganizationRegister from "./pages/Auth/OrganizationRegister";
 import Login from "./pages/Auth/Login";
@@ -98,12 +99,12 @@ const protectedRoutes = [
   { path: "/order/detail/:orderId", element: <OrderDetailDisplay /> },
   { path: "/order/edit/:orderId", element: <EditOrderFormDisplay /> },
 
-  { path: "/staff/staff-list", element: <StaffListDisplay /> },
-  { path: "/staff/staff-detail/:slug", element: <StaffDetailDisplay /> },
-  { path: "/staff/edit/:slug", element: <StaffEditDisplay /> },
-  { path: "/staff/exited-staffs-list", element: <ExitedStaffsListDisplay /> },
-  { path: "/staff/payroll-list", element: <PayrollListDisplay /> },
-  { path: "/staff/generate-payroll", element: <GeneratePayrollListDisplay /> },
+  { path: "/staff/staff-list", element: <StaffListDisplay />, admin: true },
+  { path: "/staff/staff-detail/:slug", element: <StaffDetailDisplay />, admin: true },
+  { path: "/staff/edit/:slug", element: <StaffEditDisplay />, admin: true },
+  { path: "/staff/exited-staffs-list", element: <ExitedStaffsListDisplay />, admin: true },
+  { path: "/staff/payroll-list", element: <PayrollListDisplay />, admin: true },
+  { path: "/staff/generate-payroll", element: <GeneratePayrollListDisplay />, admin: true },
 
   { path: "/reports/reports/dashboard", element: <ReportDashboardDisplay /> },
   { path: "/reports/monthly/data", element: <MonthlyDataReportDisplay /> },
@@ -167,11 +168,17 @@ const App = () => {
           />
         ))}
 
-        {protectedRoutes.map(({ path, element }, index) => (
+        {protectedRoutes.map(({ path, element, admin }, index) => (
           <Route
             key={index}
             path={path}
-            element={<ProtectedRoute>{element}</ProtectedRoute>}
+            element={
+              admin ? (
+                <AdminRoute>{element}</AdminRoute>
+              ) : (
+                <ProtectedRoute>{element}</ProtectedRoute>
+              )
+            }
           />
         ))}
 

@@ -19,7 +19,7 @@ import {
 import ClientService from "../../services/ClientService";
 import { useClient } from "../../contexts/ClientContext";
 
-const ClientsList = forwardRef((_props, ref) => {
+const ClientsList = forwardRef(({ searchQuery: propSearchQuery, filterBy: propFilterBy, ...props }, ref) => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -33,8 +33,16 @@ const ClientsList = forwardRef((_props, ref) => {
   }));
 
   // Search and Filter states
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterBy, setFilterBy] = useState("all");
+  const [searchQuery, setSearchQuery] = useState(propSearchQuery || "");
+  const [filterBy, setFilterBy] = useState(propFilterBy || "all");
+
+  useEffect(() => {
+    if (propSearchQuery !== undefined) setSearchQuery(propSearchQuery);
+  }, [propSearchQuery]);
+
+  useEffect(() => {
+    if (propFilterBy !== undefined) setFilterBy(propFilterBy);
+  }, [propFilterBy]);
   const [dateFilter, setDateFilter] = useState("all");
   const [selectedTags, setSelectedTags] = useState([]);
   const [sortBy, setSortBy] = useState("name");

@@ -8,6 +8,8 @@ import {
   CheckSquare,
 } from "lucide-react";
 import ReportService from "../../services/ReportService";
+import PaymentService from "../../services/PaymentService";
+import OrderService from "../../services/OrderService";
 
 const PaymentsReport = () => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
@@ -21,11 +23,57 @@ const PaymentsReport = () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await ReportService.getPaymentSummary();
-        setSummary(data || {});
-        setPayments(data.payments || []);
+        const [summaryData, paymentsData, ordersData] = await Promise.all([
+          ReportService.getPaymentSummary(),
+          PaymentService.getAllPayments(),
+          OrderService.getOrders(),
+        ]);
+
+        setSummary(summaryData || {});
+
+        const ordersList = Array.isArray(ordersData)
+          ? ordersData
+          : ordersData.orders || ordersData.results || [];
+        const orderMap = {};
+        ordersList.forEach((order) => {
+          orderMap[order.id] = order;
+        });
+
+        const paymentList = Array.isArray(paymentsData)
+          ? paymentsData
+          : paymentsData.payments ||
+            paymentsData.results ||
+            paymentsData.data ||
+            [];
+
+        const mapped = paymentList.map((p) => {
+          const order = p.order ? orderMap[p.order] : null;
+          return {
+            ...p,
+            client_name:
+              p.client_name ||
+              order?.client_full_name ||
+              order?.client_name ||
+              "Unknown",
+            order_name:
+              p.order_name ||
+              order?.order_title ||
+              p.payment_type ||
+              "Payment",
+            amount:
+              p.amount ||
+              p.amount_paid ||
+              0,
+            payment_date:
+              p.payment_date ||
+              p.paid_at ||
+              null,
+          };
+        });
+
+        setPayments(mapped);
       } catch {
-        setError("Failed to load payment summary.");
+        setError("Failed to load payment report.");
       } finally {
         setLoading(false);
       }
@@ -62,6 +110,20 @@ const PaymentsReport = () => {
       bg: "bg-blue-100",
     },
   ];
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "-";
+    try {
+      return new Date(dateStr).toLocaleDateString();
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatCurrency = (val) => {
+    const num = parseFloat(val) || 0;
+    return `₦${num.toLocaleString()}`;
+  };
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -170,14 +232,14 @@ const PaymentsReport = () => {
                 </tr>
               ) : (
                 payments.map((payment, index) => (
-                  <tr key={index} className="border-b text-gray-700">
+                  <tr key={payment.id || index} className="border-b text-gray-700">
                     <td className="p-3">
                       <CheckSquare className="w-5 h-5 text-gray-500" />
                     </td>
                     <td className="p-3 text-sm">{payment.client_name}</td>
                     <td className="p-3 text-sm">{payment.order_name}</td>
-                    <td className="p-3 text-sm">{payment.amount}</td>
-                    <td className="p-3 text-sm">{payment.payment_date}</td>
+                    <td className="p-3 text-sm">{formatCurrency(payment.amount)}</td>
+                    <td className="p-3 text-sm">{formatDate(payment.payment_date)}</td>
                     <td className="p-3 text-right">
                       <MoreVertical className="w-5 h-5 text-gray-500" />
                     </td>
