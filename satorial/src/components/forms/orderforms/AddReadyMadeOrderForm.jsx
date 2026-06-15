@@ -43,6 +43,8 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
     client_email: "",
     order_title: "",
     order_price: "",
+    discount_type: "amount",
+    discount_value: "",
     initial_deposit: "",
     balance: "",
     order_status: "Completed",
@@ -96,10 +98,15 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
     });
     setFormData((prev) => {
       const deposit = parseFloat(prev.initial_deposit) || 0;
+      const discountVal = parseFloat(prev.discount_value) || 0;
+      const discount = prev.discount_type === "percentage"
+        ? (discountVal / 100) * total
+        : discountVal;
+      const priceAfterDiscount = Math.max(total - discount, 0);
       return {
         ...prev,
         order_price: total > 0 ? total.toString() : prev.order_price,
-        balance: total > 0 ? Math.max(total - deposit, 0).toFixed(2) : prev.balance,
+        balance: total > 0 ? Math.max(priceAfterDiscount - deposit, 0).toFixed(2) : prev.balance,
       };
     });
   }, [selectedItems]);
@@ -143,10 +150,15 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
     const { name, value } = e.target;
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
-      if (name === "order_price" || name === "initial_deposit") {
+      if (["order_price", "initial_deposit", "discount_type", "discount_value"].includes(name)) {
         const price = parseFloat(updated.order_price) || 0;
         const deposit = parseFloat(updated.initial_deposit) || 0;
-        updated.balance = Math.max(price - deposit, 0).toFixed(2);
+        const discountVal = parseFloat(updated.discount_value) || 0;
+        const discount = updated.discount_type === "percentage"
+          ? (discountVal / 100) * price
+          : discountVal;
+        const discountedPrice = Math.max(price - discount, 0);
+        updated.balance = Math.max(discountedPrice - deposit, 0).toFixed(2);
       }
       return updated;
     });
@@ -487,6 +499,33 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
 
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
+                  Discount
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    name="discount_type"
+                    value={formData.discount_type}
+                    onChange={handleChange}
+                    className="w-28 border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                    disabled={loading}
+                  >
+                    <option value="amount">Amount</option>
+                    <option value="percentage">%</option>
+                  </select>
+                  <input
+                    type="text"
+                    name="discount_value"
+                    placeholder={formData.discount_type === "percentage" ? "% 0" : "₦ 0"}
+                    value={formData.discount_value}
+                    onChange={handleChange}
+                    className="flex-1 border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
                   Initial Deposit *
                 </label>
                 <input
@@ -497,6 +536,25 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
                   disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Total After Discount
+                </label>
+                <input
+                  type="text"
+                  value={(() => {
+                    const p = parseFloat(formData.order_price) || 0;
+                    const dv = parseFloat(formData.discount_value) || 0;
+                    const d = formData.discount_type === "percentage" ? (dv / 100) * p : dv;
+                    return `₦${Math.max(p - d, 0).toFixed(2)}`;
+                  })()}
+                  readOnly
+                  className="w-full border border-gray-300 rounded-md p-3 bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
