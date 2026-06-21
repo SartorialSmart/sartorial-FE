@@ -94,6 +94,7 @@ const PaymentsReport = () => {
   }, []);
 
   useEffect(() => {
+    if (selectedFilter === "Custom Date" && (!customStartDate || !customEndDate)) return;
     const fetchFilteredSummary = async () => {
       const params = selectedFilter === "All Time" ? {} : (() => {
         const dr = getDateRangeISO(selectedFilter, customStartDate, customEndDate);
