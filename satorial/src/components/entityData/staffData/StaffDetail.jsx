@@ -1,6 +1,6 @@
 // components/pages/staff/StaffDetail.jsx
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Upload,
@@ -33,12 +33,39 @@ import {
 import { motion } from "framer-motion";
 import StaffService from "../../../services/staffServices/StaffService";
 import StaffReportService from "../../../services/staffServices/StaffReportService";
+import OrderService from "../../../services/OrderService";
 import dayjs from "dayjs";
 import PropTypes from "prop-types";
 import SuccessModal from "../../modals/SuccessModal";
 
 const { Option } = Select;
 const { TabPane } = Tabs;
+
+// Returns the most recent allocation record per unique order,
+// because the performance API emits one entry per allocation event.
+const getUniqueRecentOrders = (orders = []) => {
+  const seen = new Map();
+  orders.forEach((order) => {
+    const key =
+      order.order_id ||
+      order.id ||
+      `${order.client_name}-${order.order_title}-${order.order_price}`;
+    const existing = seen.get(key);
+    const thisTime = order.allocated_at ? new Date(order.allocated_at).getTime() : 0;
+    const prevTime = existing?.allocated_at ? new Date(existing.allocated_at).getTime() : 0;
+    if (!existing || thisTime > prevTime) {
+      seen.set(key, order);
+    }
+  });
+  // Sort descending by allocated_at so we always show the 10 most recent overall
+  const uniqueArray = Array.from(seen.values());
+  uniqueArray.sort((a, b) => {
+    const timeA = a.allocated_at ? new Date(a.allocated_at).getTime() : 0;
+    const timeB = b.allocated_at ? new Date(b.allocated_at).getTime() : 0;
+    return timeB - timeA;
+  });
+  return uniqueArray.slice(0, 10);
+};
 
 const StaffDetail = () => {
   const { slug } = useParams();
@@ -99,11 +126,28 @@ const StaffDetail = () => {
   const fetchPerformanceData = async () => {
     try {
       setPerformanceLoading(true);
-      const data = await StaffReportService.getStaffPerformanceDetail(
-        staff.id,
-        dateRange
-      );
-      setPerformance(data.data);
+
+      // Fetch performance metrics (date-range-scoped) AND all-time order history
+      // for this staff member in parallel.
+      const [data, allTimeData] = await Promise.all([
+        StaffReportService.getStaffPerformanceDetail(staff.id, dateRange),
+        StaffReportService.getStaffPerformanceDetail(staff.id, {
+          start_date: "2000-01-01",
+          end_date: "2099-12-31"
+        }).catch(() => null),
+      ]);
+
+      const perfData = data.data;
+      
+      // Use the all-time history if available so we see all orders ever assigned,
+      // otherwise fall back to the date-scoped history.
+      const allTimeHistory = allTimeData?.data?.order_history || [];
+      const historyOrders = allTimeHistory.length > 0 ? allTimeHistory : (perfData?.order_history ?? []);
+
+      setPerformance({
+        ...perfData,
+        order_history: historyOrders,
+      });
     } catch (error) {
       console.error("Failed to fetch performance data:", error);
       message.error("Failed to load performance data");
@@ -478,8 +522,10 @@ const StaffDetail = () => {
                   </div>
                 </Card>
 
-                {/* Order History */}
-                {performance.order_history && performance.order_history.length > 0 && (
+                {/* Order History - deduplicated so each order appears once */}
+                {(() => {
+                  const recentOrders = getUniqueRecentOrders(performance.order_history);
+                  return recentOrders.length > 0 ? (
                   <Card title="Recent Order History" className="shadow-sm">
                     <div className="overflow-x-auto">
                       <table className="w-full">
@@ -503,32 +549,39 @@ const StaffDetail = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                          {performance.order_history.slice(0, 10).map((order) => (
-                            <tr key={order.order_id} className="hover:bg-gray-50">
-                              <td className="px-4 py-3 text-sm">
-                                {order.order_title}
-                              </td>
-                              <td className="px-4 py-3 text-sm">
-                                {order.client_name}
-                              </td>
-                              <td className="px-4 py-3 text-sm">
-                                <Tag color={getStatusColor(order.order_status)}>
-                                  {order.order_status}
-                                </Tag>
-                              </td>
-                              <td className="px-4 py-3 text-sm font-medium">
-                                {formatCurrency(order.order_price)}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-500">
-                                {dayjs(order.allocated_at).format('MMM DD, YYYY')}
-                              </td>
-                            </tr>
-                          ))}
+                          {recentOrders.map((order) => {
+                            // Resolve status field — API may use order_status or status
+                            const orderStatus = order.order_status || order.status;
+                            const rowKey = order.order_id || order.id ||
+                              `${order.client_name}-${order.order_title}`;
+                            return (
+                              <tr key={rowKey} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm">
+                                  {order.order_title || order.title}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  {order.client_name}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <Tag color={getStatusColor(orderStatus)}>
+                                    {orderStatus}
+                                  </Tag>
+                                </td>
+                                <td className="px-4 py-3 text-sm font-medium">
+                                  {formatCurrency(order.order_price)}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-500">
+                                  {dayjs(order.allocated_at).format('MMM DD, YYYY')}
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
                   </Card>
-                )}
+                  ) : null;
+                })()}
               </>
             ) : (
               <Empty description="No performance data available" />
