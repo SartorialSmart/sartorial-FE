@@ -1,8 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { CheckSquare } from "lucide-react";
 import ReportService from "../../services/ReportService";
 
+const FILTERS = [
+  "All Time",
+  "Today",
+  "This Week",
+  "This Month",
+  "This Year",
+  "Custom Date",
+];
+
 const StaffPerformanceReport = () => {
+  const [selectedFilter, setSelectedFilter] = useState("All Time");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [staff, setStaff] = useState([]);
@@ -30,9 +42,50 @@ const StaffPerformanceReport = () => {
         &nbsp;
         <span className="text-gray-800 font-medium">Performance Report</span>
       </div>
-      <h2 className="text-[22px] font-semibold text-gray-900 mb-4">
-        Performance Report
-      </h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-[22px] font-semibold text-gray-900">
+          Performance Report
+        </h2>
+        <div className="flex space-x-2">
+          {FILTERS.map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setSelectedFilter(filter)}
+              className={`px-4 py-[6px] text-sm rounded-md border transition ${
+                selectedFilter === filter
+                  ? "bg-blue-600 text-white font-semibold"
+                  : "bg-gray-200 text-gray-700"
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {selectedFilter === "Custom Date" && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4 gap-3 bg-white p-3 rounded-lg shadow-sm">
+          <div className="w-full sm:w-auto">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 w-full"
+            />
+          </div>
+          <div className="w-full sm:w-auto">
+            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={(e) => setCustomEndDate(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 w-full"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         {loading ? (
           <div className="text-center py-10">Loading...</div>
