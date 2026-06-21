@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { CheckSquare } from "lucide-react";
-import ReportService from "../../services/ReportService";
+import StaffReportService from "../../services/staffServices/StaffReportService";
+import StaffService from "../../services/staffServices/StaffService";
 
 const FILTERS = [
   "All Time",
@@ -24,8 +25,29 @@ const StaffPerformanceReport = () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await ReportService.getStaffPerformance();
-        setStaff(Array.isArray(data) ? data : data.staff || []);
+        const [perfData, staffList] = await Promise.all([
+          StaffReportService.getAllStaffPerformance(),
+          StaffService.listStaff(),
+        ]);
+        const perfArr = perfData.data || perfData.results || perfData || [];
+        const staffArr = Array.isArray(staffList) ? staffList : staffList.results || staffList.staff || [];
+        const staffMap = {};
+        staffArr.forEach((s) => {
+          staffMap[s.id] = s;
+        });
+        const merged = perfArr.map((p) => {
+          const s = staffMap[p.staff_id] || {};
+          return {
+            name: `${s.first_name || ""} ${s.last_name || ""}`.trim() || s.name || p.name || "Unknown",
+            role: s.staff_role || s.role || p.role || "",
+            assigned: p.total_assigned ?? "-",
+            completed: p.completed_orders ?? "-",
+            ongoing: p.in_progress_orders ?? "-",
+            not_started: p.pending_orders ?? "-",
+            reassigned: p.reassigned_orders ?? "-",
+          };
+        });
+        setStaff(merged);
       } catch {
         setError("Failed to load staff performance.");
       } finally {
