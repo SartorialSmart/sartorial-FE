@@ -10,6 +10,7 @@ import {
 import PropTypes from "prop-types";
 import ReportService from "../../services/ReportService";
 import OrderService from "../../services/OrderService";
+import { getDateRangeISO } from "../../../utils/reportUtils";
 
 const FILTERS = [
   "All Time",
@@ -50,6 +51,23 @@ const OrderReport = () => {
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const fetchFilteredSummary = async () => {
+      const params = selectedFilter === "All Time" ? {} : (() => {
+        const dr = getDateRangeISO(selectedFilter, customStartDate, customEndDate);
+        return {
+          start_date: dr.startDate?.split("T")[0],
+          end_date: dr.endDate?.split("T")[0],
+        };
+      })();
+      try {
+        const data = await ReportService.getOrderSummary(params);
+        setSummary(data || {});
+      } catch {}
+    };
+    fetchFilteredSummary();
+  }, [selectedFilter, customStartDate, customEndDate]);
 
   const cards = [
     {

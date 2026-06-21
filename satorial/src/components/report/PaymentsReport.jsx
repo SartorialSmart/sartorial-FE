@@ -10,7 +10,7 @@ import {
 import ReportService from "../../services/ReportService";
 import PaymentService from "../../services/PaymentService";
 import OrderService from "../../services/OrderService";
-import { filterByDateRange } from "../../../utils/reportUtils";
+import { filterByDateRange, getDateRangeISO } from "../../../utils/reportUtils";
 
 const FILTERS = [
   "All Time",
@@ -92,6 +92,23 @@ const PaymentsReport = () => {
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const fetchFilteredSummary = async () => {
+      const params = selectedFilter === "All Time" ? {} : (() => {
+        const dr = getDateRangeISO(selectedFilter, customStartDate, customEndDate);
+        return {
+          start_date: dr.startDate?.split("T")[0],
+          end_date: dr.endDate?.split("T")[0],
+        };
+      })();
+      try {
+        const summaryData = await ReportService.getPaymentSummary(params);
+        setSummary(summaryData || {});
+      } catch {}
+    };
+    fetchFilteredSummary();
+  }, [selectedFilter, customStartDate, customEndDate]);
 
   const filteredPayments = useMemo(() => {
     return filterByDateRange(payments, "payment_date", selectedFilter, customStartDate, customEndDate);
