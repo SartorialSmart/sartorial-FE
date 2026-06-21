@@ -164,17 +164,21 @@ const OrderDetail = () => {
   const handleQAComplete = async () => {
     setShowQAModal(false);
     setQaChecked(true);
-    setUpdatingStatus(true);
-    try {
-      const targetStatus = order.order_status === "QA Check" ? "Completed" : "QA Check";
-      await OrderService.updateOrder(orderId, { order_status: targetStatus });
-      const updatedOrder = await OrderService.getOrderById(orderId);
-      setOrder(updatedOrder);
-    } catch (err) {
-      console.error("Failed to update status:", err);
-      alert("Failed to update order status. Please try again.");
-    } finally {
-      setUpdatingStatus(false);
+    const shouldComplete = order.order_status === "QA Check";
+    if (!shouldComplete) {
+      setUpdatingStatus(true);
+      try {
+        await OrderService.updateOrder(orderId, { order_status: "QA Check" });
+        const updatedOrder = await OrderService.getOrderById(orderId);
+        setOrder(updatedOrder);
+      } catch (err) {
+        console.error("Failed to update status:", err);
+        alert("Failed to update order status. Please try again.");
+      } finally {
+        setUpdatingStatus(false);
+      }
+    } else {
+      setShowCompleteUploadModal(true);
     }
   };
 
@@ -219,6 +223,11 @@ const OrderDetail = () => {
         setAssignMode("reassign");
         setShowAssignModal(true);
       }
+      return;
+    }
+
+    if (newStatus === "QA Check") {
+      setShowQAModal(true);
       return;
     }
 
