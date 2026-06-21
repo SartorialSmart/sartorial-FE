@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { CheckSquare } from "lucide-react";
 import StaffReportService from "../../services/staffServices/StaffReportService";
 import StaffService from "../../services/staffServices/StaffService";
+import { getDateRangeISO } from "../../../utils/reportUtils";
 
 const FILTERS = [
   "All Time",
@@ -20,42 +21,59 @@ const StaffPerformanceReport = () => {
   const [error, setError] = useState(null);
   const [staff, setStaff] = useState([]);
 
+  const fetchData = async (filter, startDate, endDate) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = filter === "All Time" ? {} : (() => {
+        const dr = getDateRangeISO(filter, startDate, endDate);
+        return {
+          start_date: dr.startDate?.split("T")[0],
+          end_date: dr.endDate?.split("T")[0],
+        };
+      })();
+
+      const [perfData, staffList] = await Promise.all([
+        StaffReportService.getAllStaffPerformance(params),
+        StaffService.listStaff(),
+      ]);
+      const perfArr = perfData.data || perfData.results || perfData || [];
+      const staffArr = Array.isArray(staffList) ? staffList : staffList.results || staffList.staff || [];
+      const staffMap = {};
+      staffArr.forEach((s) => {
+        staffMap[s.id] = s;
+      });
+      const merged = perfArr.map((p) => {
+        const s = staffMap[p.staff_id] || {};
+        return {
+          name: `${s.first_name || ""} ${s.last_name || ""}`.trim() || s.name || p.name || "Unknown",
+          role: s.staff_role || s.role || p.role || "",
+          assigned: p.total_assigned ?? "-",
+          completed: p.completed_orders ?? "-",
+          ongoing: p.in_progress_orders ?? "-",
+          not_started: p.pending_orders ?? "-",
+          reassigned: p.reassigned_orders ?? "-",
+        };
+      });
+      setStaff(merged);
+    } catch {
+      setError("Failed to load staff performance.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [perfData, staffList] = await Promise.all([
-          StaffReportService.getAllStaffPerformance(),
-          StaffService.listStaff(),
-        ]);
-        const perfArr = perfData.data || perfData.results || perfData || [];
-        const staffArr = Array.isArray(staffList) ? staffList : staffList.results || staffList.staff || [];
-        const staffMap = {};
-        staffArr.forEach((s) => {
-          staffMap[s.id] = s;
-        });
-        const merged = perfArr.map((p) => {
-          const s = staffMap[p.staff_id] || {};
-          return {
-            name: `${s.first_name || ""} ${s.last_name || ""}`.trim() || s.name || p.name || "Unknown",
-            role: s.staff_role || s.role || p.role || "",
-            assigned: p.total_assigned ?? "-",
-            completed: p.completed_orders ?? "-",
-            ongoing: p.in_progress_orders ?? "-",
-            not_started: p.pending_orders ?? "-",
-            reassigned: p.reassigned_orders ?? "-",
-          };
-        });
-        setStaff(merged);
-      } catch {
-        setError("Failed to load staff performance.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchData(selectedFilter, customStartDate, customEndDate);
   }, []);
+
+  useEffect(() => {
+    if (selectedFilter === "Custom Date" && (!customStartDate || !customEndDate)) return;
+    const hasData = staff.length > 0 || selectedFilter !== "All Time";
+    if (hasData || selectedFilter !== "All Time") {
+      fetchData(selectedFilter, customStartDate, customEndDate);
+    }
+  }, [selectedFilter, customStartDate, customEndDate]);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -105,6 +123,13 @@ const StaffPerformanceReport = () => {
               className="border border-gray-300 rounded-lg px-3 py-2 w-full"
             />
           </div>
+          <button
+            onClick={() => fetchData("Custom Date", customStartDate, customEndDate)}
+            disabled={!customStartDate || !customEndDate}
+            className="mt-5 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+          >
+            Apply
+          </button>
         </div>
       )}
 
