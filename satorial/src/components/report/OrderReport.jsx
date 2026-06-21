@@ -276,6 +276,7 @@ const OrderReport = () => {
             "All",
             "Assigned",
             "In Progress",
+            "QA Check",
             "On Delivery",
             "Completed",
             "Cancelled",
