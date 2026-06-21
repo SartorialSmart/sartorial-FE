@@ -211,7 +211,7 @@ const OrderReport = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="bg-gray-100 p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-[22px] font-semibold text-gray-900">
           Order Report
@@ -314,7 +314,7 @@ const OrderReport = () => {
           </button>
         </div>
       </div>
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
         {loading ? (
           <div className="text-center py-10">Loading...</div>
         ) : error ? (
