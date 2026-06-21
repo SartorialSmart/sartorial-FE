@@ -39,8 +39,16 @@ const ReportDashboard = () => {
     setLoading(true);
     setError(null);
     try {
+      const params = filter === "All Time" ? {} : (() => {
+        const dr = getDateRangeISO(filter, startDate, endDate);
+        return {
+          start_date: dr.startDate?.split("T")[0],
+          end_date: dr.endDate?.split("T")[0],
+        };
+      })();
+
       const [summaryData, monthly] = await Promise.all([
-        ReportService.getReportSummary(),
+        ReportService.getReportSummary(params),
         ReportService.getMonthlyStatistics(),
       ]);
       setSummary(summaryData || {});
@@ -50,11 +58,7 @@ const ReportDashboard = () => {
       if (filter === "All Time") {
         profit = await ReportService.getProfitReport();
       } else {
-        const dateRange = getDateRangeISO(filter, startDate, endDate);
-        profit = await ReportService.getProfitReport({
-          start_date: dateRange.startDate?.split("T")[0],
-          end_date: dateRange.endDate?.split("T")[0],
-        });
+        profit = await ReportService.getProfitReport(params);
       }
       setProfitReport(profit || null);
     } catch {

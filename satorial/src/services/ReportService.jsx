@@ -9,20 +9,20 @@ const ReportService = {
   },
 
   // Fetch report summary
-  getReportSummary: async () => {
-    const response = await axiosInstance.get(API.REPORT.REPORT_SUMMARY);
+  getReportSummary: async (params = {}) => {
+    const response = await axiosInstance.get(API.REPORT.REPORT_SUMMARY, { params });
     return response.data;
   },
 
   // Fetch order summary report
-  getOrderSummary: async () => {
-    const response = await axiosInstance.get(API.REPORT.ORDER_SUMMARY);
+  getOrderSummary: async (params = {}) => {
+    const response = await axiosInstance.get(API.REPORT.ORDER_SUMMARY, { params });
     return response.data;
   },
 
   // Fetch payment summary report
-  getPaymentSummary: async () => {
-    const response = await axiosInstance.get(API.REPORT.PAYMENT_SUMMARY);
+  getPaymentSummary: async (params = {}) => {
+    const response = await axiosInstance.get(API.REPORT.PAYMENT_SUMMARY, { params });
     return response.data;
   },
 
