@@ -10,6 +10,8 @@ import SettingsService from "../../../services/settings";
 import AddPaymentModal from "../../modals/formModals/AddOrderPaymentFormModal";
 import TrackOrderStatusModal from "../../modals/formModals/TrackOrderStatusModal";
 import AssignOrderModal from "../../allocationModals/AssignOrderModal";
+import Avatar from "../../avatar/Avatar";
+import StaffService from "../../../services/staffServices/StaffService";
 import { getLogoUrl, getLocalProfile, getLocalInvoiceSettings } from "../../../utils/localImageService";
 import { isReadyMadeOrder, getCleanDescription } from "../../../../utils/orderUtils";
 
@@ -52,6 +54,31 @@ const OrderDetail = () => {
     const fetchOrderDetails = async () => {
       try {
         const data = await OrderService.getOrderById(orderId);
+        if (!data.current_allocation) {
+          try {
+            const allocations = await OrderService.getAllocations();
+            const allocationList = Array.isArray(allocations)
+              ? allocations
+              : allocations.results || allocations.allocations || [];
+            const match = allocationList.find(
+              (a) => String(a.order?.id || a.order?.order_id || a.order) === String(orderId)
+            );
+            if (match) {
+              const staffObj = match.staff || match;
+              data.current_allocation = {
+                staff_name: staffObj.name || `${staffObj.first_name || ""} ${staffObj.last_name || ""}`.trim() || "Staff",
+                staff_id: staffObj.id || match.staff_id || match.staff,
+                staff: staffObj.id || match.staff,
+                department: match.department || staffObj.department || "",
+                role: match.role || staffObj.role || staffObj.staff_role || "",
+                avatar_url: staffObj.avatar || staffObj.avatar_url || match.avatar_url,
+                id: match.id,
+              };
+            }
+          } catch {
+            // allocations fetch is optional
+          }
+        }
         setOrder(data);
       } catch (err) {
         setError("Failed to fetch order details.");
@@ -111,8 +138,21 @@ const OrderDetail = () => {
   };
 
   const handleAssignOrder = async (payload) => {
-    await OrderService.assignOrder(payload);
+    const result = await OrderService.assignOrder(payload);
     const updatedOrder = await OrderService.getOrderById(orderId);
+    if (result) {
+      const alloc = result.allocation || result;
+      const s = result.staff || alloc.staff || alloc;
+      updatedOrder.current_allocation = {
+        staff_name: s.name || `${s.first_name || ""} ${s.last_name || ""}`.trim() || "Staff",
+        staff_id: s.id || alloc.staff_id,
+        staff: s.id || alloc.staff,
+        department: alloc.department || s.department || "",
+        role: alloc.role || s.role || s.staff_role || "",
+        avatar_url: s.avatar || s.avatar_url || alloc.avatar_url,
+        id: alloc.id,
+      };
+    }
     setOrder(updatedOrder);
   };
 
@@ -761,14 +801,22 @@ const OrderDetail = () => {
                     {order.order_status}
                   </span>
                 </div>
-                {order.order_description && (
-                  <p className="text-sm text-gray-500 mt-1.5">{order.order_description}</p>
-                )}
-                {order.current_allocation && (
-                  <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 bg-gray-50 rounded-lg px-3 py-1.5 inline-flex">
-                    <UserCheck size={14} className="text-green-600 shrink-0" />
-                    <span>Assigned to <strong>{order.current_allocation.staff_name}</strong> ({order.current_allocation.department})</span>
-                  </div>
+                {(order.order_description || order.current_allocation) && (
+                  <p className="text-sm text-gray-500 mt-1.5">
+                    {order.order_description}
+                    {order.order_description && order.current_allocation && (
+                      <> <span className="text-gray-300">|</span> </>
+                    )}
+                    {order.current_allocation && (
+                      <>
+                        <User size={13} className="inline text-gray-400 mr-1 -mt-0.5" />
+                        Assigned to <strong>{order.current_allocation.staff_name}</strong>
+                        {order.current_allocation.department && (
+                          <> ({order.current_allocation.department})</>
+                        )}
+                      </>
+                    )}
+                  </p>
                 )}
               </div>
             </div>
@@ -1013,6 +1061,21 @@ const OrderDetail = () => {
               <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
                 {getCleanDescription(order.order_description) || "No description provided."}
               </p>
+              {order.current_allocation && (
+                <>
+                  <hr className="my-4 border-t border-gray-200" />
+                  <div className="flex items-center gap-3">
+                    <Avatar
+                      src={order.current_allocation.avatar_url}
+                      alt={order.current_allocation.staff_name}
+                    />
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned To</p>
+                      <p className="text-sm font-bold text-gray-900">{order.current_allocation.staff_name}</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -1171,6 +1234,24 @@ const OrderDetail = () => {
                 {order.ordered_at ? formatDate(order.ordered_at) : 'N/A'}
               </span>
             </div>
+
+            {/* Staff Assignment timeline event */}
+            {order.current_allocation && (
+              <div className="flex items-center justify-between py-4 border-b border-gray-100 hover:bg-gray-50 rounded-lg px-4 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center shadow-md">
+                    <UserCheck className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Order / Staff</p>
+                    <p className="text-gray-500 text-sm">Assigned to: <span className="font-semibold text-gray-700">{order.current_allocation.staff_name}</span></p>
+                  </div>
+                </div>
+                <span className="text-gray-600 text-sm font-medium">
+                  {order.updated_at ? formatDate(order.updated_at) : 'N/A'}
+                </span>
+              </div>
+            )}
 
             {/* Payment timeline events */}
             {order.payments && order.payments.length > 0 && (

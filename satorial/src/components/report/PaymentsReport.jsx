@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Mail,
   User,
@@ -10,9 +10,21 @@ import {
 import ReportService from "../../services/ReportService";
 import PaymentService from "../../services/PaymentService";
 import OrderService from "../../services/OrderService";
+import { filterByDateRange } from "../../../utils/reportUtils";
+
+const FILTERS = [
+  "All Time",
+  "Today",
+  "This Week",
+  "This Month",
+  "This Year",
+  "Custom Date",
+];
 
 const PaymentsReport = () => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState(null);
@@ -81,6 +93,10 @@ const PaymentsReport = () => {
     fetchData();
   }, []);
 
+  const filteredPayments = useMemo(() => {
+    return filterByDateRange(payments, "payment_date", selectedFilter, customStartDate, customEndDate);
+  }, [payments, selectedFilter, customStartDate, customEndDate]);
+
   const cards = [
     {
       title: "Fully Paid",
@@ -132,14 +148,7 @@ const PaymentsReport = () => {
           Payment Report
         </h2>
         <div className="flex space-x-2 bg-white p-1 rounded-lg">
-          {[
-            "All Time",
-            "Today",
-            "This Week",
-            "This Month",
-            "This Year",
-            "Custom Date",
-          ].map((filter) => (
+          {FILTERS.map((filter) => (
             <button
               key={filter}
               onClick={() => setSelectedFilter(filter)}
@@ -154,6 +163,30 @@ const PaymentsReport = () => {
           ))}
         </div>
       </div>
+
+      {selectedFilter === "Custom Date" && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4 gap-3 bg-white p-3 rounded-lg shadow-sm">
+          <div className="w-full sm:w-auto">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 w-full"
+            />
+          </div>
+          <div className="w-full sm:w-auto">
+            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={(e) => setCustomEndDate(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 w-full"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {cards.map((card, index) => (
           <div
@@ -224,14 +257,14 @@ const PaymentsReport = () => {
               </tr>
             </thead>
             <tbody>
-              {payments.length === 0 ? (
+              {filteredPayments.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-8 text-gray-400">
                     No payments found.
                   </td>
                 </tr>
               ) : (
-                payments.map((payment, index) => (
+                filteredPayments.map((payment, index) => (
                   <tr key={payment.id || index} className="border-b text-gray-700">
                     <td className="p-3">
                       <CheckSquare className="w-5 h-5 text-gray-500" />
