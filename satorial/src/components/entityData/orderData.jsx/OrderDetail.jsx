@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { 
   EditIcon, ChevronRight, CheckCircle, Calendar, Clock, Truck, Package, 
   UserCheck, XCircle, Loader2, User, Mail, FileText, ShoppingBag, 
-  CreditCard, BarChart3, Tag, UserPlus, Repeat
+  CreditCard, BarChart3, Tag, UserPlus, Repeat, ClipboardCheck, Upload, X
 } from "lucide-react";
 import OrderService from "../../../services/OrderService";
 import SettingsService from "../../../services/settings";
@@ -30,12 +30,17 @@ const OrderDetail = () => {
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
   const [orgProfile, setOrgProfile] = useState(null);
   const [invoiceLayout, setInvoiceLayout] = useState("layout1");
+  const [showQAModal, setShowQAModal] = useState(false);
+  const [qaChecked, setQaChecked] = useState(false);
+  const [showCompleteUploadModal, setShowCompleteUploadModal] = useState(false);
+  const [completeOrderImage, setCompleteOrderImage] = useState(null);
 
   // Define all possible statuses in order (Completed before On Delivery)
   const STATUS_FLOW = [
     { key: 'Pending', label: 'Pending', icon: Clock, color: 'text-yellow-600', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' },
     { key: 'Assigned', label: 'Assigned', icon: UserCheck, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
     { key: 'In Progress', label: 'In Progress', icon: Package, color: 'text-orange-600', bgColor: 'bg-orange-50', borderColor: 'border-orange-200' },
+    { key: 'QA Check', label: 'QA Check', icon: ClipboardCheck, color: 'text-cyan-600', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200' },
     { key: 'Completed', label: 'Completed', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
     { key: 'On Delivery', label: 'On Delivery', icon: Truck, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
     { key: 'Cancelled', label: 'Cancelled', icon: XCircle, color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
@@ -156,6 +161,47 @@ const OrderDetail = () => {
     setOrder(updatedOrder);
   };
 
+  const handleQAComplete = async () => {
+    setShowQAModal(false);
+    setQaChecked(true);
+    setUpdatingStatus(true);
+    try {
+      const targetStatus = order.order_status === "QA Check" ? "Completed" : "QA Check";
+      await OrderService.updateOrder(orderId, { order_status: targetStatus });
+      const updatedOrder = await OrderService.getOrderById(orderId);
+      setOrder(updatedOrder);
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      alert("Failed to update order status. Please try again.");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleCompleteConfirm = async () => {
+    setShowCompleteUploadModal(false);
+    setUpdatingStatus(true);
+    try {
+      const updateData = { order_status: "Completed" };
+      if (completeOrderImage) {
+        const formData = new FormData();
+        formData.append("order_status", "Completed");
+        formData.append("order_completion_image", completeOrderImage);
+        await OrderService.updateOrder(orderId, formData);
+      } else {
+        await OrderService.updateOrder(orderId, updateData);
+      }
+      const updatedOrder = await OrderService.getOrderById(orderId);
+      setOrder(updatedOrder);
+      setCompleteOrderImage(null);
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      alert("Failed to update order status. Please try again.");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   const handleStatusUpdate = async (newStatus) => {
     if (updatingStatus || !order) return;
 
@@ -172,6 +218,15 @@ const OrderDetail = () => {
       if (confirmed) {
         setAssignMode("reassign");
         setShowAssignModal(true);
+      }
+      return;
+    }
+
+    if (newStatus === "Completed") {
+      if (!qaChecked) {
+        setShowQAModal(true);
+      } else {
+        setShowCompleteUploadModal(true);
       }
       return;
     }
@@ -1515,6 +1570,115 @@ const OrderDetail = () => {
           orderId={orderId}
           isReadyMade={isReadyMade}
         />
+      )}
+
+      {/* QA Checklist Modal */}
+      {showQAModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowQAModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <ClipboardCheck className="w-6 h-6 text-cyan-600" />
+                QA Checklist
+              </h3>
+              <button onClick={() => setShowQAModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">Verify all items before marking the order as quality checked:</p>
+            <div className="space-y-3 mb-6">
+              {[
+                { id: "measurements", label: "Measurements verified and match order specifications" },
+                { id: "fabric", label: "Fabric inspected for quality and consistency" },
+                { id: "stitching", label: "Stitching and seam quality meets standards" },
+                { id: "finishing", label: "Finishing touches completed (buttons, zippers, hems)" },
+                { id: "pressing", label: "Garment pressed and prepared for delivery" },
+                { id: "final_inspection", label: "Final quality inspection passed" },
+              ].map((item) => (
+                <label key={item.id} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 w-4 h-4 text-cyan-600 border-gray-300 rounded focus:ring-cyan-500"
+                    defaultChecked={qaChecked}
+                  />
+                  <span className="text-sm text-gray-700">{item.label}</span>
+                </label>
+              ))}
+            </div>
+            <button
+              onClick={handleQAComplete}
+              className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-xl hover:from-cyan-600 hover:to-blue-700 transition-all"
+            >
+              Complete QA Check
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Complete Upload Modal */}
+      {showCompleteUploadModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowCompleteUploadModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+                Complete Order
+              </h3>
+              <button onClick={() => setShowCompleteUploadModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Optionally upload a photo of the completed garment before marking the order as done.
+            </p>
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 mb-6 text-center hover:border-gray-400 transition-colors">
+              {completeOrderImage ? (
+                <div className="space-y-3">
+                  <img
+                    src={URL.createObjectURL(completeOrderImage)}
+                    alt="Completed garment preview"
+                    className="max-h-48 mx-auto rounded-lg object-contain"
+                  />
+                  <p className="text-sm text-gray-500">{completeOrderImage.name}</p>
+                  <button
+                    onClick={() => setCompleteOrderImage(null)}
+                    className="text-sm text-red-500 hover:text-red-700"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <label className="cursor-pointer flex flex-col items-center gap-2">
+                  <Upload className="w-10 h-10 text-gray-400" />
+                  <span className="text-sm text-gray-500">Click to upload completed garment photo</span>
+                  <span className="text-xs text-gray-400">Optional</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files[0]) setCompleteOrderImage(e.target.files[0]);
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowCompleteUploadModal(false); setCompleteOrderImage(null); }}
+                className="flex-1 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCompleteConfirm}
+                className="flex-1 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all"
+              >
+                Complete Order
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Assign / Reassign Modal */}
