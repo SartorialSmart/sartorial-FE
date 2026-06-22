@@ -97,6 +97,7 @@ const SalesReport = () => {
     "Pending",
     "Assigned", 
     "In Progress",
+    "QA Check",
     "On Delivery",
     "Completed",
     "Cancelled"

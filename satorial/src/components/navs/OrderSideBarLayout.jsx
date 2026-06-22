@@ -17,9 +17,9 @@ const OrderSideABrLayout = ({ children }) => {
 
   const sidebarItems = [
     { icon: <LayoutGrid />, label: "Dashboard", path: "/order/order-dashboard" },
-    { icon: <ClipboardList />, label: "Orders", path: "/order/orders-list" },
+    { icon: <ClipboardList />, label: "Orders", path: "/order/orders-list", activeOn: ["/order/detail"] },
     { icon: <CreditCard />, label: "Payments", path: "/order/payments-list" },
-    { icon: <FileText />, label: "Bills", path: "/order/bills-list" },
+    { icon: <FileText />, label: "Bills", path: "/order/bills-list", activeOn: ["/order/bills"] },
     { icon: <Store />, label: "Vendor", path: "/order/vendor-list" },
     { icon: <Store />, label: "Create Vendor", path: "/order/vendor/add" },
     { icon: <Store />, label: "Vendor Category", path: "/order/vendor-category-list" },

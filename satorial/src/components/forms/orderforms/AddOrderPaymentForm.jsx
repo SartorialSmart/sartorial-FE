@@ -3,7 +3,13 @@ import PropTypes from "prop-types";
 import PaymentService from "../../../services/PaymentService";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
 
+const VAT_RATE = 0.075;
+
 const AddPaymentForm = ({ order, onClose, onSave }) => {
+  const totalAmountPayable = Number(order.order_price || 0) * (1 + VAT_RATE);
+  const totalPaid = Number(order.total_paid) || 0;
+  const maxAdditionalPayment = Math.max(0, totalAmountPayable - totalPaid);
+
   const [formData, setFormData] = useState({
     order: order.id,
     price: order.order_price || 0,
@@ -21,13 +27,12 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
   const formatCurrency = (value) => `₦ ${Number(value).toLocaleString("en-NG", { minimumFractionDigits: 0 })}`;
 
   useEffect(() => {
-    const totalPaid = Number(order.total_paid) || 0;
     const newBalance = Math.max(
       formData.price - totalPaid - (Number(formData.amountPaid) || 0),
       0
     );
     setFormData((prev) => ({ ...prev, balance: newBalance }));
-  }, [formData.amountPaid, formData.price, order.total_paid]);
+  }, [formData.amountPaid, formData.price, totalPaid]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -45,13 +50,23 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
       return;
     }
 
+    const currentPayment = Number(formData.amountPaid) || 0;
+    if (totalPaid + currentPayment > totalAmountPayable) {
+      setError(
+        `Overpayment not allowed. Total amount payable is ${formatCurrency(totalAmountPayable)}. ` +
+        `Already paid: ${formatCurrency(totalPaid)}. ` +
+        `Maximum additional payment: ${formatCurrency(maxAdditionalPayment)}.`
+      );
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       const paymentData = {
         order: formData.order,
-        amount_paid: Number(formData.amountPaid),
+        amount_paid: currentPayment,
         payment_type: formData.payment_type,
         payment_method: formData.payment_method || undefined,
         payment_reference: formData.payment_reference || undefined,
@@ -70,7 +85,6 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-        {/* Modal Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Add Payment</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -78,9 +92,7 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
           </button>
         </div>
 
-        {/* Form Fields */}
         <div className="space-y-4">
-          {/* Read-only Order Info */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-gray-600 text-sm font-medium">Total Price</label>
@@ -92,6 +104,18 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
               />
             </div>
             <div>
+              <label className="text-gray-600 text-sm font-medium">Total Amount Payable (incl. VAT)</label>
+              <input
+                type="text"
+                value={formatCurrency(totalAmountPayable)}
+                className="w-full border p-2.5 rounded-md bg-blue-50 text-sm font-semibold"
+                readOnly
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
               <label className="text-gray-600 text-sm font-medium">Initial Deposit</label>
               <input
                 type="text"
@@ -100,20 +124,20 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
                 readOnly
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-gray-600 text-sm font-medium">Total Paid</label>
               <input
                 type="text"
-                value={formatCurrency(order.total_paid || 0)}
+                value={formatCurrency(totalPaid)}
                 className="w-full border p-2.5 rounded-md bg-gray-100 text-sm"
                 readOnly
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-gray-600 text-sm font-medium">Balance</label>
+              <label className="text-gray-600 text-sm font-medium">Balance (w/o VAT)</label>
               <input
                 type="text"
                 value={formatCurrency(formData.balance)}
@@ -121,9 +145,21 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
                 readOnly
               />
             </div>
+            <div>
+              <label className="text-gray-600 text-sm font-medium">Max Additional Payment</label>
+              <input
+                type="text"
+                value={formatCurrency(maxAdditionalPayment)}
+                className={`w-full border p-2.5 rounded-md text-sm font-semibold ${
+                  maxAdditionalPayment <= 0
+                    ? "bg-red-50 text-red-700"
+                    : "bg-gray-100"
+                }`}
+                readOnly
+              />
+            </div>
           </div>
 
-          {/* Payment Type */}
           <div>
             <label className="text-gray-600 text-sm font-medium">
               Payment Type <span className="text-red-500">*</span>
@@ -142,7 +178,6 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
             </select>
           </div>
 
-          {/* Payment Method */}
           <div>
             <label className="text-gray-600 text-sm font-medium">Payment Method</label>
             <select
@@ -160,7 +195,6 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
             </select>
           </div>
 
-          {/* Payment Reference */}
           <div>
             <label className="text-gray-600 text-sm font-medium">Payment Reference</label>
             <input
@@ -173,7 +207,6 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
             />
           </div>
 
-          {/* Amount Paid */}
           <div>
             <label className="text-gray-600 text-sm font-medium">
               Amount Paid <span className="text-red-500">*</span>
@@ -186,16 +219,18 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
                 value={formData.amountPaid}
                 onChange={handleChange}
                 placeholder="0.00"
+                max={maxAdditionalPayment}
                 className="w-full border p-3 pl-8 rounded-md"
               />
             </div>
+            {maxAdditionalPayment <= 0 && (
+              <p className="text-red-500 text-xs mt-1">This order is fully paid.</p>
+            )}
           </div>
         </div>
 
-        {/* Error Message */}
         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
-        {/* Save Button */}
         <button
           onClick={handleSave}
           className="w-full mt-4 bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 disabled:bg-gray-400"

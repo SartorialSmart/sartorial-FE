@@ -6,7 +6,7 @@ const OrderService = {
    * Fetch all orders
    * @returns {Promise}
    */
-  getOrders: () => apiGet(API.ORDER_MANAGEMENT.ORDERS.LIST),
+  getOrders: (params = {}) => apiGet(API.ORDER_MANAGEMENT.ORDERS.LIST, { params }),
 
   /**
    * Fetch a single order by ID
