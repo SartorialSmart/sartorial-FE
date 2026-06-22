@@ -3,13 +3,15 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { 
   EditIcon, ChevronRight, CheckCircle, Calendar, Clock, Truck, Package, 
   UserCheck, XCircle, Loader2, User, Mail, FileText, ShoppingBag, 
-  CreditCard, BarChart3, Tag, UserPlus, Repeat
+  CreditCard, BarChart3, Tag, UserPlus, Repeat, ClipboardCheck, Upload, X
 } from "lucide-react";
 import OrderService from "../../../services/OrderService";
 import SettingsService from "../../../services/settings";
 import AddPaymentModal from "../../modals/formModals/AddOrderPaymentFormModal";
 import TrackOrderStatusModal from "../../modals/formModals/TrackOrderStatusModal";
 import AssignOrderModal from "../../allocationModals/AssignOrderModal";
+import Avatar from "../../avatar/Avatar";
+import StaffService from "../../../services/staffServices/StaffService";
 import { getLogoUrl, getLocalProfile, getLocalInvoiceSettings } from "../../../utils/localImageService";
 import { isReadyMadeOrder, getCleanDescription } from "../../../../utils/orderUtils";
 
@@ -28,12 +30,17 @@ const OrderDetail = () => {
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
   const [orgProfile, setOrgProfile] = useState(null);
   const [invoiceLayout, setInvoiceLayout] = useState("layout1");
+  const [showQAModal, setShowQAModal] = useState(false);
+  const [qaChecked, setQaChecked] = useState(false);
+  const [showCompleteUploadModal, setShowCompleteUploadModal] = useState(false);
+  const [completeOrderImage, setCompleteOrderImage] = useState(null);
 
   // Define all possible statuses in order (Completed before On Delivery)
   const STATUS_FLOW = [
     { key: 'Pending', label: 'Pending', icon: Clock, color: 'text-yellow-600', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' },
     { key: 'Assigned', label: 'Assigned', icon: UserCheck, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
     { key: 'In Progress', label: 'In Progress', icon: Package, color: 'text-orange-600', bgColor: 'bg-orange-50', borderColor: 'border-orange-200' },
+    { key: 'QA Check', label: 'QA Check', icon: ClipboardCheck, color: 'text-cyan-600', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200' },
     { key: 'Completed', label: 'Completed', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
     { key: 'On Delivery', label: 'On Delivery', icon: Truck, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
     { key: 'Cancelled', label: 'Cancelled', icon: XCircle, color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
@@ -52,6 +59,31 @@ const OrderDetail = () => {
     const fetchOrderDetails = async () => {
       try {
         const data = await OrderService.getOrderById(orderId);
+        if (!data.current_allocation) {
+          try {
+            const allocations = await OrderService.getAllocations();
+            const allocationList = Array.isArray(allocations)
+              ? allocations
+              : allocations.results || allocations.allocations || [];
+            const match = allocationList.find(
+              (a) => String(a.order?.id || a.order?.order_id || a.order) === String(orderId)
+            );
+            if (match) {
+              const staffObj = match.staff || match;
+              data.current_allocation = {
+                staff_name: staffObj.name || `${staffObj.first_name || ""} ${staffObj.last_name || ""}`.trim() || "Staff",
+                staff_id: staffObj.id || match.staff_id || match.staff,
+                staff: staffObj.id || match.staff,
+                department: match.department || staffObj.department || "",
+                role: match.role || staffObj.role || staffObj.staff_role || "",
+                avatar_url: staffObj.avatar || staffObj.avatar_url || match.avatar_url,
+                id: match.id,
+              };
+            }
+          } catch {
+            // allocations fetch is optional
+          }
+        }
         setOrder(data);
       } catch (err) {
         setError("Failed to fetch order details.");
@@ -111,9 +143,67 @@ const OrderDetail = () => {
   };
 
   const handleAssignOrder = async (payload) => {
-    await OrderService.assignOrder(payload);
+    const result = await OrderService.assignOrder(payload);
     const updatedOrder = await OrderService.getOrderById(orderId);
+    if (result) {
+      const alloc = result.allocation || result;
+      const s = result.staff || alloc.staff || alloc;
+      updatedOrder.current_allocation = {
+        staff_name: s.name || `${s.first_name || ""} ${s.last_name || ""}`.trim() || "Staff",
+        staff_id: s.id || alloc.staff_id,
+        staff: s.id || alloc.staff,
+        department: alloc.department || s.department || "",
+        role: alloc.role || s.role || s.staff_role || "",
+        avatar_url: s.avatar || s.avatar_url || alloc.avatar_url,
+        id: alloc.id,
+      };
+    }
     setOrder(updatedOrder);
+  };
+
+  const handleQAComplete = async () => {
+    setShowQAModal(false);
+    setQaChecked(true);
+    const shouldComplete = order.order_status === "QA Check";
+    if (!shouldComplete) {
+      setUpdatingStatus(true);
+      try {
+        await OrderService.updateOrder(orderId, { order_status: "QA Check" });
+        const updatedOrder = await OrderService.getOrderById(orderId);
+        setOrder(updatedOrder);
+      } catch (err) {
+        console.error("Failed to update status:", err);
+        alert("Failed to update order status. Please try again.");
+      } finally {
+        setUpdatingStatus(false);
+      }
+    } else {
+      setShowCompleteUploadModal(true);
+    }
+  };
+
+  const handleCompleteConfirm = async () => {
+    setShowCompleteUploadModal(false);
+    setUpdatingStatus(true);
+    try {
+      const updateData = { order_status: "Completed" };
+      if (completeOrderImage) {
+        const formData = new FormData();
+        formData.append("order_status", "Completed");
+        formData.append("order_completion_image", completeOrderImage);
+        await OrderService.updateOrder(orderId, formData);
+      } else {
+        await OrderService.updateOrder(orderId, updateData);
+      }
+      const updatedOrder = await OrderService.getOrderById(orderId);
+      setOrder(updatedOrder);
+      setCompleteOrderImage(null);
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      alert("Failed to update order status. Please try again.");
+    } finally {
+      setUpdatingStatus(false);
+    }
   };
 
   const handleStatusUpdate = async (newStatus) => {
@@ -132,6 +222,20 @@ const OrderDetail = () => {
       if (confirmed) {
         setAssignMode("reassign");
         setShowAssignModal(true);
+      }
+      return;
+    }
+
+    if (newStatus === "QA Check") {
+      setShowQAModal(true);
+      return;
+    }
+
+    if (newStatus === "Completed") {
+      if (!qaChecked) {
+        setShowQAModal(true);
+      } else {
+        setShowCompleteUploadModal(true);
       }
       return;
     }
@@ -761,14 +865,22 @@ const OrderDetail = () => {
                     {order.order_status}
                   </span>
                 </div>
-                {order.order_description && (
-                  <p className="text-sm text-gray-500 mt-1.5">{order.order_description}</p>
-                )}
-                {order.current_allocation && (
-                  <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 bg-gray-50 rounded-lg px-3 py-1.5 inline-flex">
-                    <UserCheck size={14} className="text-green-600 shrink-0" />
-                    <span>Assigned to <strong>{order.current_allocation.staff_name}</strong> ({order.current_allocation.department})</span>
-                  </div>
+                {(order.order_description || order.current_allocation) && (
+                  <p className="text-sm text-gray-500 mt-1.5">
+                    {order.order_description}
+                    {order.order_description && order.current_allocation && (
+                      <> <span className="text-gray-300">|</span> </>
+                    )}
+                    {order.current_allocation && (
+                      <>
+                        <User size={13} className="inline text-gray-400 mr-1 -mt-0.5" />
+                        Assigned to <strong>{order.current_allocation.staff_name}</strong>
+                        {order.current_allocation.department && (
+                          <> ({order.current_allocation.department})</>
+                        )}
+                      </>
+                    )}
+                  </p>
                 )}
               </div>
             </div>
@@ -1013,6 +1125,21 @@ const OrderDetail = () => {
               <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
                 {getCleanDescription(order.order_description) || "No description provided."}
               </p>
+              {order.current_allocation && (
+                <>
+                  <hr className="my-4 border-t border-gray-200" />
+                  <div className="flex items-center gap-3">
+                    <Avatar
+                      src={order.current_allocation.avatar_url}
+                      alt={order.current_allocation.staff_name}
+                    />
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned To</p>
+                      <p className="text-sm font-bold text-gray-900">{order.current_allocation.staff_name}</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -1171,6 +1298,24 @@ const OrderDetail = () => {
                 {order.ordered_at ? formatDate(order.ordered_at) : 'N/A'}
               </span>
             </div>
+
+            {/* Staff Assignment timeline event */}
+            {order.current_allocation && (
+              <div className="flex items-center justify-between py-4 border-b border-gray-100 hover:bg-gray-50 rounded-lg px-4 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center shadow-md">
+                    <UserCheck className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Order / Staff</p>
+                    <p className="text-gray-500 text-sm">Assigned to: <span className="font-semibold text-gray-700">{order.current_allocation.staff_name}</span></p>
+                  </div>
+                </div>
+                <span className="text-gray-600 text-sm font-medium">
+                  {order.updated_at ? formatDate(order.updated_at) : 'N/A'}
+                </span>
+              </div>
+            )}
 
             {/* Payment timeline events */}
             {order.payments && order.payments.length > 0 && (
@@ -1434,6 +1579,115 @@ const OrderDetail = () => {
           orderId={orderId}
           isReadyMade={isReadyMade}
         />
+      )}
+
+      {/* QA Checklist Modal */}
+      {showQAModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowQAModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <ClipboardCheck className="w-6 h-6 text-cyan-600" />
+                QA Checklist
+              </h3>
+              <button onClick={() => setShowQAModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">Verify all items before marking the order as quality checked:</p>
+            <div className="space-y-3 mb-6">
+              {[
+                { id: "measurements", label: "Measurements verified and match order specifications" },
+                { id: "fabric", label: "Fabric inspected for quality and consistency" },
+                { id: "stitching", label: "Stitching and seam quality meets standards" },
+                { id: "finishing", label: "Finishing touches completed (buttons, zippers, hems)" },
+                { id: "pressing", label: "Garment pressed and prepared for delivery" },
+                { id: "final_inspection", label: "Final quality inspection passed" },
+              ].map((item) => (
+                <label key={item.id} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 w-4 h-4 text-cyan-600 border-gray-300 rounded focus:ring-cyan-500"
+                    defaultChecked={qaChecked}
+                  />
+                  <span className="text-sm text-gray-700">{item.label}</span>
+                </label>
+              ))}
+            </div>
+            <button
+              onClick={handleQAComplete}
+              className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-xl hover:from-cyan-600 hover:to-blue-700 transition-all"
+            >
+              Complete QA Check
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Complete Upload Modal */}
+      {showCompleteUploadModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowCompleteUploadModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+                Complete Order
+              </h3>
+              <button onClick={() => setShowCompleteUploadModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Optionally upload a photo of the completed garment before marking the order as done.
+            </p>
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 mb-6 text-center hover:border-gray-400 transition-colors">
+              {completeOrderImage ? (
+                <div className="space-y-3">
+                  <img
+                    src={URL.createObjectURL(completeOrderImage)}
+                    alt="Completed garment preview"
+                    className="max-h-48 mx-auto rounded-lg object-contain"
+                  />
+                  <p className="text-sm text-gray-500">{completeOrderImage.name}</p>
+                  <button
+                    onClick={() => setCompleteOrderImage(null)}
+                    className="text-sm text-red-500 hover:text-red-700"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <label className="cursor-pointer flex flex-col items-center gap-2">
+                  <Upload className="w-10 h-10 text-gray-400" />
+                  <span className="text-sm text-gray-500">Click to upload completed garment photo</span>
+                  <span className="text-xs text-gray-400">Optional</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files[0]) setCompleteOrderImage(e.target.files[0]);
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowCompleteUploadModal(false); setCompleteOrderImage(null); }}
+                className="flex-1 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCompleteConfirm}
+                className="flex-1 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all"
+              >
+                Complete Order
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Assign / Reassign Modal */}

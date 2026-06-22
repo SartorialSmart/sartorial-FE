@@ -12,39 +12,81 @@ import {
   Cell,
 } from "recharts";
 import ReportService from "../../services/ReportService";
+import { getDateRangeISO } from "../../../utils/reportUtils";
 
 const COLORS = ["#42A5F5", "#66BB6A"];
 
+const FILTERS = [
+  "All Time",
+  "Today",
+  "This Week",
+  "This Month",
+  "This Year",
+  "Custom Date",
+];
+
 const ReportDashboard = () => {
+  const [selectedFilter, setSelectedFilter] = useState("All Time");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState({});
   const [profitReport, setProfitReport] = useState(null);
   const [monthlyStats, setMonthlyStats] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [data, profit, monthly] = await Promise.all([
-          ReportService.getReportSummary(),
-          ReportService.getProfitReport(),
-          ReportService.getMonthlyStatistics(),
-        ]);
-        setSummary(data || {});
-        setProfitReport(profit || null);
-        setMonthlyStats(Array.isArray(monthly) ? monthly : []);
-      } catch {
-        setError("Failed to load report summary.");
-      } finally {
-        setLoading(false);
+  const fetchData = async (filter, startDate, endDate) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = filter === "All Time" ? {} : (() => {
+        const dr = getDateRangeISO(filter, startDate, endDate);
+        return {
+          start_date: dr.startDate?.split("T")[0],
+          end_date: dr.endDate?.split("T")[0],
+        };
+      })();
+
+      const [summaryData, monthly] = await Promise.all([
+        ReportService.getReportSummary(params),
+        ReportService.getMonthlyStatistics(),
+      ]);
+      setSummary(summaryData || {});
+      setMonthlyStats(Array.isArray(monthly) ? monthly : []);
+
+      let profit = null;
+      if (filter === "All Time") {
+        profit = await ReportService.getProfitReport();
+      } else {
+        profit = await ReportService.getProfitReport(params);
       }
-    };
-    fetchData();
+      setProfitReport(profit || null);
+    } catch {
+      setError("Failed to load report summary.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(selectedFilter, customStartDate, customEndDate);
   }, []);
 
-  // Cards mapping: adjust keys as per your API response
+  const handleFilterClick = (filter) => {
+    setSelectedFilter(filter);
+    if (filter !== "Custom Date") {
+      setCustomStartDate("");
+      setCustomEndDate("");
+      fetchData(filter, "", "");
+    }
+  };
+
+  const handleCustomDateFilter = () => {
+    if (customStartDate && customEndDate) {
+      fetchData("Custom Date", customStartDate, customEndDate);
+    }
+  };
+
   const cards = [
     {
       title: "Total Orders",
@@ -102,29 +144,20 @@ const ReportDashboard = () => {
     },
   ];
 
-  // Chart data: expects summary.monthly_stats = [{ month, expenses, sales }]
   const chartData = monthlyStats;
-
-  // Pie data: expects summary.retention = [{ name, value }]
   const pieData = summary.retention || [];
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-light">Dashboard</h1>
-        <div className="flex gap-2">
-          {[
-            "All Time",
-            "Today",
-            "This Week",
-            "This Month",
-            "This Year",
-            "Custom Date",
-          ].map((filter, index) => (
+        <div className="flex gap-2 flex-wrap">
+          {FILTERS.map((filter) => (
             <button
-              key={index}
+              key={filter}
+              onClick={() => handleFilterClick(filter)}
               className={`px-4 py-2 rounded-lg ${
-                index === 0
+                selectedFilter === filter
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 text-gray-700"
               }`}
@@ -134,6 +167,36 @@ const ReportDashboard = () => {
           ))}
         </div>
       </div>
+
+      {selectedFilter === "Custom Date" && (
+        <div className="flex items-center gap-3 mb-4 bg-white p-3 rounded-lg shadow-sm">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Start Date</label>
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">End Date</label>
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={(e) => setCustomEndDate(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
+          <button
+            onClick={handleCustomDateFilter}
+            disabled={!customStartDate || !customEndDate}
+            className="mt-5 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+          >
+            Apply
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-10">Loading...</div>

@@ -10,9 +10,21 @@ import {
 import PropTypes from "prop-types";
 import ReportService from "../../services/ReportService";
 import OrderService from "../../services/OrderService";
+import { getDateRangeISO } from "../../../utils/reportUtils";
+
+const FILTERS = [
+  "All Time",
+  "Today",
+  "This Week",
+  "This Month",
+  "This Year",
+  "Custom Date",
+];
 
 const OrderReport = () => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState({});
@@ -39,6 +51,24 @@ const OrderReport = () => {
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (selectedFilter === "Custom Date" && (!customStartDate || !customEndDate)) return;
+    const fetchFilteredSummary = async () => {
+      const params = selectedFilter === "All Time" ? {} : (() => {
+        const dr = getDateRangeISO(selectedFilter, customStartDate, customEndDate);
+        return {
+          start_date: dr.startDate?.split("T")[0],
+          end_date: dr.endDate?.split("T")[0],
+        };
+      })();
+      try {
+        const data = await ReportService.getOrderSummary(params);
+        setSummary(data || {});
+      } catch {}
+    };
+    fetchFilteredSummary();
+  }, [selectedFilter, customStartDate, customEndDate]);
 
   const cards = [
     {
@@ -85,7 +115,6 @@ const OrderReport = () => {
     },
   ];
 
-  // Filter orders based on search query, status, and date
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       searchQuery === "" ||
@@ -99,7 +128,6 @@ const OrderReport = () => {
     const matchesStatus =
       selectedStatus === "All" || order.order_status === selectedStatus;
 
-    // Date filtering logic
     const matchesDate = (() => {
       if (selectedFilter === "All Time") return true;
 
@@ -120,10 +148,12 @@ const OrderReport = () => {
         case "This Year":
           const yearStart = new Date(today.getFullYear(), 0, 1);
           return orderDate >= yearStart;
-        case "Custom Date":
-          // For custom date, you might want to implement date range pickers
-          // For now, return true to show all (can be enhanced later)
-          return true;
+        case "Custom Date": {
+          if (!customStartDate || !customEndDate) return true;
+          const start = new Date(customStartDate);
+          const end = new Date(customEndDate + "T23:59:59.999");
+          return orderDate >= start && orderDate <= end;
+        }
         default:
           return true;
       }
@@ -132,7 +162,6 @@ const OrderReport = () => {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  // Export functionality
   const handleExport = () => {
     if (filteredOrders.length === 0) {
       alert("No data to export");
@@ -182,20 +211,13 @@ const OrderReport = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="bg-gray-100 p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-[22px] font-semibold text-gray-900">
           Order Report
         </h2>
         <div className="flex space-x-2">
-          {[
-            "All Time",
-            "Today",
-            "This Week",
-            "This Month",
-            "This Year",
-            "Custom Date",
-          ].map((filter) => (
+          {FILTERS.map((filter) => (
             <button
               key={filter}
               onClick={() => setSelectedFilter(filter)}
@@ -210,6 +232,30 @@ const OrderReport = () => {
           ))}
         </div>
       </div>
+
+      {selectedFilter === "Custom Date" && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4 gap-3 bg-white p-3 rounded-lg shadow-sm">
+          <div className="w-full sm:w-auto">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 w-full"
+            />
+          </div>
+          <div className="w-full sm:w-auto">
+            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={(e) => setCustomEndDate(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 w-full"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card, index) => (
           <div
@@ -230,6 +276,7 @@ const OrderReport = () => {
             "All",
             "Assigned",
             "In Progress",
+            "QA Check",
             "On Delivery",
             "Completed",
             "Cancelled",
@@ -268,7 +315,7 @@ const OrderReport = () => {
           </button>
         </div>
       </div>
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
         {loading ? (
           <div className="text-center py-10">Loading...</div>
         ) : error ? (

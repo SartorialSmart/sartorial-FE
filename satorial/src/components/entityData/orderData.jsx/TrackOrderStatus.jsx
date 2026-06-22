@@ -1,4 +1,4 @@
-import { X, Clock, Check, Truck, Package, UserCheck, AlertCircle, ShoppingBag } from "lucide-react";
+import { X, Clock, Check, Truck, Package, UserCheck, AlertCircle, ShoppingBag, ClipboardCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
@@ -27,6 +27,13 @@ const customStatuses = [
   },
   {
     id: 4,
+    label: "QA Check",
+    description: "Quality assurance check before completion",
+    icon: ClipboardCheck,
+    color: "cyan"
+  },
+  {
+    id: 5,
     label: "Completed",
     description: "Order production has been completed",
     icon: Check,
@@ -93,6 +100,7 @@ const TrackOrderStatus = ({ currentStatus = "Pending", onClose, orderId, isReady
       blue: { bg: "bg-blue-100", border: "border-blue-500", text: "text-blue-700", lightBg: "bg-blue-50" },
       indigo: { bg: "bg-indigo-100", border: "border-indigo-500", text: "text-indigo-700", lightBg: "bg-indigo-50" },
       purple: { bg: "bg-purple-100", border: "border-purple-500", text: "text-purple-700", lightBg: "bg-purple-50" },
+      cyan: { bg: "bg-cyan-100", border: "border-cyan-500", text: "text-cyan-700", lightBg: "bg-cyan-50" },
       green: { bg: "bg-green-100", border: "border-green-500", text: "text-green-700", lightBg: "bg-green-50" },
       red: { bg: "bg-red-100", border: "border-red-500", text: "text-red-700", lightBg: "bg-red-50" },
     };

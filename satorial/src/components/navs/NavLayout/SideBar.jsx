@@ -54,7 +54,10 @@ const Sidebar = ({ isOpen, toggleSidebar, sidebarItems }) => {
       {/* Navigation Items */}
       <nav className="flex-1 space-y-1 overflow-y-auto">
         {sidebarItems.map((item, index) => {
-          const isActive = item.path && location.pathname === item.path;
+          const isActive = item.path && (
+            location.pathname === item.path ||
+            (item.activeOn && item.activeOn.some(p => location.pathname.startsWith(p)))
+          );
           
           if (item.onClick) {
             return (
