@@ -485,9 +485,9 @@ const StaffDetail = () => {
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     <div className="text-center p-4 bg-orange-50 rounded-lg">
                       <div className="text-2xl font-bold text-orange-600">
-                        {performance.assigned_orders}
+                        {Math.max(0, (performance.total_assigned || 0) - (performance.completed_orders || 0) - (performance.cancelled_orders || 0))}
                       </div>
-                      <div className="text-sm text-gray-600">Assigned</div>
+                      <div className="text-sm text-gray-600">Active Assignments</div>
                     </div>
                     <div className="text-center p-4 bg-blue-50 rounded-lg">
                       <div className="text-2xl font-bold text-blue-600">

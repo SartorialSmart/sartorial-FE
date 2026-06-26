@@ -15,6 +15,15 @@ const ExpenseFormModal = ({ isOpen, onClose, onSuccess, expenseToEdit = null }) 
   const formRef = useRef(null);
   const modalContentRef = useRef(null);
 
+  const RECURRENCE_TYPES = [
+    { value: "", label: "One-off" },
+    { value: "weekly", label: "Weekly" },
+    { value: "monthly", label: "Monthly" },
+    { value: "quarterly", label: "Quarterly" },
+    { value: "biennially", label: "Biennially" },
+    { value: "annually", label: "Annually" },
+  ];
+
   const [form, setForm] = useState({
     category: "",
     amount: "",
@@ -22,6 +31,9 @@ const ExpenseFormModal = ({ isOpen, onClose, onSuccess, expenseToEdit = null }) 
     paidTo: "",
     receipt: null,
     description: "",
+    recurrenceType: "",
+    recurrenceStartDate: "",
+    recurrenceEndDate: "",
   });
 
   const [categories, setCategories] = useState([]);
@@ -78,6 +90,9 @@ const ExpenseFormModal = ({ isOpen, onClose, onSuccess, expenseToEdit = null }) 
           paidTo: "",
           receipt: null,
           description: "",
+          recurrenceType: "",
+          recurrenceStartDate: "",
+          recurrenceEndDate: "",
         });
         setReceiptPreview(null);
         setExistingReceiptUrl(null);
@@ -100,6 +115,9 @@ const ExpenseFormModal = ({ isOpen, onClose, onSuccess, expenseToEdit = null }) 
         paidTo: expenseToEdit.paid_to || "",
         receipt: null,
         description: expenseToEdit.description || "",
+        recurrenceType: expenseToEdit.recurrence_type || "",
+        recurrenceStartDate: expenseToEdit.recurrence_start_date || "",
+        recurrenceEndDate: expenseToEdit.recurrence_end_date || "",
       });
       setExistingReceiptUrl(expenseToEdit.receipt_url);
     }
@@ -143,6 +161,20 @@ const ExpenseFormModal = ({ isOpen, onClose, onSuccess, expenseToEdit = null }) 
     if (!form.paidTo) newErrors.paidTo = "Paid to is required";
     
     if (!form.description?.trim()) newErrors.description = "Description is required";
+
+    // Recurrence validation
+    if (form.recurrenceType) {
+      if (!form.recurrenceStartDate) {
+        newErrors.recurrenceStartDate = "Start date is required for recurring expenses";
+      }
+      if (!form.recurrenceEndDate) {
+        newErrors.recurrenceEndDate = "End date is required for recurring expenses";
+      }
+      if (form.recurrenceStartDate && form.recurrenceEndDate &&
+          new Date(form.recurrenceStartDate) >= new Date(form.recurrenceEndDate)) {
+        newErrors.recurrenceEndDate = "End date must be after start date";
+      }
+    }
 
     // Validate receipt file type and size if provided
     if (form.receipt) {
@@ -242,6 +274,11 @@ const ExpenseFormModal = ({ isOpen, onClose, onSuccess, expenseToEdit = null }) 
       formData.append("created_by", form.createdBy);
       formData.append("paid_to", form.paidTo);
       formData.append("description", form.description.trim());
+      formData.append("recurrence_type", form.recurrenceType || "");
+      if (form.recurrenceType) {
+        formData.append("recurrence_start_date", form.recurrenceStartDate);
+        formData.append("recurrence_end_date", form.recurrenceEndDate);
+      }
 
       if (form.receipt instanceof File) {
         formData.append("receipt", form.receipt);
@@ -293,6 +330,29 @@ const ExpenseFormModal = ({ isOpen, onClose, onSuccess, expenseToEdit = null }) 
       currency: "NGN",
       minimumFractionDigits: 0,
     }).format(value);
+  };
+
+  const computeRecurrenceBreakdown = () => {
+    if (!form.recurrenceType || !form.amount || !form.recurrenceStartDate || !form.recurrenceEndDate) return null;
+    const start = new Date(form.recurrenceStartDate);
+    const end = new Date(form.recurrenceEndDate);
+    const days = Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24)));
+    const dailyRate = parseFloat(form.amount) / days;
+    const labels = {
+      weekly: `≈${formatCurrency(dailyRate * 7)}/wk`,
+      monthly: `≈${formatCurrency(dailyRate * 30)}/mo`,
+      quarterly: `≈${formatCurrency(dailyRate * 91)}/qtr`,
+      biennially: `≈${formatCurrency(dailyRate * 730)}/2yr`,
+      annually: `≈${formatCurrency(dailyRate * 365)}/yr`,
+    };
+    const typeLabel = RECURRENCE_TYPES.find(t => t.value === form.recurrenceType)?.label || "";
+    return {
+      days,
+      dailyRate,
+      total: parseFloat(form.amount),
+      interval: labels[form.recurrenceType] || "",
+      typeLabel,
+    };
   };
 
   // Handle modal background click
@@ -472,6 +532,108 @@ const ExpenseFormModal = ({ isOpen, onClose, onSuccess, expenseToEdit = null }) 
                         </p>
                       )}
                     </div>
+                  </div>
+
+                  {/* Recurrence Section */}
+                  <div className="border-t border-gray-200 pt-6">
+                    <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Recurrence
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Billing Cycle
+                        </label>
+                        <select
+                          name="recurrenceType"
+                          value={form.recurrenceType}
+                          onChange={handleChange}
+                          disabled={loading}
+                          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed"
+                        >
+                          {RECURRENCE_TYPES.map((rt) => (
+                            <option key={rt.value} value={rt.value}>{rt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div></div>
+
+                      {form.recurrenceType && (
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Period Start <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="date"
+                              name="recurrenceStartDate"
+                              value={form.recurrenceStartDate}
+                              onChange={handleChange}
+                              disabled={loading}
+                              className={`w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed ${errors.recurrenceStartDate ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                            />
+                            {errors.recurrenceStartDate && (
+                              <p className="mt-1 text-sm text-red-600 flex items-center">
+                                <AlertCircle className="w-4 h-4 mr-1 flex-shrink-0" />
+                                {errors.recurrenceStartDate}
+                              </p>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Period End <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="date"
+                              name="recurrenceEndDate"
+                              value={form.recurrenceEndDate}
+                              onChange={handleChange}
+                              disabled={loading}
+                              className={`w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed ${errors.recurrenceEndDate ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                            />
+                            {errors.recurrenceEndDate && (
+                              <p className="mt-1 text-sm text-red-600 flex items-center">
+                                <AlertCircle className="w-4 h-4 mr-1 flex-shrink-0" />
+                                {errors.recurrenceEndDate}
+                              </p>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Computed Breakdown */}
+                    {(() => {
+                      const breakdown = computeRecurrenceBreakdown();
+                      if (!breakdown) return null;
+                      return (
+                        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          <h4 className="text-sm font-medium text-blue-800 mb-2">Rate Breakdown</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div>
+                              <span className="text-blue-600">Period</span>
+                              <p className="font-semibold text-blue-900">{breakdown.days} days</p>
+                            </div>
+                            <div>
+                              <span className="text-blue-600">Daily Rate</span>
+                              <p className="font-semibold text-blue-900">{formatCurrency(breakdown.dailyRate)}</p>
+                            </div>
+                            <div>
+                              <span className="text-blue-600">{breakdown.typeLabel}</span>
+                              <p className="font-semibold text-blue-900">{breakdown.interval}</p>
+                            </div>
+                            <div>
+                              <span className="text-blue-600">Total</span>
+                              <p className="font-semibold text-blue-900">{formatCurrency(breakdown.total)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Receipt Upload */}
@@ -678,6 +840,9 @@ ExpenseFormModal.propTypes = {
     paid_to: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     receipt_url: PropTypes.string,
     description: PropTypes.string,
+    recurrence_type: PropTypes.string,
+    recurrence_start_date: PropTypes.string,
+    recurrence_end_date: PropTypes.string,
   }),
 };
 
