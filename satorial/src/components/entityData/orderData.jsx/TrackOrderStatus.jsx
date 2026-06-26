@@ -41,8 +41,8 @@ const customStatuses = [
   },
   {
     id: 5,
-    label: "On Delivery",
-    description: "Order has been sent for delivery to the client",
+    label: "Delivered",
+    description: "Order has been delivered to the client",
     icon: Truck,
     color: "purple"
   },
@@ -66,8 +66,8 @@ const readyMadeStatuses = [
   },
   {
     id: 2,
-    label: "On Delivery",
-    description: "Order has been sent for delivery to the client",
+    label: "Delivered",
+    description: "Order has been delivered to the client",
     icon: Truck,
     color: "purple"
   },

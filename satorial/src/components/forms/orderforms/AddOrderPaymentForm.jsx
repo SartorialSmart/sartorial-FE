@@ -1,42 +1,59 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import PaymentService from "../../../services/PaymentService";
+import SettingsService from "../../../services/settings";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
-
-const VAT_RATE = 0.075;
+import { getLocalInvoiceSettings } from "../../../utils/localImageService";
 
 const AddPaymentForm = ({ order, onClose, onSave }) => {
-  const totalAmountPayable = Number(order.order_price || 0) * (1 + VAT_RATE);
+  const [vatSettings, setVatSettings] = useState({ vatEnabled: false, vatRate: 7.5 });
   const totalPaid = Number(order.total_paid) || 0;
-  const maxAdditionalPayment = Math.max(0, totalAmountPayable - totalPaid);
 
   const [formData, setFormData] = useState({
     order: order.id,
     price: order.order_price || 0,
     initialDeposit: order.initial_deposit || 0,
-    balance: order.balance_amount || order.balance || 0,
     amountPaid: "",
     payment_type: "",
     payment_method: "",
     payment_reference: "",
+    vatExempt: false,
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const vatRate = vatSettings.vatEnabled && !formData.vatExempt ? vatSettings.vatRate / 100 : 0;
+  const vatPayable = Number(formData.price) * vatRate;
+  const totalAmountPayable = Number(formData.price) + vatPayable;
+  const hasInitialDeposit =
+    Number(order.initial_deposit) > 0 ||
+    (order.payments || []).some((p) => p.payment_type === "Initial Deposit");
+
   const formatCurrency = (value) => `₦ ${Number(value).toLocaleString("en-NG", { minimumFractionDigits: 0 })}`;
 
   useEffect(() => {
-    const newBalance = Math.max(
-      formData.price - totalPaid - (Number(formData.amountPaid) || 0),
-      0
-    );
-    setFormData((prev) => ({ ...prev, balance: newBalance }));
-  }, [formData.amountPaid, formData.price, totalPaid]);
+    const local = getLocalInvoiceSettings();
+    if (local) {
+      setVatSettings({
+        vatEnabled: local.vatEnabled ?? false,
+        vatRate: local.vatRate ?? 7.5,
+      });
+    } else {
+      SettingsService.Invoice.getSettings()
+        .then((data) => {
+          setVatSettings({
+            vatEnabled: data.vat_enabled ?? false,
+            vatRate: data.vat_rate ?? 7.5,
+          });
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
     if (error) setError(null);
   };
 
@@ -49,13 +66,16 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
       setError("Please select a payment type.");
       return;
     }
+    if (!formData.payment_method) {
+      setError("Please select a payment method.");
+      return;
+    }
 
     const currentPayment = Number(formData.amountPaid) || 0;
     if (totalPaid + currentPayment > totalAmountPayable) {
       setError(
         `Overpayment not allowed. Total amount payable is ${formatCurrency(totalAmountPayable)}. ` +
-        `Already paid: ${formatCurrency(totalPaid)}. ` +
-        `Maximum additional payment: ${formatCurrency(maxAdditionalPayment)}.`
+        `Already paid: ${formatCurrency(totalPaid)}.`
       );
       return;
     }
@@ -64,12 +84,17 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
     setError(null);
 
     try {
+      const notes = formData.vatExempt
+        ? "Customer was exempted from VAT payment"
+        : undefined;
+
       const paymentData = {
         order: formData.order,
         amount_paid: currentPayment,
         payment_type: formData.payment_type,
         payment_method: formData.payment_method || undefined,
         payment_reference: formData.payment_reference || undefined,
+        ...(notes && { notes }),
       };
 
       await PaymentService.createPayment(paymentData);
@@ -83,162 +108,152 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Add Payment</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            ✖
-          </button>
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-gray-600 text-sm font-medium">Total Price</label>
+          <input
+            type="text"
+            value={formatCurrency(formData.price)}
+            className="w-full border p-2.5 rounded-md bg-gray-100 text-sm"
+            readOnly
+          />
         </div>
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-gray-600 text-sm font-medium">Total Price</label>
-              <input
-                type="text"
-                value={formatCurrency(formData.price)}
-                className="w-full border p-2.5 rounded-md bg-gray-100 text-sm"
-                readOnly
-              />
-            </div>
-            <div>
-              <label className="text-gray-600 text-sm font-medium">Total Amount Payable (incl. VAT)</label>
-              <input
-                type="text"
-                value={formatCurrency(totalAmountPayable)}
-                className="w-full border p-2.5 rounded-md bg-blue-50 text-sm font-semibold"
-                readOnly
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-gray-600 text-sm font-medium">Initial Deposit</label>
-              <input
-                type="text"
-                value={formatCurrency(formData.initialDeposit)}
-                className="w-full border p-2.5 rounded-md bg-gray-100 text-sm"
-                readOnly
-              />
-            </div>
-            <div>
-              <label className="text-gray-600 text-sm font-medium">Total Paid</label>
-              <input
-                type="text"
-                value={formatCurrency(totalPaid)}
-                className="w-full border p-2.5 rounded-md bg-gray-100 text-sm"
-                readOnly
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-gray-600 text-sm font-medium">Balance (w/o VAT)</label>
-              <input
-                type="text"
-                value={formatCurrency(formData.balance)}
-                className="w-full border p-2.5 rounded-md bg-gray-100 text-sm"
-                readOnly
-              />
-            </div>
-            <div>
-              <label className="text-gray-600 text-sm font-medium">Max Additional Payment</label>
-              <input
-                type="text"
-                value={formatCurrency(maxAdditionalPayment)}
-                className={`w-full border p-2.5 rounded-md text-sm font-semibold ${
-                  maxAdditionalPayment <= 0
-                    ? "bg-red-50 text-red-700"
-                    : "bg-gray-100"
-                }`}
-                readOnly
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-gray-600 text-sm font-medium">
-              Payment Type <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="payment_type"
-              value={formData.payment_type}
-              onChange={handleChange}
-              className="w-full border p-3 rounded-md"
-            >
-              <option value="">Select payment type</option>
-              <option value="Initial Deposit">Initial Deposit</option>
-              <option value="Partial Payment">Partial Payment</option>
-              <option value="Final Payment">Final Payment</option>
-              <option value="Full Payment">Full Payment</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="text-gray-600 text-sm font-medium">Payment Method</label>
-            <select
-              name="payment_method"
-              value={formData.payment_method}
-              onChange={handleChange}
-              className="w-full border p-3 rounded-md"
-            >
-              <option value="">Select method</option>
-              <option value="Cash">Cash</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="Card">Card</option>
-              <option value="Mobile Money">Mobile Money</option>
-              <option value="POS">POS</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="text-gray-600 text-sm font-medium">Payment Reference</label>
-            <input
-              type="text"
-              name="payment_reference"
-              value={formData.payment_reference}
-              onChange={handleChange}
-              placeholder="e.g. Transaction ID"
-              className="w-full border p-3 rounded-md"
-            />
-          </div>
-
-          <div>
-            <label className="text-gray-600 text-sm font-medium">
-              Amount Paid <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₦</span>
-              <input
-                type="number"
-                name="amountPaid"
-                value={formData.amountPaid}
-                onChange={handleChange}
-                placeholder="0.00"
-                max={maxAdditionalPayment}
-                className="w-full border p-3 pl-8 rounded-md"
-              />
-            </div>
-            {maxAdditionalPayment <= 0 && (
-              <p className="text-red-500 text-xs mt-1">This order is fully paid.</p>
-            )}
-          </div>
+        <div>
+          <label className="text-gray-600 text-sm font-medium">VAT Payable</label>
+          <input
+            type="text"
+            value={formatCurrency(vatPayable)}
+            className={`w-full border p-2.5 rounded-md text-sm ${
+              !vatSettings.vatEnabled ? "bg-gray-100 text-gray-400" : "bg-blue-50 font-semibold"
+            }`}
+            readOnly
+          />
         </div>
-
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-
-        <button
-          onClick={handleSave}
-          className="w-full mt-4 bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
-          disabled={loading}
-        >
-          {loading ? "Saving..." : "Save Payment"}
-        </button>
       </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-gray-600 text-sm font-medium">Initial Deposit</label>
+          <input
+            type="text"
+            value={formatCurrency(formData.initialDeposit)}
+            className="w-full border p-2.5 rounded-md bg-gray-100 text-sm"
+            readOnly
+          />
+        </div>
+        <div>
+          <label className="text-gray-600 text-sm font-medium">Total Paid</label>
+          <input
+            type="text"
+            value={formatCurrency(totalPaid)}
+            className="w-full border p-2.5 rounded-md bg-gray-100 text-sm"
+            readOnly
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="text-gray-600 text-sm font-medium">Total Amount Payable</label>
+        <input
+          type="text"
+          value={formatCurrency(totalAmountPayable)}
+          className="w-full border p-2.5 rounded-md bg-blue-50 text-sm font-semibold"
+          readOnly
+        />
+      </div>
+
+      {vatSettings.vatEnabled && (
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            name="vatExempt"
+            checked={formData.vatExempt}
+            onChange={handleChange}
+            className="w-4 h-4 text-blue-600 rounded"
+          />
+          <span className="text-sm text-gray-600">Exempt this customer from VAT</span>
+        </label>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-gray-600 text-sm font-medium">
+            Payment Type <span className="text-red-500">*</span>
+          </label>
+          <select
+            name="payment_type"
+            value={formData.payment_type}
+            onChange={handleChange}
+            className="w-full border p-3 rounded-md"
+          >
+            <option value="">Select payment type</option>
+            {!hasInitialDeposit && (
+              <option value="Initial Deposit">Initial Deposit</option>
+            )}
+            <option value="Partial Payment">Partial Payment</option>
+            <option value="Final Payment">Final Payment</option>
+            <option value="Full Payment">Full Payment</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-gray-600 text-sm font-medium">
+            Payment Method <span className="text-red-500">*</span>
+          </label>
+          <select
+            name="payment_method"
+            value={formData.payment_method}
+            onChange={handleChange}
+            className="w-full border p-3 rounded-md"
+          >
+            <option value="">Select method</option>
+            <option value="Cash">Cash</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="Card">Card</option>
+            <option value="Mobile Money">Mobile Money</option>
+            <option value="POS">POS</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="text-gray-600 text-sm font-medium">Payment Reference</label>
+        <input
+          type="text"
+          name="payment_reference"
+          value={formData.payment_reference}
+          onChange={handleChange}
+          placeholder="e.g. Transaction ID"
+          className="w-full border p-3 rounded-md"
+        />
+      </div>
+
+      <div>
+        <label className="text-gray-600 text-sm font-medium">
+          Amount Paid <span className="text-red-500">*</span>
+        </label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₦</span>
+          <input
+            type="number"
+            name="amountPaid"
+            value={formData.amountPaid}
+            onChange={handleChange}
+            placeholder="0.00"
+            className="w-full border p-3 pl-8 rounded-md"
+          />
+        </div>
+      </div>
+
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+
+      <button
+        onClick={handleSave}
+        className="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 disabled:bg-gray-400 font-medium"
+        disabled={loading}
+      >
+        {loading ? "Saving..." : "Save Payment"}
+      </button>
     </div>
   );
 };

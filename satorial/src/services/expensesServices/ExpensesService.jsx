@@ -17,8 +17,8 @@ const ExpensesService = {
   getExpenseList: (params) =>
     apiGet(API.EXPENSE_MANAGEMENT.EXPENSES.EXPENSE_LIST, { params }),
 
-  getExpenseSummary: () =>
-    apiGet(API.EXPENSE_MANAGEMENT.EXPENSES.SUMMARY),
+  getExpenseSummary: (params) =>
+    apiGet(API.EXPENSE_MANAGEMENT.EXPENSES.SUMMARY, { params }),
 
   exportExpenses: (params) =>
     apiGet(API.EXPENSE_MANAGEMENT.EXPENSES.EXPENSE_LIST, {

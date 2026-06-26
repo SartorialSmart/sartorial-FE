@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Upload, X, FileText, Image, AlertCircle, Loader2 } from "lucide-react";
+import { Upload, X, FileText, Image, AlertCircle, Loader2, Repeat } from "lucide-react";
 import PropTypes from "prop-types";
 import ExpensesService from "../../../services/expensesServices/ExpensesService";
 import ExpensescategoryService from "../../../services/expensesServices/ExpensesCategoryService";
@@ -8,6 +8,15 @@ import StaffService from "../../../services/staffServices/StaffService";
 import { useAuth } from "../../../contexts/AuthContext";
 import SuccessModal from "../../modals/SuccessModal";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
+
+const RECURRENCE_TYPES = [
+  { value: "", label: "One-off" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "quarterly", label: "Quarterly" },
+  { value: "biennially", label: "Biennially" },
+  { value: "annually", label: "Annually" },
+];
 
 const AddExpensesForm = ({ onClose, onSuccess }) => {
   const { user } = useAuth();
@@ -18,6 +27,9 @@ const AddExpensesForm = ({ onClose, onSuccess }) => {
     paidTo: "",
     receipt: null,
     description: "",
+    recurrenceType: "",
+    recurrenceStartDate: "",
+    recurrenceEndDate: "",
   });
 
   const [categories, setCategories] = useState([]);
@@ -66,6 +78,16 @@ const AddExpensesForm = ({ onClose, onSuccess }) => {
     if (!form.createdBy) newErrors.createdBy = "Created by is required";
     if (!form.paidTo) newErrors.paidTo = "Paid to is required";
     if (!form.description?.trim()) newErrors.description = "Description is required";
+
+    // Recurrence validation
+    if (form.recurrenceType) {
+      if (!form.recurrenceStartDate) newErrors.recurrenceStartDate = "Start date required";
+      if (!form.recurrenceEndDate) newErrors.recurrenceEndDate = "End date required";
+      if (form.recurrenceStartDate && form.recurrenceEndDate &&
+          new Date(form.recurrenceStartDate) >= new Date(form.recurrenceEndDate)) {
+        newErrors.recurrenceEndDate = "End date must be after start date";
+      }
+    }
 
     // Validate receipt file type and size
     if (form.receipt) {
@@ -143,6 +165,11 @@ const AddExpensesForm = ({ onClose, onSuccess }) => {
       formData.append("created_by", form.createdBy);
       formData.append("paid_to", form.paidTo);
       formData.append("description", form.description.trim());
+      formData.append("recurrence_type", form.recurrenceType || "");
+      if (form.recurrenceType) {
+        formData.append("recurrence_start_date", form.recurrenceStartDate);
+        formData.append("recurrence_end_date", form.recurrenceEndDate);
+      }
 
       if (form.receipt instanceof File) {
         formData.append("receipt", form.receipt);
@@ -315,6 +342,75 @@ const AddExpensesForm = ({ onClose, onSuccess }) => {
                 </p>
               )}
             </div>
+          </div>
+
+          {/* Recurrence Section */}
+          <div className="border-t border-gray-200 pt-6">
+            <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <Repeat className="w-5 h-5 text-gray-500" />
+              Recurrence
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Billing Cycle</label>
+                <select
+                  name="recurrenceType"
+                  value={form.recurrenceType}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {RECURRENCE_TYPES.map(rt => (
+                    <option key={rt.value} value={rt.value}>{rt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div></div>
+              {form.recurrenceType && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Period Start <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="recurrenceStartDate"
+                      value={form.recurrenceStartDate}
+                      onChange={handleChange}
+                      className={`w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.recurrenceStartDate ? "border-red-500" : "border-gray-300"}`}
+                    />
+                    {errors.recurrenceStartDate && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center"><AlertCircle className="w-4 h-4 mr-1" />{errors.recurrenceStartDate}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Period End <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="recurrenceEndDate"
+                      value={form.recurrenceEndDate}
+                      onChange={handleChange}
+                      className={`w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.recurrenceEndDate ? "border-red-500" : "border-gray-300"}`}
+                    />
+                    {errors.recurrenceEndDate && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center"><AlertCircle className="w-4 h-4 mr-1" />{errors.recurrenceEndDate}</p>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+            {form.recurrenceType && form.amount && form.recurrenceStartDate && form.recurrenceEndDate && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <span className="font-medium">Total:</span> {new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 0 }).format(form.amount)}
+                  {" | "}
+                  <span className="font-medium">Daily:</span> {new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 0 }).format(
+                    parseFloat(form.amount) / Math.max(1, Math.round((new Date(form.recurrenceEndDate) - new Date(form.recurrenceStartDate)) / (1000 * 60 * 60 * 24)))
+                  )}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Receipt Upload */}
