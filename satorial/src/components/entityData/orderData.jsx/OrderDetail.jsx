@@ -3,7 +3,8 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { 
   EditIcon, ChevronRight, CheckCircle, Calendar, Clock, Truck, Package, 
   UserCheck, XCircle, Loader2, User, Mail, FileText, ShoppingBag, 
-  CreditCard, BarChart3, Tag, UserPlus, Repeat, ClipboardCheck, Upload, X
+  CreditCard, BarChart3, Tag, UserPlus, Repeat, ClipboardCheck, Upload, X,
+  ArrowUpDown
 } from "lucide-react";
 import OrderService from "../../../services/OrderService";
 import SettingsService from "../../../services/settings";
@@ -14,6 +15,8 @@ import Avatar from "../../avatar/Avatar";
 import StaffService from "../../../services/staffServices/StaffService";
 import { getLogoUrl, getLocalProfile, getLocalInvoiceSettings } from "../../../utils/localImageService";
 import { isReadyMadeOrder, getCleanDescription } from "../../../../utils/orderUtils";
+import SuccessModal from "../../modals/SuccessModal";
+import { extractErrorMessage } from "../../../../utils/errorUtils";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
@@ -31,9 +34,15 @@ const OrderDetail = () => {
   const [orgProfile, setOrgProfile] = useState(null);
   const [invoiceLayout, setInvoiceLayout] = useState("layout1");
   const [showQAModal, setShowQAModal] = useState(false);
-  const [qaChecked, setQaChecked] = useState(false);
+  const [qaChecklist, setQaChecklist] = useState(() => {
+    const saved = localStorage.getItem(`qa_checklist_${orderId}`);
+    return saved ? JSON.parse(saved) : {};
+  });
   const [showCompleteUploadModal, setShowCompleteUploadModal] = useState(false);
   const [completeOrderImage, setCompleteOrderImage] = useState(null);
+  const [errorModal, setErrorModal] = useState({ show: false, title: "", message: "" });
+  const [timelineSortAsc, setTimelineSortAsc] = useState(false);
+  const [cachedAllocation, setCachedAllocation] = useState(null);
 
   // Define all possible statuses in order (Completed before On Delivery)
   const STATUS_FLOW = [
@@ -42,18 +51,46 @@ const OrderDetail = () => {
     { key: 'In Progress', label: 'In Progress', icon: Package, color: 'text-orange-600', bgColor: 'bg-orange-50', borderColor: 'border-orange-200' },
     { key: 'QA Check', label: 'QA Check', icon: ClipboardCheck, color: 'text-cyan-600', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200' },
     { key: 'Completed', label: 'Completed', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
-    { key: 'On Delivery', label: 'On Delivery', icon: Truck, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
+    { key: 'On Delivery', label: 'Delivered', icon: Truck, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
     { key: 'Cancelled', label: 'Cancelled', icon: XCircle, color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
   ];
 
   const READY_MADE_STATUS_FLOW = [
     { key: 'Completed', label: 'Completed', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
-    { key: 'On Delivery', label: 'On Delivery', icon: Truck, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
+    { key: 'On Delivery', label: 'Delivered', icon: Truck, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
     { key: 'Cancelled', label: 'Cancelled', icon: XCircle, color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
   ];
 
+  const STATUS_API_MAP = {
+    "QA Check": "Processing",
+    "On Delivery": "Delivered",
+  };
+  const REVERSE_STATUS_API_MAP = Object.fromEntries(
+    Object.entries(STATUS_API_MAP).map(([k, v]) => [v, k])
+  );
+  const displayStatus = REVERSE_STATUS_API_MAP[order?.order_status] || order?.order_status;
+
+  const QA_ITEMS = [
+    { id: "measurements", label: "Measurements verified and match order specifications" },
+    { id: "fabric", label: "Fabric inspected for quality and consistency" },
+    { id: "stitching", label: "Stitching and seam quality meets standards" },
+    { id: "finishing", label: "Finishing touches completed (buttons, zippers, hems)" },
+    { id: "pressing", label: "Garment pressed and prepared for delivery" },
+    { id: "final_inspection", label: "Final quality inspection passed" },
+  ];
+  const allQaChecked = QA_ITEMS.every((item) => qaChecklist[item.id]);
+
   const isReadyMade = isReadyMadeOrder(order);
   const activeStatusFlow = isReadyMade ? READY_MADE_STATUS_FLOW : STATUS_FLOW;
+
+  const preserveAllocation = (data) => {
+    if (data.current_allocation) {
+      setCachedAllocation(data.current_allocation);
+    } else if (cachedAllocation) {
+      data.current_allocation = cachedAllocation;
+    }
+    return data;
+  };
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -84,6 +121,7 @@ const OrderDetail = () => {
             // allocations fetch is optional
           }
         }
+        preserveAllocation(data);
         setOrder(data);
       } catch (err) {
         setError("Failed to fetch order details.");
@@ -136,7 +174,7 @@ const OrderDetail = () => {
     try {
       setShowPaymentModal(false);
       const updatedOrder = await OrderService.getOrderById(orderId);
-      setOrder(updatedOrder);
+      setOrder(preserveAllocation(updatedOrder));
     } catch (err) {
       console.error("Failed to refresh order after payment:", err);
     }
@@ -163,23 +201,21 @@ const OrderDetail = () => {
 
   const handleQAComplete = async () => {
     setShowQAModal(false);
-    setQaChecked(true);
-    const shouldComplete = order.order_status === "QA Check";
+    const qaStatus = STATUS_API_MAP["QA Check"] || "QA Check";
+    const shouldComplete = order.order_status === qaStatus;
     if (!shouldComplete) {
       setUpdatingStatus(true);
       try {
-        await OrderService.updateOrder(orderId, { order_status: "QA Check" });
+        await OrderService.updateOrder(orderId, { order_status: qaStatus });
         const updatedOrder = await OrderService.getOrderById(orderId);
-        setOrder(updatedOrder);
+        setOrder(preserveAllocation(updatedOrder));
       } catch (err) {
-        console.error("Failed to update status:", err);
-        alert("Failed to update order status. Please try again.");
+        console.warn("QA status update skipped (backend may not support this status). Proceeding to completion upload.", err);
       } finally {
         setUpdatingStatus(false);
       }
-    } else {
-      setShowCompleteUploadModal(true);
     }
+    setShowCompleteUploadModal(true);
   };
 
   const handleCompleteConfirm = async () => {
@@ -196,11 +232,15 @@ const OrderDetail = () => {
         await OrderService.updateOrder(orderId, updateData);
       }
       const updatedOrder = await OrderService.getOrderById(orderId);
-      setOrder(updatedOrder);
+      setOrder(preserveAllocation(updatedOrder));
       setCompleteOrderImage(null);
     } catch (err) {
       console.error("Failed to update status:", err);
-      alert("Failed to update order status. Please try again.");
+      setErrorModal({
+        show: true,
+        title: "Failed to update order status",
+        message: extractErrorMessage(err, "Please try again."),
+      });
     } finally {
       setUpdatingStatus(false);
     }
@@ -232,7 +272,7 @@ const OrderDetail = () => {
     }
 
     if (newStatus === "Completed") {
-      if (!qaChecked) {
+      if (!allQaChecked) {
         setShowQAModal(true);
       } else {
         setShowCompleteUploadModal(true);
@@ -242,16 +282,21 @@ const OrderDetail = () => {
 
     setUpdatingStatus(true);
     try {
+      const apiStatus = STATUS_API_MAP[newStatus] || newStatus;
       const updateData = {
-        order_status: newStatus
+        order_status: apiStatus
       };
 
       await OrderService.updateOrder(orderId, updateData);
       const updatedOrder = await OrderService.getOrderById(orderId);
-      setOrder(updatedOrder);
+      setOrder(preserveAllocation(updatedOrder));
     } catch (err) {
       console.error("Failed to update status:", err);
-      alert("Failed to update order status. Please try again.");
+      setErrorModal({
+        show: true,
+        title: "Failed to update order status",
+        message: extractErrorMessage(err, "Please try again."),
+      });
     } finally {
       setUpdatingStatus(false);
     }
@@ -776,8 +821,8 @@ const OrderDetail = () => {
   };
 
   // Get current status index
-  const currentStatusIndex = activeStatusFlow.findIndex(status => status.key === order?.order_status);
-  const isCancelled = order?.order_status === 'Cancelled';
+  const currentStatusIndex = activeStatusFlow.findIndex(status => status.key === displayStatus);
+  const isCancelled = displayStatus === 'Cancelled';
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -1030,17 +1075,17 @@ const OrderDetail = () => {
                 <h3 className={`font-bold text-lg ${
                   isCancelled ? 'text-red-900' : 'text-blue-900'
                 }`}>
-                  Current Status: {order.order_status}
+                  Current Status: {displayStatus}
                 </h3>
                 <p className={`${
                   isCancelled ? 'text-red-700' : 'text-blue-700'
                 } text-sm mt-1`}>
-                  {order.order_status === 'Pending' && 'Order has been created and is awaiting assignment to a staff member.'}
-                  {order.order_status === 'Assigned' && 'Order has been assigned to staff and work will begin soon.'}
-                  {order.order_status === 'In Progress' && 'Order is currently being worked on by our team.'}
-                  {order.order_status === 'Completed' && (isReadyMade ? 'Ready made order has been completed.' : 'Order production has been completed.')}
-                  {order.order_status === 'On Delivery' && 'Order has been sent for delivery to the client.'}
-                  {order.order_status === 'Cancelled' && 'This order has been cancelled and will not be processed further.'}
+                  {displayStatus === 'Pending' && 'Order has been created and is awaiting assignment to a staff member.'}
+                  {displayStatus === 'Assigned' && 'Order has been assigned to staff and work will begin soon.'}
+                  {displayStatus === 'In Progress' && 'Order is currently being worked on by our team.'}
+                  {displayStatus === 'Completed' && (isReadyMade ? 'Ready made order has been completed.' : 'Order production has been completed.')}
+                  {displayStatus === 'On Delivery' && 'Order has been sent for delivery to the client.'}
+                  {displayStatus === 'Cancelled' && 'This order has been cancelled and will not be processed further.'}
                 </p>
               </div>
             </div>
@@ -1277,93 +1322,166 @@ const OrderDetail = () => {
           </div>
         </div>
 
-        {/* Order Timeline */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <Clock className="text-indigo-600" size={20} />
-            Order Timeline
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between py-4 border-b border-gray-100 hover:bg-gray-50 rounded-lg px-4 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-md">
-                  <CheckCircle className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Order Created</p>
-                  <p className="text-gray-500 text-sm">Order was successfully created in the system</p>
-                </div>
-              </div>
-              <span className="text-gray-600 text-sm font-medium">
-                {order.ordered_at ? formatDate(order.ordered_at) : 'N/A'}
-              </span>
+        {/* Order Timeline & Completion Image */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Order Timeline */}
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <Clock className="text-indigo-600" size={20} />
+                Order Timeline
+              </h3>
+              <button
+                onClick={() => setTimelineSortAsc((prev) => !prev)}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                title={timelineSortAsc ? "Sort descending" : "Sort ascending"}
+              >
+                <ArrowUpDown size={16} />
+                <span>{timelineSortAsc ? "ASC" : "DSC"}</span>
+              </button>
             </div>
+            <div className="space-y-0">
+              {(() => {
+              const events = [];
 
-            {/* Staff Assignment timeline event */}
-            {order.current_allocation && (
-              <div className="flex items-center justify-between py-4 border-b border-gray-100 hover:bg-gray-50 rounded-lg px-4 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center shadow-md">
-                    <UserCheck className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Order / Staff</p>
-                    <p className="text-gray-500 text-sm">Assigned to: <span className="font-semibold text-gray-700">{order.current_allocation.staff_name}</span></p>
-                  </div>
-                </div>
-                <span className="text-gray-600 text-sm font-medium">
-                  {order.updated_at ? formatDate(order.updated_at) : 'N/A'}
-                </span>
-              </div>
-            )}
-
-            {/* Payment timeline events */}
-            {order.payments && order.payments.length > 0 && (
-              [...order.payments]
-                .sort((a, b) => new Date(a.paid_at) - new Date(b.paid_at))
-                .map((payment, idx) => (
-                  <div key={`pay-${idx}`} className="flex items-center justify-between py-4 border-b border-gray-100 hover:bg-gray-50 rounded-lg px-4 transition-colors">
+              events.push({
+                date: order.ordered_at,
+                element: (
+                  <div className="flex items-center justify-between py-4 border-b border-gray-100 hover:bg-gray-50 rounded-lg px-4 transition-colors">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center shadow-md">
-                        <CreditCard className="w-5 h-5 text-white" />
+                      <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-md">
+                        <CheckCircle className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">{payment.payment_type || "Payment Received"}</p>
-                        <p className="text-gray-500 text-sm">
-                          {`₦${Number(payment.amount_paid).toLocaleString()}`}
-                          {payment.payment_method ? ` via ${payment.payment_method}` : ""}
-                        </p>
+                        <p className="font-semibold text-gray-900">Order Created</p>
+                        <p className="text-gray-500 text-sm">Order was successfully created in the system</p>
                       </div>
                     </div>
                     <span className="text-gray-600 text-sm font-medium">
-                      {payment.paid_at ? formatDate(payment.paid_at) : 'N/A'}
+                      {order.ordered_at ? formatDate(order.ordered_at) : 'N/A'}
                     </span>
                   </div>
-                ))
-            )}
+                )
+              });
 
-            <div className="flex items-center justify-between py-4 border-b border-gray-100 hover:bg-gray-50 rounded-lg px-4 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
-                  order.order_status !== 'Pending'
-                    ? 'bg-gradient-to-br from-blue-400 to-blue-500'
-                    : 'bg-gray-200'
-                }`}>
-                  {order.order_status !== 'Pending' ? (
-                    <CheckCircle className="w-5 h-5 text-white" />
-                  ) : (
-                    <Clock className="w-5 h-5 text-gray-400" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Status Updated</p>
-                  <p className="text-gray-500 text-sm">Current status: <span className="font-semibold text-gray-700">{order.order_status}</span></p>
-                </div>
-              </div>
-              <span className="text-gray-600 text-sm font-medium">
-                {order.updated_at ? formatDate(order.updated_at) : 'N/A'}
-              </span>
+              if (order.current_allocation) {
+                const allocDate = order.current_allocation.allocated_at || order.updated_at;
+                events.push({
+                  date: allocDate,
+                  element: (
+                    <div className="flex items-center justify-between py-4 border-b border-gray-100 hover:bg-gray-50 rounded-lg px-4 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center shadow-md">
+                          <UserCheck className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Order / Staff</p>
+                          <p className="text-gray-500 text-sm">Assigned to: <span className="font-semibold text-gray-700">{order.current_allocation.staff_name}</span></p>
+                        </div>
+                      </div>
+                      <span className="text-gray-600 text-sm font-medium">
+                        {allocDate ? formatDate(allocDate) : 'N/A'}
+                      </span>
+                    </div>
+                  )
+                });
+              }
+
+              if (order.payments && order.payments.length > 0) {
+                order.payments.forEach((payment) => {
+                  events.push({
+                    date: payment.paid_at,
+                    element: (
+                      <div className="flex items-center justify-between py-4 border-b border-gray-100 hover:bg-gray-50 rounded-lg px-4 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center shadow-md">
+                            <CreditCard className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{payment.payment_type || "Payment Received"}</p>
+                            <p className="text-gray-500 text-sm">
+                              {`₦${Number(payment.amount_paid).toLocaleString()}`}
+                              {payment.payment_method ? ` via ${payment.payment_method}` : ""}
+                            </p>
+                            {payment.notes && (
+                              <p className="text-xs text-amber-600 mt-1 font-medium">{payment.notes}</p>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-gray-600 text-sm font-medium">
+                          {payment.paid_at ? formatDate(payment.paid_at) : 'N/A'}
+                        </span>
+                      </div>
+                    )
+                  });
+                });
+              }
+
+              events.push({
+                date: order.updated_at,
+                element: (
+                  <div className="flex items-center justify-between py-4 border-b border-gray-100 hover:bg-gray-50 rounded-lg px-4 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
+                        order.order_status !== 'Pending'
+                          ? 'bg-gradient-to-br from-blue-400 to-blue-500'
+                          : 'bg-gray-200'
+                      }`}>
+                        {order.order_status !== 'Pending' ? (
+                          <CheckCircle className="w-5 h-5 text-white" />
+                        ) : (
+                          <Clock className="w-5 h-5 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Status Updated</p>
+                        <p className="text-gray-500 text-sm">Current status: <span className="font-semibold text-gray-700">{order.order_status}</span></p>
+                      </div>
+                    </div>
+                    <span className="text-gray-600 text-sm font-medium">
+                      {order.updated_at ? formatDate(order.updated_at) : 'N/A'}
+                    </span>
+                  </div>
+                )
+              });
+
+              const sortedEvents = events
+                .filter((e) => e.date)
+                .sort((a, b) => {
+                  const diff = new Date(a.date) - new Date(b.date);
+                  return timelineSortAsc ? diff : -diff;
+                });
+
+              return sortedEvents.length > 0
+                ? sortedEvents.map((event, i) => (
+                    <div key={i}>{event.element}</div>
+                  ))
+                : <p className="text-gray-500 text-sm text-center py-4">No timeline events available.</p>;
+            })()}
             </div>
+          </div>
+
+          {/* Completion Image */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <CheckCircle className="text-green-600" size={20} />
+              Completed Work
+            </h3>
+            {order.order_completion_image_url || order.order_completion_image ? (
+              <div className="space-y-3">
+                <img
+                  src={order.order_completion_image_url || order.order_completion_image}
+                  alt="Completed garment"
+                  className="w-full rounded-lg object-contain border border-gray-200"
+                  style={{ maxHeight: "320px" }}
+                />
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <CheckCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                <p className="text-gray-500 text-sm">No completion image uploaded yet</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1421,6 +1539,7 @@ const OrderDetail = () => {
                     <th className="p-4 text-left text-sm font-bold text-gray-900">Payment Type</th>
                     <th className="p-4 text-left text-sm font-bold text-gray-900">Reference</th>
                     <th className="p-4 text-left text-sm font-bold text-gray-900">Method</th>
+                    <th className="p-4 text-left text-sm font-bold text-gray-900">Notes</th>
                     <th className="p-4 text-right text-sm font-bold text-gray-900">Amount</th>
                     <th className="p-4 text-center text-sm font-bold text-gray-900">Action</th>
                   </tr>
@@ -1477,6 +1596,15 @@ const OrderDetail = () => {
                         {payment.payment_method ? (
                           <span className="text-sm font-medium text-gray-700">
                             {payment.payment_method}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm">—</span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        {payment.notes ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                            {payment.notes}
                           </span>
                         ) : (
                           <span className="text-gray-400 text-sm">—</span>
@@ -1594,21 +1722,19 @@ const OrderDetail = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-sm text-gray-600 mb-4">Verify all items before marking the order as quality checked:</p>
+              <p className="text-sm text-gray-600 mb-4">Verify all items before marking the order as quality checked:</p>
             <div className="space-y-3 mb-6">
-              {[
-                { id: "measurements", label: "Measurements verified and match order specifications" },
-                { id: "fabric", label: "Fabric inspected for quality and consistency" },
-                { id: "stitching", label: "Stitching and seam quality meets standards" },
-                { id: "finishing", label: "Finishing touches completed (buttons, zippers, hems)" },
-                { id: "pressing", label: "Garment pressed and prepared for delivery" },
-                { id: "final_inspection", label: "Final quality inspection passed" },
-              ].map((item) => (
+              {QA_ITEMS.map((item) => (
                 <label key={item.id} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
                   <input
                     type="checkbox"
                     className="mt-0.5 w-4 h-4 text-cyan-600 border-gray-300 rounded focus:ring-cyan-500"
-                    defaultChecked={qaChecked}
+                    checked={qaChecklist[item.id] || false}
+                    onChange={() => {
+                      const next = { ...qaChecklist, [item.id]: !qaChecklist[item.id] };
+                      setQaChecklist(next);
+                      localStorage.setItem(`qa_checklist_${orderId}`, JSON.stringify(next));
+                    }}
                   />
                   <span className="text-sm text-gray-700">{item.label}</span>
                 </label>
@@ -1616,9 +1742,14 @@ const OrderDetail = () => {
             </div>
             <button
               onClick={handleQAComplete}
-              className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-xl hover:from-cyan-600 hover:to-blue-700 transition-all"
+              disabled={!allQaChecked}
+              className={`w-full py-3 font-semibold rounded-xl transition-all ${
+                allQaChecked
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 cursor-pointer"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
             >
-              Complete QA Check
+              {allQaChecked ? "Complete QA Check" : "Check all items to continue"}
             </button>
           </div>
         </div>
@@ -1700,6 +1831,17 @@ const OrderDetail = () => {
           showDepartmentFilter={true}
           onAssign={handleAssignOrder}
           excludeStaffId={order?.current_allocation?.staff_id || order?.current_allocation?.staff}
+        />
+      )}
+
+      {/* Error Modal */}
+      {errorModal.show && (
+        <SuccessModal
+          title={errorModal.title}
+          message={errorModal.message}
+          buttonText="OK"
+          onClose={() => setErrorModal({ show: false, title: "", message: "" })}
+          isError={true}
         />
       )}
     </div>

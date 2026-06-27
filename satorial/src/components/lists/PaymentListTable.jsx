@@ -8,6 +8,7 @@ const columns = [
   { key: "date", label: "Date" },
   { key: "client_name", label: "Client Name" },
   { key: "payment_type", label: "Payment Type" },
+  { key: "payment_method", label: "Payment Method" },
   { key: "amount_paid", label: "Amount Paid" },
 ];
 
@@ -33,22 +34,43 @@ const PaymentsListTable = ({ searchTerm, dateFilter, customDateRange }) => {
   useEffect(() => {
     const fetchPayments = async () => {
       try {
-        const response = await PaymentService.getPaymentList();
+        const [paymentsResponse, ordersResponse] = await Promise.all([
+          PaymentService.getAllPayments(),
+          OrderService.getOrders(),
+        ]);
 
-        const paymentsData = Array.isArray(response)
-          ? response.map((item) => ({
-              ...item,
-              date: new Date(item.paid_at).toLocaleString("en-NG", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              }),
-              paid_at: item.paid_at,
-            }))
-          : [];
+        const raw = Array.isArray(paymentsResponse)
+          ? paymentsResponse
+          : paymentsResponse?.payments || paymentsResponse?.results || paymentsResponse?.data || [];
+
+        const ordersList = Array.isArray(ordersResponse)
+          ? ordersResponse
+          : ordersResponse?.orders || ordersResponse?.results || [];
+        const orderMap = {};
+        ordersList.forEach((order) => {
+          orderMap[order.id] = order;
+        });
+
+        const paymentsData = raw.map((item) => {
+          const order = item.order ? orderMap[item.order] : null;
+          return {
+            ...item,
+            client_name:
+              item.client_name ||
+              order?.client_full_name ||
+              order?.client_name ||
+              "Unknown",
+            date: new Date(item.paid_at).toLocaleString("en-NG", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            }),
+            paid_at: item.paid_at,
+          };
+        });
 
         setPayments(paymentsData);
         dropdownRefs.current = new Array(paymentsData.length).fill(null);
@@ -583,10 +605,6 @@ const PaymentsListTable = ({ searchTerm, dateFilter, customDateRange }) => {
                       {col.key === "amount_paid" ? (
                         <span className="font-semibold text-green-600">
                           {formatAmount(row[col.key])}
-                        </span>
-                      ) : col.key === "payment_type" ? (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                          {row[col.key] || "Payment"}
                         </span>
                       ) : (
                         row[col.key] || "N/A"

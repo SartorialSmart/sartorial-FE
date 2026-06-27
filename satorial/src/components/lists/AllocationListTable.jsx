@@ -88,8 +88,41 @@ const AllocationListTable = ({ searchTerm }) => {
   const fetchAllocations = async () => {
     setLoading(true);
     try {
-      const data = await OrderService.getAllocations();
-      setAllocations(Array.isArray(data.results) ? data.results : data);
+      const [allocData, ordersData] = await Promise.all([
+        OrderService.getAllocations(),
+        OrderService.getOrders(),
+      ]);
+      const allocs = Array.isArray(allocData.results) ? allocData.results : allocData;
+
+      const ordersList = Array.isArray(ordersData)
+        ? ordersData
+        : ordersData?.orders || ordersData?.results || [];
+      const orderMap = {};
+      ordersList.forEach((o) => {
+        orderMap[o.id] = o;
+      });
+
+      const enriched = allocs.map((a) => {
+        const order = a.order && orderMap[a.order.id || a.order]
+          ? (orderMap[a.order.id || a.order])
+          : a.order;
+        return {
+          ...a,
+          order: order
+            ? {
+                ...order,
+                client_name:
+                  order.client_name ||
+                  order.client_full_name ||
+                  a.order?.client_name ||
+                  a.order?.client_full_name ||
+                  "",
+              }
+            : a.order,
+        };
+      });
+
+      setAllocations(enriched);
     } catch {
       setAllocations([]);
     } finally {
@@ -290,6 +323,9 @@ const AllocationListTable = ({ searchTerm }) => {
                           <h3 className="font-semibold text-gray-900 truncate">
                             {allocation.order?.title || "Untitled Order"}
                           </h3>
+                          <p className="text-xs text-gray-700 mt-1 truncate">
+                            Client: {allocation.order?.client_name || allocation.order?.client_full_name || "N/A"}
+                          </p>
                           <p className="text-gray-500 text-sm mt-1 line-clamp-2">
                             {allocation.order?.description || "No description"}
                           </p>

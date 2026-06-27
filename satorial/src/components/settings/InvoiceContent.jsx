@@ -11,6 +11,8 @@ const DEFAULT_SETTINGS = {
   autoSend: "no",
   fileFormat: "pdf",
   selectedLayout: "layout1",
+  vatEnabled: false,
+  vatRate: 7.5,
 };
 
 export default function InvoiceContent() {
@@ -33,6 +35,8 @@ export default function InvoiceContent() {
         autoSend: data.auto_send ?? local?.autoSend ?? "no",
         fileFormat: data.file_format ?? local?.fileFormat ?? "pdf",
         selectedLayout: data.selected_layout ?? local?.selectedLayout ?? "layout1",
+        vatEnabled: data.vat_enabled ?? local?.vatEnabled ?? false,
+        vatRate: data.vat_rate ?? local?.vatRate ?? 7.5,
       };
       setInvoiceSettings(mapped);
       saveInvoiceSettingsLocally(mapped);
@@ -60,6 +64,8 @@ export default function InvoiceContent() {
         auto_send: invoiceSettings.autoSend,
         file_format: invoiceSettings.fileFormat,
         selected_layout: invoiceSettings.selectedLayout,
+        vat_enabled: invoiceSettings.vatEnabled,
+        vat_rate: Number(invoiceSettings.vatRate),
       };
       saveInvoiceSettingsLocally(invoiceSettings);
       await SettingsService.Invoice.updateSettings(payload);
@@ -193,6 +199,51 @@ export default function InvoiceContent() {
               <span className="ml-2">No</span>
             </label>
           </div>
+        </div>
+
+        {/* VAT Charges Setting */}
+        <div className="space-y-3">
+          <h3 className="font-medium">Enable VAT Charges</h3>
+          <div className="flex items-center space-x-6">
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="vatEnabled"
+                value="yes"
+                checked={invoiceSettings.vatEnabled === true}
+                onChange={() => handleSettingChange("vatEnabled", true)}
+                className="w-4 h-4 text-blue-600"
+              />
+              <span className="ml-2">Yes</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="vatEnabled"
+                value="no"
+                checked={invoiceSettings.vatEnabled === false}
+                onChange={() => handleSettingChange("vatEnabled", false)}
+                className="w-4 h-4 text-blue-600"
+              />
+              <span className="ml-2">No</span>
+            </label>
+          </div>
+          {invoiceSettings.vatEnabled && (
+            <div className="mt-2">
+              <label className="block text-sm text-gray-600 mb-1">
+                VAT Rate (%) <span className="text-gray-400">(1.0 - 100.0)</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                step="0.1"
+                value={invoiceSettings.vatRate}
+                onChange={(e) => handleSettingChange("vatRate", Math.min(100, Math.max(1, Number(e.target.value))))}
+                className="w-32 border border-gray-300 rounded-md px-3 py-2 text-sm"
+              />
+            </div>
+          )}
         </div>
       </div>
 
