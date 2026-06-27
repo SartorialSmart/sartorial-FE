@@ -41,19 +41,23 @@ const ExpensesList = () => {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
     filterExpenses();
-  }, [expenses, searchTerm, selectedCategory, dateRange]);
+  }, [expenses, searchTerm, selectedCategory]);
 
-  const fetchData = async () => {
+  const fetchData = async (filterStart, filterEnd) => {
     try {
       setLoading(true);
+      const listParams = {};
+      if (filterStart) listParams.start_date = filterStart;
+      if (filterEnd) listParams.end_date = filterEnd;
+
+      const summaryParams = {};
+      if (filterStart) summaryParams.start_date = filterStart;
+      if (filterEnd) summaryParams.end_date = filterEnd;
+
       const [expensesData, summaryData] = await Promise.all([
-        ExpensesService.getExpenseList(),
-        ExpensesService.getExpenseSummary(),
+        ExpensesService.getExpenseList(listParams),
+        ExpensesService.getExpenseSummary(summaryParams),
       ]);
 
       setExpenses(expensesData || []);
@@ -66,6 +70,12 @@ const ExpensesList = () => {
       setLoading(false);
     }
   };
+
+  // Fetch on mount + re-fetch when date filters change (server-side for recurrence-aware summary)
+  useEffect(() => {
+    fetchData(dateRange.start || undefined, dateRange.end || undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange.start, dateRange.end]);
 
   const filterExpenses = () => {
     let filtered = [...expenses];
@@ -84,18 +94,6 @@ const ExpensesList = () => {
     if (selectedCategory !== "All") {
       filtered = filtered.filter(
         (expense) => expense.category_name === selectedCategory
-      );
-    }
-
-    // Date range filter
-    if (dateRange.start) {
-      filtered = filtered.filter(
-        (expense) => new Date(expense.created_at) >= new Date(dateRange.start)
-      );
-    }
-    if (dateRange.end) {
-      filtered = filtered.filter(
-        (expense) => new Date(expense.created_at) <= new Date(dateRange.end)
       );
     }
 
@@ -484,6 +482,9 @@ const ExpensesList = () => {
                   Category
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Recurrence
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Amount
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -500,7 +501,7 @@ const ExpensesList = () => {
             <tbody className="divide-y divide-gray-200">
               {filteredExpenses.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
                     <FileText className="w-12 h-12 mx-auto text-gray-300 mb-2" />
                     <p className="text-sm">No expenses found</p>
                     <p className="text-xs text-gray-400 mt-1">
@@ -542,6 +543,18 @@ const ExpensesList = () => {
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {expense.category_name || "N/A"}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {expense.recurrence_type ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800" title={expense.recurrence_interval_label || ""}>
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          {expense.recurrence_interval_label || expense.recurrence_type}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold ${getAmountColor(expense.amount)}`}>
@@ -780,6 +793,30 @@ const ExpensesList = () => {
                       })}
                     </p>
                   </div>
+                  {selectedExpense.recurrence_type && (
+                    <>
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Billing Cycle</p>
+                        <p className="text-base text-gray-900 mt-1 capitalize">
+                          {selectedExpense.recurrence_type}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Period</p>
+                        <p className="text-base text-gray-900 mt-1">
+                          {selectedExpense.recurrence_start_date} → {selectedExpense.recurrence_end_date}
+                        </p>
+                      </div>
+                      {selectedExpense.recurrence_interval_label && (
+                        <div className="col-span-2">
+                          <p className="text-sm font-medium text-gray-500">Rate Breakdown</p>
+                          <p className="text-base text-gray-900 mt-1">
+                            {selectedExpense.recurrence_interval_label}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 <div>
