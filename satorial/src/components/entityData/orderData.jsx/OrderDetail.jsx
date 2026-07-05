@@ -17,6 +17,7 @@ import { getLogoUrl, getLocalProfile, getLocalInvoiceSettings } from "../../../u
 import { isReadyMadeOrder, getCleanDescription } from "../../../../utils/orderUtils";
 import SuccessModal from "../../modals/SuccessModal";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
+import { useAuth } from "../../../contexts/AuthContext";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
@@ -43,6 +44,11 @@ const OrderDetail = () => {
   const [errorModal, setErrorModal] = useState({ show: false, title: "", message: "" });
   const [timelineSortAsc, setTimelineSortAsc] = useState(false);
   const [cachedAllocation, setCachedAllocation] = useState(null);
+  const { user } = useAuth();
+  const ALLOWED_ROLES = ["super_admin", "admin", "organization"];
+  const isAdmin = ALLOWED_ROLES.includes(user?.role?.toLowerCase());
+  const userPermissions = user?.staff_permissions;
+  const canAccessQA = isAdmin || !userPermissions || userPermissions.includes("qa_checklist");
 
   // Define all possible statuses in order (Completed before On Delivery)
   const STATUS_FLOW = [
@@ -267,13 +273,13 @@ const OrderDetail = () => {
     }
 
     if (newStatus === "QA Check") {
-      setShowQAModal(true);
+      if (canAccessQA) setShowQAModal(true);
       return;
     }
 
     if (newStatus === "Completed") {
       if (!allQaChecked) {
-        setShowQAModal(true);
+        if (canAccessQA) setShowQAModal(true);
       } else {
         setShowCompleteUploadModal(true);
       }
@@ -1003,7 +1009,7 @@ const OrderDetail = () => {
               const IconComponent = status.icon;
               const isCompleted = index <= currentStatusIndex;
               const isCurrent = order.order_status === status.key;
-              const isClickable = !isReadyMade && index <= currentStatusIndex + 1 && !isCancelled;
+              const isClickable = !isReadyMade && index <= currentStatusIndex + 1 && !isCancelled && (status.key !== "QA Check" || canAccessQA);
               
               return (
                 <div key={status.key} className="flex flex-col items-center relative z-10">
