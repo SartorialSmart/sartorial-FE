@@ -15,6 +15,7 @@ const AVAILABLE_VIEWS = [
   { key: "subscriptions", label: "Subscription" },
   { key: "settings", label: "Settings" },
   { key: "notifications", label: "Notifications" },
+  { key: "qa_checklist", label: "Q/A Checklist" },
 ];
 
 const PermissionsModal = ({ staff, isOpen, onClose }) => {
