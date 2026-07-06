@@ -137,11 +137,12 @@ const StaffDetail = () => {
         }).catch(() => null),
       ]);
 
-      const perfData = data;
+      // API may return data directly or wrapped in a `data` field — handle both
+      const perfData = data?.data || data;
       
       // Use the all-time history if available so we see all orders ever assigned,
       // otherwise fall back to the date-scoped history.
-      const allTimeHistory = allTimeData?.order_history || [];
+      const allTimeHistory = allTimeData?.data?.order_history || allTimeData?.order_history || [];
       const historyOrders = allTimeHistory.length > 0 ? allTimeHistory : (perfData?.order_history ?? []);
 
       setPerformance({
