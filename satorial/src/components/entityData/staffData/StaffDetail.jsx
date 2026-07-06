@@ -137,11 +137,11 @@ const StaffDetail = () => {
         }).catch(() => null),
       ]);
 
-      const perfData = data.data;
+      const perfData = data;
       
       // Use the all-time history if available so we see all orders ever assigned,
       // otherwise fall back to the date-scoped history.
-      const allTimeHistory = allTimeData?.data?.order_history || [];
+      const allTimeHistory = allTimeData?.order_history || [];
       const historyOrders = allTimeHistory.length > 0 ? allTimeHistory : (perfData?.order_history ?? []);
 
       setPerformance({
@@ -365,7 +365,7 @@ const StaffDetail = () => {
                     <Card className="border-l-4 border-l-orange-500">
                       <Statistic
                         title="Total Assigned"
-                        value={performance.total_assigned}
+                        value={performance.total_assigned || 0}
                         prefix={<Briefcase className="text-orange-500" />}
                       />
                     </Card>
@@ -379,7 +379,7 @@ const StaffDetail = () => {
                     <Card className="border-l-4 border-l-green-500">
                       <Statistic
                         title="Completed"
-                        value={performance.completed_orders}
+                        value={performance.completed_orders || 0}
                         prefix={<CheckCircle className="text-green-500" />}
                       />
                     </Card>
@@ -393,7 +393,7 @@ const StaffDetail = () => {
                     <Card className="border-l-4 border-l-blue-500">
                       <Statistic
                         title="In Progress"
-                        value={performance.in_progress_orders}
+                        value={performance.in_progress_orders || 0}
                         prefix={<Clock className="text-blue-500" />}
                       />
                     </Card>
@@ -407,7 +407,7 @@ const StaffDetail = () => {
                     <Card className="border-l-4 border-l-red-500">
                       <Statistic
                         title="Reassigned"
-                        value={performance.reassigned_orders}
+                        value={performance.reassigned_orders || 0}
                         prefix={<AlertTriangle className="text-red-500" />}
                       />
                     </Card>
@@ -419,7 +419,7 @@ const StaffDetail = () => {
                   <Card title="Completion Rate" className="shadow-sm">
                     <div className="space-y-4">
                       <Progress
-                        percent={performance.completion_rate}
+                        percent={performance.completion_rate || 0}
                         strokeColor={{
                           '0%': '#108ee9',
                           '100%': '#87d068',
@@ -427,8 +427,8 @@ const StaffDetail = () => {
                         format={(percent) => `${percent}%`}
                       />
                       <div className="flex justify-between text-sm text-gray-600">
-                        <span>{performance.completed_orders} Completed</span>
-                        <span>{performance.total_assigned} Total</span>
+                        <span>{performance.completed_orders || 0} Completed</span>
+                        <span>{performance.total_assigned || 0} Total</span>
                       </div>
                     </div>
                   </Card>
@@ -436,15 +436,15 @@ const StaffDetail = () => {
                   <Card title="Reassignment Rate" className="shadow-sm">
                     <div className="space-y-4">
                       <Progress
-                        percent={performance.reassignment_rate}
+                        percent={performance.reassignment_rate || 0}
                         strokeColor={
-                          performance.reassignment_rate > 20 ? '#ff4d4f' : '#faad14'
+                          (performance.reassignment_rate || 0) > 20 ? '#ff4d4f' : '#faad14'
                         }
                         format={(percent) => `${percent}%`}
                       />
                       <div className="flex justify-between text-sm text-gray-600">
-                        <span>{performance.reassigned_orders} Reassigned</span>
-                        <span>{performance.total_assigned} Total</span>
+                        <span>{performance.reassigned_orders || 0} Reassigned</span>
+                        <span>{performance.total_assigned || 0} Total</span>
                       </div>
                     </div>
                   </Card>
@@ -455,7 +455,7 @@ const StaffDetail = () => {
                   <Card className="shadow-sm">
                     <Statistic
                       title="Total Order Value"
-                      value={performance.total_order_value}
+                      value={performance.total_order_value || 0}
                       prefix={<DollarSign size={16} />}
                       formatter={(value) => formatCurrency(value)}
                     />
@@ -464,7 +464,7 @@ const StaffDetail = () => {
                   <Card className="shadow-sm">
                     <Statistic
                       title="Completed Order Value"
-                      value={performance.completed_order_value}
+                      value={performance.completed_order_value || 0}
                       prefix={<Award size={16} />}
                       formatter={(value) => formatCurrency(value)}
                     />
@@ -491,31 +491,31 @@ const StaffDetail = () => {
                     </div>
                     <div className="text-center p-4 bg-blue-50 rounded-lg">
                       <div className="text-2xl font-bold text-blue-600">
-                        {performance.in_progress_orders}
+                        {performance.in_progress_orders || 0}
                       </div>
                       <div className="text-sm text-gray-600">In Progress</div>
                     </div>
                     <div className="text-center p-4 bg-purple-50 rounded-lg">
                       <div className="text-2xl font-bold text-purple-600">
-                        {performance.pending_orders}
+                        {performance.pending_orders || 0}
                       </div>
                       <div className="text-sm text-gray-600">Pending</div>
                     </div>
                     <div className="text-center p-4 bg-cyan-50 rounded-lg">
                       <div className="text-2xl font-bold text-cyan-600">
-                        {performance.on_delivery_orders}
+                        {performance.on_delivery_orders || 0}
                       </div>
                       <div className="text-sm text-gray-600">On Delivery</div>
                     </div>
                     <div className="text-center p-4 bg-green-50 rounded-lg">
                       <div className="text-2xl font-bold text-green-600">
-                        {performance.completed_orders}
+                        {performance.completed_orders || 0}
                       </div>
                       <div className="text-sm text-gray-600">Completed</div>
                     </div>
                     <div className="text-center p-4 bg-red-50 rounded-lg">
                       <div className="text-2xl font-bold text-red-600">
-                        {performance.cancelled_orders}
+                        {performance.cancelled_orders || 0}
                       </div>
                       <div className="text-sm text-gray-600">Cancelled</div>
                     </div>

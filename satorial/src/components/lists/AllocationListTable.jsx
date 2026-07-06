@@ -33,6 +33,7 @@ const StatusBadge = ({ status }) => {
       'Pending': { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: Clock },
       'Assigned': { color: 'bg-blue-100 text-blue-800 border-blue-200', icon: User },
       'In Progress': { color: 'bg-orange-100 text-orange-800 border-orange-200', icon: Loader2 },
+      'QA Check': { color: 'bg-cyan-100 text-cyan-800 border-cyan-200', icon: CheckCircle },
       'On Delivery': { color: 'bg-purple-100 text-purple-800 border-purple-200', icon: Truck },
       'Completed': { color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle },
       'Cancelled': { color: 'bg-red-100 text-red-800 border-red-200', icon: XCircle },
@@ -146,25 +147,26 @@ const AllocationListTable = ({ searchTerm }) => {
     await fetchAllocations();
   };
 
-  // Get unique statuses for filter
+  // Get unique statuses for filter — support both "status" and "order_status"
   const statusOptions = [
     "all",
-    ...new Set(allocations.map(a => a.order?.status).filter(Boolean))
+    ...new Set(allocations.map(a => (a.order?.status || a.order?.order_status)).filter(Boolean))
   ];
 
   // Filtering logic
   const filteredAllocations = allocations.filter((allocation) => {
     const searchText = (effectiveSearch || "").toLowerCase();
-    const statusMatch = statusFilter === "all" || allocation.order?.status === statusFilter;
+    const allocStatus = allocation.order?.status || allocation.order?.order_status || "";
+    const statusMatch = statusFilter === "all" || allocStatus === statusFilter;
 
     if (!statusMatch) return false;
 
     if (searchText) {
       return (
-        allocation.order?.title?.toLowerCase().includes(searchText) ||
-        allocation.order?.description?.toLowerCase().includes(searchText) ||
-        allocation.staff?.name?.toLowerCase().includes(searchText) ||
-        allocation.order?.status?.toLowerCase().includes(searchText)
+        (allocation.order?.title || "")?.toLowerCase().includes(searchText) ||
+        (allocation.order?.description || "")?.toLowerCase().includes(searchText) ||
+        (allocation.staff?.name || "")?.toLowerCase().includes(searchText) ||
+        allocStatus.toLowerCase().includes(searchText)
       );
     }
 
@@ -184,10 +186,16 @@ const AllocationListTable = ({ searchTerm }) => {
           </div>
           
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="text-2xl font-bold text-gray-900">{allocations.length}</div>
               <div className="text-sm text-gray-500">Total</div>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <div className="text-2xl font-bold text-orange-600">
+                {allocations.filter(a => a.order?.status === 'Assigned').length}
+              </div>
+              <div className="text-sm text-gray-500">Assigned</div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="text-2xl font-bold text-blue-600">
@@ -196,16 +204,22 @@ const AllocationListTable = ({ searchTerm }) => {
               <div className="text-sm text-gray-500">In Progress</div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <div className="text-2xl font-bold text-cyan-600">
+                {allocations.filter(a => a.order?.status === 'QA Check').length}
+              </div>
+              <div className="text-sm text-gray-500">QA Check</div>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="text-2xl font-bold text-green-600">
                 {allocations.filter(a => a.order?.status === 'Completed').length}
               </div>
               <div className="text-sm text-gray-500">Completed</div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <div className="text-2xl font-bold text-orange-600">
-                {allocations.filter(a => a.order?.status === 'Assigned').length}
+              <div className="text-2xl font-bold text-red-600">
+                {allocations.filter(a => a.order?.status === 'Cancelled').length}
               </div>
-              <div className="text-sm text-gray-500">Assigned</div>
+              <div className="text-sm text-gray-500">Cancelled</div>
             </div>
           </div>
         </div>
