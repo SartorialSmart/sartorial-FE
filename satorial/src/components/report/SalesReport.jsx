@@ -182,16 +182,24 @@ const SalesReport = () => {
     fetchData();
   }, [dateRange]);
 
-  // Calculate metrics from the orders (already date-filtered by the server)
-  const totalOrders = orders.length;
-  const completedOrders = orders.filter(order => order.order_status === 'Completed').length;
-  const inProgressOrders = orders.filter(order => order.order_status === 'In Progress').length;
-  const averageOrderValue = totalOrders > 0
-    ? orders.reduce((sum, o) => sum + (parseFloat(o.order_price) || 0), 0) / totalOrders
-    : 0;
+  // Apply date-range filter client-side as fallback (server may not support date params)
+  const dateFilteredOrders = orders.filter((order) => {
+    if (!dateRange.startDate || !order.ordered_at) return true;
+    const orderDate = new Date(order.ordered_at);
+    const start = new Date(dateRange.startDate + "T00:00:00");
+    const end = new Date(dateRange.endDate + "T23:59:59");
+    return orderDate >= start && orderDate <= end;
+  });
 
-  // Client-side filter logic (search, category, status — date is via server)
-  const filteredOrders = orders.filter((order) => {
+  // Calculate metrics from the date-filtered orders
+  const totalOrders = dateFilteredOrders.length;
+  const completedOrders = dateFilteredOrders.filter(order => order.order_status === 'Completed').length;
+  const inProgressOrders = dateFilteredOrders.filter(order => order.order_status === 'In Progress').length;
+  const totalSalesValue = dateFilteredOrders.reduce((sum, o) => sum + (parseFloat(o.order_price) || 0), 0);
+  const averageOrderValue = totalOrders > 0 ? totalSalesValue / totalOrders : 0;
+
+  // Client-side filter logic (search, category, status)
+  const filteredOrders = dateFilteredOrders.filter((order) => {
     const matchesSearch = searchQuery === "" ||
       (order.client_full_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (order.order_title?.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -208,11 +216,6 @@ const SalesReport = () => {
 
     return matchesSearch && matchesCategory && matchesStatus;
   });
-
-  // Total value of the server-filtered orders
-  const serverFilteredTotal = orders.reduce((sum, order) => 
-    sum + (parseFloat(order.order_price) || 0), 0
-  );
 
   // Total value of the client-side filtered (visible) orders
   const filteredTotalSales = filteredOrders.reduce((sum, order) => 
@@ -260,7 +263,7 @@ const SalesReport = () => {
   const cards = [
     {
       title: "Total Sales",
-      value: `₦${Number(serverFilteredTotal).toLocaleString()}`,
+      value: `₦${Number(totalSalesValue).toLocaleString()}`,
       subtitle: filterLabel,
       icon: <DollarSign className="w-6 h-6" />,
       bg: "bg-blue-50",
@@ -492,7 +495,7 @@ const SalesReport = () => {
       <div className="mb-4 flex items-center justify-between">
         <div className="text-sm text-gray-600">
           Showing <span className="font-semibold text-gray-900">{filteredOrders.length}</span> of{" "}
-          <span className="font-semibold text-gray-900">{orders.length}</span> orders
+          <span className="font-semibold text-gray-900">{dateFilteredOrders.length}</span> orders
           {dateRange.label && dateRange.label !== "All Time" && (
             <> for <span className="font-medium text-blue-600">{dateRange.label}</span></>
           )}
