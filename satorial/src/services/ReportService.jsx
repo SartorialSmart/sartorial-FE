@@ -41,8 +41,8 @@ const ReportService = {
   },
 
   // Fetch total sales by duration report
-  getSalesByDuration: async () => {
-    const response = await axiosInstance.get(API.REPORT.SALES_BY_DURATION);
+  getSalesByDuration: async (params = {}) => {
+    const response = await axiosInstance.get(API.REPORT.SALES_BY_DURATION, { params });
     return response.data;
   },
 };
