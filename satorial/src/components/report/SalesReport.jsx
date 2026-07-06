@@ -12,13 +12,21 @@ import {
   Loader2,
   ChevronDown,
   BarChart3,
-  Printer
+  Printer,
+  Clock
 } from "lucide-react";
 import PropTypes from "prop-types";
 import ReportService from "../../services/ReportService";
 import OrderService from "../../services/OrderService";
 import OrderCategoryService from "../../services/OrderCategoryService";
 import FinancialReportModal from "./FinancialReportModal";
+
+const toLocalDateStr = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
 
 const getDateRange = (filter) => {
   const now = new Date();
@@ -29,37 +37,62 @@ const getDateRange = (filter) => {
 
   switch (filter) {
     case "Today":
-      return { startDate: start.toISOString(), endDate: end.toISOString() };
+      return {
+        startDate: toLocalDateStr(start),
+        endDate: toLocalDateStr(end),
+      };
     case "Yesterday": {
       start.setDate(start.getDate() - 1);
       end.setDate(end.getDate() - 1);
-      return { startDate: start.toISOString(), endDate: end.toISOString() };
+      return {
+        startDate: toLocalDateStr(start),
+        endDate: toLocalDateStr(end),
+      };
     }
     case "This Week": {
       const day = start.getDay();
-      start.setDate(start.getDate() - ((day + 6) % 7));
-      return { startDate: start.toISOString(), endDate: end.toISOString() };
+      const mondayOffset = day === 0 ? -6 : 1 - day;
+      start.setDate(start.getDate() + mondayOffset);
+      return {
+        startDate: toLocalDateStr(start),
+        endDate: toLocalDateStr(end),
+      };
     }
     case "Last Week": {
       const day = start.getDay();
-      start.setDate(start.getDate() - ((day + 6) % 7) - 7);
+      const mondayOffset = day === 0 ? -6 : 1 - day;
+      start.setDate(start.getDate() + mondayOffset - 7);
       end.setDate(start.getDate() + 6);
       end.setHours(23, 59, 59, 999);
-      return { startDate: start.toISOString(), endDate: end.toISOString() };
+      return {
+        startDate: toLocalDateStr(start),
+        endDate: toLocalDateStr(end),
+      };
     }
     case "This Month":
       start.setDate(1);
-      return { startDate: start.toISOString(), endDate: end.toISOString() };
+      return {
+        startDate: toLocalDateStr(start),
+        endDate: toLocalDateStr(end),
+      };
     case "Last Month": {
       start.setMonth(start.getMonth() - 1, 1);
       end.setMonth(end.getMonth(), 0);
       end.setHours(23, 59, 59, 999);
-      return { startDate: start.toISOString(), endDate: end.toISOString() };
+      return {
+        startDate: toLocalDateStr(start),
+        endDate: toLocalDateStr(end),
+      };
     }
     case "This Quarter": {
       const qStart = Math.floor(start.getMonth() / 3) * 3;
       start.setMonth(qStart, 1);
-      return { startDate: start.toISOString(), endDate: end.toISOString() };
+      end.setMonth(qStart + 3, 0);
+      end.setHours(23, 59, 59, 999);
+      return {
+        startDate: toLocalDateStr(start),
+        endDate: toLocalDateStr(end),
+      };
     }
     case "All Time":
     default:
@@ -119,19 +152,24 @@ const SalesReport = () => {
       setLoading(true);
       setError(null);
       try {
-        // Fetch total sales
-        const salesData = await ReportService.getSalesByDuration();
+        const params = {};
+        if (dateRange.startDate) params.start_date = dateRange.startDate;
+        if (dateRange.endDate) params.end_date = dateRange.endDate;
+
+        // Fetch total sales for the period
+        const salesData = await ReportService.getSalesByDuration(params);
         setTotalSales(
           salesData.total_sales ?? salesData.total_sales_amount ?? 0
         );
-        
-        // Fetch orders for table
-        const ordersData = await OrderService.getOrders();
-        setOrders(
-          Array.isArray(ordersData) ? ordersData : ordersData.orders || []
-        );
-        
-        // Fetch categories for filter dropdown
+
+        // Fetch orders for the period
+        const ordersData = await OrderService.getOrders(params);
+        const fetchedOrders = Array.isArray(ordersData)
+          ? ordersData
+          : ordersData.results || ordersData.orders || [];
+        setOrders(fetchedOrders);
+
+        // Fetch categories for filter dropdown (unfiltered)
         const categoriesData = await OrderCategoryService.getCategories();
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       } catch (err) {
@@ -142,41 +180,41 @@ const SalesReport = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [dateRange]);
 
-  // Calculate additional metrics
+  // Calculate metrics from the orders (already date-filtered by the server)
   const totalOrders = orders.length;
   const completedOrders = orders.filter(order => order.order_status === 'Completed').length;
-  const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
+  const inProgressOrders = orders.filter(order => order.order_status === 'In Progress').length;
+  const averageOrderValue = totalOrders > 0
+    ? orders.reduce((sum, o) => sum + (parseFloat(o.order_price) || 0), 0) / totalOrders
+    : 0;
 
-  // Enhanced filter logic
+  // Client-side filter logic (search, category, status — date is via server)
   const filteredOrders = orders.filter((order) => {
-    // Search filter
     const matchesSearch = searchQuery === "" ||
       (order.client_full_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (order.order_title?.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (order.order_description?.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    // Category filter
     const matchesCategory = selectedCategory === "All" ||
       (order.order_category &&
         ((typeof order.order_category === "object" &&
           order.order_category.name === selectedCategory) ||
           order.order_category === selectedCategory));
 
-    // Status filter
     const matchesStatus = statusFilter === "all" || 
       order.order_status === statusFilter;
 
-    // Date range filter
-    const matchesDateRange = !dateRange.startDate || !order.ordered_at ||
-      (new Date(order.ordered_at) >= new Date(dateRange.startDate) &&
-       new Date(order.ordered_at) <= new Date(dateRange.endDate));
-
-    return matchesSearch && matchesCategory && matchesStatus && matchesDateRange;
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  // Calculate filtered metrics
+  // Total value of the server-filtered orders
+  const serverFilteredTotal = orders.reduce((sum, order) => 
+    sum + (parseFloat(order.order_price) || 0), 0
+  );
+
+  // Total value of the client-side filtered (visible) orders
   const filteredTotalSales = filteredOrders.reduce((sum, order) => 
     sum + (parseFloat(order.order_price) || 0), 0
   );
@@ -218,11 +256,12 @@ const SalesReport = () => {
   };
 
   // Stats cards data
+  const filterLabel = dateRange.label || "All Time";
   const cards = [
     {
       title: "Total Sales",
-      value: `₦${Number(totalSales).toLocaleString()}`,
-      subtitle: "All time revenue",
+      value: `₦${Number(serverFilteredTotal).toLocaleString()}`,
+      subtitle: filterLabel,
       icon: <DollarSign className="w-6 h-6" />,
       bg: "bg-blue-50",
       border: "border-blue-200",
@@ -238,6 +277,15 @@ const SalesReport = () => {
       text: "text-green-700"
     },
     {
+      title: "In Progress",
+      value: inProgressOrders.toLocaleString(),
+      subtitle: filterLabel,
+      icon: <Clock className="w-6 h-6" />,
+      bg: "bg-orange-50",
+      border: "border-orange-200",
+      text: "text-orange-700"
+    },
+    {
       title: "Average Order",
       value: `₦${Number(averageOrderValue).toLocaleString()}`,
       subtitle: "Per order value",
@@ -245,15 +293,6 @@ const SalesReport = () => {
       bg: "bg-purple-50",
       border: "border-purple-200",
       text: "text-purple-700"
-    },
-    {
-      title: "Filtered Sales",
-      value: `₦${Number(filteredTotalSales).toLocaleString()}`,
-      subtitle: "Based on current filters",
-      icon: <Eye className="w-6 h-6" />,
-      bg: "bg-orange-50",
-      border: "border-orange-200",
-      text: "text-orange-700"
     },
   ];
 
@@ -454,6 +493,9 @@ const SalesReport = () => {
         <div className="text-sm text-gray-600">
           Showing <span className="font-semibold text-gray-900">{filteredOrders.length}</span> of{" "}
           <span className="font-semibold text-gray-900">{orders.length}</span> orders
+          {dateRange.label && dateRange.label !== "All Time" && (
+            <> for <span className="font-medium text-blue-600">{dateRange.label}</span></>
+          )}
         </div>
         {filteredOrders.length > 0 && (
           <div className="text-sm text-gray-600">
