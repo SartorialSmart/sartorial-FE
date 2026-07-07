@@ -138,6 +138,16 @@ const AllocationListTable = ({ searchTerm }) => {
                 (typeof a.order === 'object' ? a.order?.client_name : null) ||
                 (typeof a.order === 'object' ? a.order?.client_full_name : null) ||
                 "",
+              order_description:
+                order?.order_description ||
+                order?.description ||
+                (typeof a.order === 'object' ? (a.order?.order_description || a.order?.description) : null) ||
+                "",
+              description:
+                order?.description ||
+                order?.order_description ||
+                (typeof a.order === 'object' ? (a.order?.description || a.order?.order_description) : null) ||
+                "",
             }
           : a.order;
         const orderStatus = (resolvedOrder?.status || resolvedOrder?.order_status || "").trim();
