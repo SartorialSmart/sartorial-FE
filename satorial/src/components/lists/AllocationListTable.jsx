@@ -89,37 +89,75 @@ const AllocationListTable = ({ searchTerm }) => {
   const fetchAllocations = async () => {
     setLoading(true);
     try {
-      const [allocData, ordersData] = await Promise.all([
-        OrderService.getAllocations(),
-        OrderService.getOrders(),
-      ]);
+      const allocData = await OrderService.getAllocations();
       const allocs = Array.isArray(allocData.results) ? allocData.results : allocData;
 
-      const ordersList = Array.isArray(ordersData)
-        ? ordersData
-        : ordersData?.orders || ordersData?.results || [];
+      // Build a map of order data from multiple sources
       const orderMap = {};
-      ordersList.forEach((o) => {
-        orderMap[o.id] = o;
-      });
+
+      // Load the full orders list (optional - may not contain all orders)
+      try {
+        const ordersData = await OrderService.getOrders();
+        const ordersList = Array.isArray(ordersData)
+          ? ordersData
+          : ordersData?.orders || ordersData?.results || [];
+        ordersList.forEach((o) => {
+          orderMap[o.id] = o;
+        });
+      } catch {
+        // orders fetch is optional
+      }
+
+      // Fetch individual orders that are missing from the map
+      const missingIds = allocs
+        .map((a) => a.order?.id || a.order?.order_id || a.order)
+        .filter((id) => id && !orderMap[id]);
+
+      if (missingIds.length > 0) {
+        await Promise.all(
+          missingIds.map(async (id) => {
+            try {
+              const orderData = await OrderService.getOrderById(id);
+              if (orderData) orderMap[id] = orderData;
+            } catch {
+              // ignore
+            }
+          })
+        );
+      }
 
       const enriched = allocs.map((a) => {
-        const order = a.order && orderMap[a.order.id || a.order]
-          ? (orderMap[a.order.id || a.order])
+        const orderId = a.order?.id || a.order?.order_id || a.order;
+        const order = orderId && orderMap[orderId] ? orderMap[orderId] : a.order;
+        const resolvedOrder = order
+          ? {
+              ...(typeof order === 'object' ? order : {}),
+              client_name:
+                order?.client_name ||
+                order?.client_full_name ||
+                (typeof a.order === 'object' ? a.order?.client_name : null) ||
+                (typeof a.order === 'object' ? a.order?.client_full_name : null) ||
+                "",
+              order_description:
+                order?.order_description ||
+                order?.description ||
+                (typeof a.order === 'object' ? (a.order?.order_description || a.order?.description) : null) ||
+                "",
+              description:
+                order?.description ||
+                order?.order_description ||
+                (typeof a.order === 'object' ? (a.order?.description || a.order?.order_description) : null) ||
+                "",
+            }
           : a.order;
+        const orderStatus = (resolvedOrder?.status || resolvedOrder?.order_status || "").trim();
+        const hasStaff = a.staff && (a.staff.name || a.staff.id);
         return {
           ...a,
-          order: order
-            ? {
-                ...order,
-                client_name:
-                  order.client_name ||
-                  order.client_full_name ||
-                  a.order?.client_name ||
-                  a.order?.client_full_name ||
-                  "",
-              }
-            : a.order,
+          order: resolvedOrder,
+          displayStatus: hasStaff && (!orderStatus || orderStatus === "Pending")
+            ? "Assigned"
+            : (orderStatus || "Pending"),
         };
       });
 
@@ -150,21 +188,21 @@ const AllocationListTable = ({ searchTerm }) => {
   // Get unique statuses for filter — support both "status" and "order_status"
   const statusOptions = [
     "all",
-    ...new Set(allocations.map(a => (a.order?.status || a.order?.order_status)).filter(Boolean))
+    ...new Set(allocations.map(a => a.displayStatus).filter(Boolean))
   ];
 
   // Filtering logic
   const filteredAllocations = allocations.filter((allocation) => {
     const searchText = (effectiveSearch || "").toLowerCase();
-    const allocStatus = allocation.order?.status || allocation.order?.order_status || "";
+    const allocStatus = allocation.displayStatus || "";
     const statusMatch = statusFilter === "all" || allocStatus === statusFilter;
 
     if (!statusMatch) return false;
 
     if (searchText) {
       return (
-        (allocation.order?.title || "")?.toLowerCase().includes(searchText) ||
-        (allocation.order?.description || "")?.toLowerCase().includes(searchText) ||
+        (allocation.order?.order_title || allocation.order?.title || "")?.toLowerCase().includes(searchText) ||
+        (allocation.order?.order_description || allocation.order?.description || "")?.toLowerCase().includes(searchText) ||
         (allocation.staff?.name || "")?.toLowerCase().includes(searchText) ||
         allocStatus.toLowerCase().includes(searchText)
       );
@@ -193,31 +231,31 @@ const AllocationListTable = ({ searchTerm }) => {
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="text-2xl font-bold text-orange-600">
-                {allocations.filter(a => a.order?.status === 'Assigned').length}
+                {allocations.filter(a => a.displayStatus === 'Assigned').length}
               </div>
               <div className="text-sm text-gray-500">Assigned</div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="text-2xl font-bold text-blue-600">
-                {allocations.filter(a => a.order?.status === 'In Progress').length}
+                {allocations.filter(a => a.displayStatus === 'In Progress').length}
               </div>
               <div className="text-sm text-gray-500">In Progress</div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="text-2xl font-bold text-cyan-600">
-                {allocations.filter(a => a.order?.status === 'QA Check').length}
+                {allocations.filter(a => a.displayStatus === 'QA Check').length}
               </div>
               <div className="text-sm text-gray-500">QA Check</div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="text-2xl font-bold text-green-600">
-                {allocations.filter(a => a.order?.status === 'Completed').length}
+                {allocations.filter(a => a.displayStatus === 'Completed').length}
               </div>
               <div className="text-sm text-gray-500">Completed</div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="text-2xl font-bold text-red-600">
-                {allocations.filter(a => a.order?.status === 'Cancelled').length}
+                {allocations.filter(a => a.displayStatus === 'Cancelled').length}
               </div>
               <div className="text-sm text-gray-500">Cancelled</div>
             </div>
@@ -328,20 +366,20 @@ const AllocationListTable = ({ searchTerm }) => {
                         <div className="relative">
                           <img
                             src={DEFAULT_AVATAR}
-                            alt={allocation.order?.title}
+                            alt={allocation.order?.order_title || allocation.order?.title}
                             className="w-12 h-12 rounded-xl object-cover border border-gray-200"
                           />
                           <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full border-2 border-white"></div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-gray-900 truncate">
-                            {allocation.order?.title || "Untitled Order"}
+                            {allocation.order?.order_title || allocation.order?.title || "Untitled Order"}
                           </h3>
                           <p className="text-xs text-gray-700 mt-1 truncate">
                             Client: {allocation.order?.client_name || allocation.order?.client_full_name || "N/A"}
                           </p>
                           <p className="text-gray-500 text-sm mt-1 line-clamp-2">
-                            {allocation.order?.description || "No description"}
+                            {allocation.order?.order_description || allocation.order?.description || "No description"}
                           </p>
                           {allocation.order?.category && (
                             <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs">
@@ -354,7 +392,7 @@ const AllocationListTable = ({ searchTerm }) => {
 
                     {/* Status */}
                     <td className="p-6">
-                      <StatusBadge status={allocation.order?.status || "Pending"} />
+                      <StatusBadge status={allocation.displayStatus} />
                     </td>
 
                     {/* Timeline */}

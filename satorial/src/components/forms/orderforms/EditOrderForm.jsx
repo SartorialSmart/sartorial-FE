@@ -175,14 +175,13 @@ const EditOrderForm = () => {
     }
   };
 
-  const handleSavePayment = async (paymentData) => {
+  const handleSavePayment = async () => {
     try {
-      await OrderService.addPayment(orderId, paymentData);
       setShowPaymentModal(false);
       const updatedOrder = await OrderService.getOrderById(orderId);
       setOrder(updatedOrder);
     } catch (error) {
-      console.error("Failed to save payment:", error);
+      console.error("Failed to refresh order after payment:", error);
     }
   };
 

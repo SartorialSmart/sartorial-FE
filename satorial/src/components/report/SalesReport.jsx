@@ -1,25 +1,23 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Search,
   Download,
   MoreVertical,
-  Eye,
   Filter,
-  Calendar,
   DollarSign,
-  Users,
   Package,
   Loader2,
   ChevronDown,
-  BarChart3,
   Printer,
-  Clock
+  Clock,
+  User,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
 import PropTypes from "prop-types";
-import ReportService from "../../services/ReportService";
 import OrderService from "../../services/OrderService";
 import OrderCategoryService from "../../services/OrderCategoryService";
-import FinancialReportModal from "./FinancialReportModal";
 
 const toLocalDateStr = (date) => {
   const y = date.getFullYear();
@@ -35,28 +33,26 @@ const getDateRange = (filter) => {
   const end = new Date(now);
   end.setHours(23, 59, 59, 999);
 
+  const result = (s, e) => ({
+    startDate: toLocalDateStr(s),
+    endDate: toLocalDateStr(e),
+    startDateObj: s,
+    endDateObj: e,
+  });
+
   switch (filter) {
     case "Today":
-      return {
-        startDate: toLocalDateStr(start),
-        endDate: toLocalDateStr(end),
-      };
+      return result(start, end);
     case "Yesterday": {
       start.setDate(start.getDate() - 1);
       end.setDate(end.getDate() - 1);
-      return {
-        startDate: toLocalDateStr(start),
-        endDate: toLocalDateStr(end),
-      };
+      return result(start, end);
     }
     case "This Week": {
       const day = start.getDay();
       const mondayOffset = day === 0 ? -6 : 1 - day;
       start.setDate(start.getDate() + mondayOffset);
-      return {
-        startDate: toLocalDateStr(start),
-        endDate: toLocalDateStr(end),
-      };
+      return result(start, end);
     }
     case "Last Week": {
       const day = start.getDay();
@@ -64,39 +60,60 @@ const getDateRange = (filter) => {
       start.setDate(start.getDate() + mondayOffset - 7);
       end.setDate(start.getDate() + 6);
       end.setHours(23, 59, 59, 999);
-      return {
-        startDate: toLocalDateStr(start),
-        endDate: toLocalDateStr(end),
-      };
+      return result(start, end);
     }
     case "This Month":
       start.setDate(1);
-      return {
-        startDate: toLocalDateStr(start),
-        endDate: toLocalDateStr(end),
-      };
+      return result(start, end);
     case "Last Month": {
       start.setMonth(start.getMonth() - 1, 1);
       end.setMonth(end.getMonth(), 0);
       end.setHours(23, 59, 59, 999);
-      return {
-        startDate: toLocalDateStr(start),
-        endDate: toLocalDateStr(end),
-      };
+      return result(start, end);
     }
     case "This Quarter": {
       const qStart = Math.floor(start.getMonth() / 3) * 3;
       start.setMonth(qStart, 1);
       end.setMonth(qStart + 3, 0);
       end.setHours(23, 59, 59, 999);
-      return {
-        startDate: toLocalDateStr(start),
-        endDate: toLocalDateStr(end),
-      };
+      return result(start, end);
     }
     case "All Time":
     default:
-      return { startDate: null, endDate: null };
+      return { startDate: null, endDate: null, startDateObj: null, endDateObj: null };
+  }
+};
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const ordinal = (n) => {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
+const formatDateCaption = (filter, startDateObj, endDateObj) => {
+  if (!startDateObj || filter === "All Time") return "All Time";
+  switch (filter) {
+    case "Today":
+      return `${DAYS[startDateObj.getDay()]}, ${ordinal(startDateObj.getDate())} ${MONTHS[startDateObj.getMonth()]}, ${startDateObj.getFullYear()}`;
+    case "Yesterday":
+      return `${DAYS[startDateObj.getDay()]}, ${ordinal(startDateObj.getDate())} ${MONTHS[startDateObj.getMonth()]}, ${startDateObj.getFullYear()}`;
+    case "This Week":
+      return `${ordinal(startDateObj.getDate())} ${MONTHS[startDateObj.getMonth()]} - ${ordinal(endDateObj.getDate())} ${MONTHS[endDateObj.getMonth()]}, ${endDateObj.getFullYear()}`;
+    case "Last Week":
+      return `${ordinal(startDateObj.getDate())} ${MONTHS[startDateObj.getMonth()]} - ${ordinal(endDateObj.getDate())} ${MONTHS[endDateObj.getMonth()]}, ${endDateObj.getFullYear()}`;
+    case "This Month":
+      return `${MONTHS[startDateObj.getMonth()]}, ${startDateObj.getFullYear()}`;
+    case "Last Month":
+      return `${MONTHS[startDateObj.getMonth()]}, ${startDateObj.getFullYear()}`;
+    case "This Quarter": {
+      const q = Math.floor(startDateObj.getMonth() / 3) + 1;
+      return `Q${q} ${startDateObj.getFullYear()}`;
+    }
+    default:
+      return filter;
   }
 };
 
@@ -104,13 +121,12 @@ const SalesReport = () => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [totalSales, setTotalSales] = useState(null);
   const [orders, setOrders] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [showFinancialReport, setShowFinancialReport] = useState(false);
+  const printRef = useRef();
 
   // Time filter options
   const timeFilters = [
@@ -138,13 +154,13 @@ const SalesReport = () => {
 
   const [dateRange, setDateRange] = useState(() => {
     const range = getDateRange("All Time");
-    return { ...range, label: "All Time" };
+    return range;
   });
 
   const handleFilterChange = useCallback((filter) => {
     setSelectedFilter(filter);
     const range = getDateRange(filter);
-    setDateRange({ ...range, label: filter });
+    setDateRange(range);
   }, []);
 
   useEffect(() => {
@@ -155,12 +171,6 @@ const SalesReport = () => {
         const params = {};
         if (dateRange.startDate) params.start_date = dateRange.startDate;
         if (dateRange.endDate) params.end_date = dateRange.endDate;
-
-        // Fetch total sales for the period
-        const salesData = await ReportService.getSalesByDuration(params);
-        setTotalSales(
-          salesData.total_sales ?? salesData.total_sales_amount ?? 0
-        );
 
         // Fetch orders for the period
         const ordersData = await OrderService.getOrders(params);
@@ -191,13 +201,6 @@ const SalesReport = () => {
     return orderDate >= start && orderDate <= end;
   });
 
-  // Calculate metrics from the date-filtered orders
-  const totalOrders = dateFilteredOrders.length;
-  const completedOrders = dateFilteredOrders.filter(order => order.order_status === 'Completed').length;
-  const inProgressOrders = dateFilteredOrders.filter(order => order.order_status === 'In Progress').length;
-  const totalSalesValue = dateFilteredOrders.reduce((sum, o) => sum + (parseFloat(o.order_price) || 0), 0);
-  const averageOrderValue = totalOrders > 0 ? totalSalesValue / totalOrders : 0;
-
   // Client-side filter logic (search, category, status)
   const filteredOrders = dateFilteredOrders.filter((order) => {
     const matchesSearch = searchQuery === "" ||
@@ -221,6 +224,14 @@ const SalesReport = () => {
   const filteredTotalSales = filteredOrders.reduce((sum, order) => 
     sum + (parseFloat(order.order_price) || 0), 0
   );
+
+  const statusCounts = useMemo(() => {
+    const counts = {};
+    for (const s of ["Pending", "Assigned", "In Progress", "QA Check", "On Delivery", "Completed", "Cancelled"]) {
+      counts[s] = filteredOrders.filter(o => o.order_status === s).length;
+    }
+    return counts;
+  }, [filteredOrders]);
 
   // Export functionality
   const handleExport = () => {
@@ -259,11 +270,11 @@ const SalesReport = () => {
   };
 
   // Stats cards data
-  const filterLabel = dateRange.label || "All Time";
+  const filterLabel = formatDateCaption(selectedFilter, dateRange.startDateObj, dateRange.endDateObj);
   const cards = [
     {
       title: "Total Sales",
-      value: `₦${Number(totalSalesValue).toLocaleString()}`,
+      value: `₦${Number(filteredTotalSales).toLocaleString()}`,
       subtitle: filterLabel,
       icon: <DollarSign className="w-6 h-6" />,
       bg: "bg-blue-50",
@@ -271,31 +282,67 @@ const SalesReport = () => {
       text: "text-blue-700"
     },
     {
-      title: "Total Orders",
-      value: totalOrders.toLocaleString(),
-      subtitle: `${completedOrders} completed`,
-      icon: <Package className="w-6 h-6" />,
-      bg: "bg-green-50",
-      border: "border-green-200",
-      text: "text-green-700"
+      title: "Pending",
+      value: statusCounts["Pending"].toLocaleString(),
+      subtitle: filterLabel,
+      icon: <Clock className="w-6 h-6" />,
+      bg: "bg-yellow-50",
+      border: "border-yellow-200",
+      text: "text-yellow-700"
+    },
+    {
+      title: "Assigned",
+      value: statusCounts["Assigned"].toLocaleString(),
+      subtitle: filterLabel,
+      icon: <User className="w-6 h-6" />,
+      bg: "bg-purple-50",
+      border: "border-purple-200",
+      text: "text-purple-700"
     },
     {
       title: "In Progress",
-      value: inProgressOrders.toLocaleString(),
+      value: statusCounts["In Progress"].toLocaleString(),
       subtitle: filterLabel,
-      icon: <Clock className="w-6 h-6" />,
+      icon: <Loader2 className="w-6 h-6" />,
       bg: "bg-orange-50",
       border: "border-orange-200",
       text: "text-orange-700"
     },
     {
-      title: "Average Order",
-      value: `₦${Number(averageOrderValue).toLocaleString()}`,
-      subtitle: "Per order value",
-      icon: <BarChart3 className="w-6 h-6" />,
-      bg: "bg-purple-50",
-      border: "border-purple-200",
-      text: "text-purple-700"
+      title: "QA Check",
+      value: statusCounts["QA Check"].toLocaleString(),
+      subtitle: filterLabel,
+      icon: <AlertCircle className="w-6 h-6" />,
+      bg: "bg-cyan-50",
+      border: "border-cyan-200",
+      text: "text-cyan-700"
+    },
+    {
+      title: "On Delivery",
+      value: statusCounts["On Delivery"].toLocaleString(),
+      subtitle: filterLabel,
+      icon: <Package className="w-6 h-6" />,
+      bg: "bg-indigo-50",
+      border: "border-indigo-200",
+      text: "text-indigo-700"
+    },
+    {
+      title: "Completed",
+      value: statusCounts["Completed"].toLocaleString(),
+      subtitle: filterLabel,
+      icon: <CheckCircle className="w-6 h-6" />,
+      bg: "bg-green-50",
+      border: "border-green-200",
+      text: "text-green-700"
+    },
+    {
+      title: "Cancelled",
+      value: statusCounts["Cancelled"].toLocaleString(),
+      subtitle: filterLabel,
+      icon: <XCircle className="w-6 h-6" />,
+      bg: "bg-red-50",
+      border: "border-red-200",
+      text: "text-red-700"
     },
   ];
 
@@ -322,7 +369,7 @@ const SalesReport = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div ref={printRef} className="print-content p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
@@ -334,7 +381,7 @@ const SalesReport = () => {
           </div>
           
           {/* Time Filter */}
-          <div className="flex gap-2 flex-wrap">
+          <div className="no-print flex gap-2 flex-wrap">
             {timeFilters.map((filter) => (
               <button
                 key={filter}
@@ -378,7 +425,7 @@ const SalesReport = () => {
       </div>
 
       {/* Filters and Actions */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+      <div className="no-print bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
         <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
           {/* Search Bar */}
           <div className="flex-1 w-full lg:max-w-md">
@@ -439,22 +486,22 @@ const SalesReport = () => {
               <Download className="w-4 h-4" />
               Export CSV
             </button>
-            {/* Financial Report Button */}
+            {/* Print Button */}
             <button
-              onClick={() => setShowFinancialReport(true)}
+              onClick={() => window.print()}
               className="flex items-center gap-2 px-4 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-medium"
             >
               <Printer className="w-4 h-4" />
-              Financial Report
+              Print
             </button>
           </div>
         </div>
 
         {/* Active Filters */}
-        <div className="flex flex-wrap gap-2 mt-4">
+        <div className="no-print flex flex-wrap gap-2 mt-4">
           {searchQuery && (
             <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-              Search: "{searchQuery}"
+              Search: &ldquo;{searchQuery}&rdquo;
               <button onClick={() => setSearchQuery("")} className="hover:text-blue-900">
                 ×
               </button>
@@ -649,12 +696,14 @@ const SalesReport = () => {
           </div>
         )}
       </div>
-      {/* Financial Report Modal */}
-      <FinancialReportModal
-        isOpen={showFinancialReport}
-        onClose={() => setShowFinancialReport(false)}
-        dateRange={dateRange}
-      />
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          .print-content, .print-content * { visibility: visible; }
+          .print-content { position: absolute; left: 0; top: 0; width: 100%; }
+          .no-print { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 };
