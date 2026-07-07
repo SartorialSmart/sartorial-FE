@@ -8,14 +8,41 @@ const getDateRange = (filter, customStartDate, customEndDate) => {
   switch (filter) {
     case "Today":
       return { startDate: start, endDate: end };
+    case "Yesterday": {
+      start.setDate(start.getDate() - 1);
+      end.setDate(end.getDate() - 1);
+      return { startDate: start, endDate: end };
+    }
     case "This Week": {
       const day = start.getDay();
-      start.setDate(start.getDate() - day);
+      const mondayOffset = day === 0 ? -6 : 1 - day;
+      start.setDate(start.getDate() + mondayOffset);
+      return { startDate: start, endDate: end };
+    }
+    case "Last Week": {
+      const day = start.getDay();
+      const mondayOffset = day === 0 ? -6 : 1 - day;
+      start.setDate(start.getDate() + mondayOffset - 7);
+      end.setDate(start.getDate() + 6);
+      end.setHours(23, 59, 59, 999);
       return { startDate: start, endDate: end };
     }
     case "This Month":
       start.setDate(1);
       return { startDate: start, endDate: end };
+    case "Last Month": {
+      start.setMonth(start.getMonth() - 1, 1);
+      end.setMonth(end.getMonth(), 0);
+      end.setHours(23, 59, 59, 999);
+      return { startDate: start, endDate: end };
+    }
+    case "This Quarter": {
+      const qStart = Math.floor(start.getMonth() / 3) * 3;
+      start.setMonth(qStart, 1);
+      end.setMonth(qStart + 3, 0);
+      end.setHours(23, 59, 59, 999);
+      return { startDate: start, endDate: end };
+    }
     case "This Year":
       start.setMonth(0, 1);
       return { startDate: start, endDate: end };
@@ -54,4 +81,44 @@ const filterByDateRange = (items, dateField, filter, customStartDate, customEndD
   });
 };
 
-export { getDateRange, getDateRangeISO, filterByDateRange };
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const ordinal = (n) => {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
+const formatDateCaption = (filter, customStartDate, customEndDate) => {
+  if (filter === "All Time") return "All Time";
+  const range = getDateRange(filter, customStartDate, customEndDate);
+  if (!range) return filter;
+  const { startDate, endDate } = range;
+  switch (filter) {
+    case "Today":
+      return `${DAYS[startDate.getDay()]}, ${ordinal(startDate.getDate())} ${MONTHS[startDate.getMonth()]}, ${startDate.getFullYear()}`;
+    case "Yesterday":
+      return `${DAYS[startDate.getDay()]}, ${ordinal(startDate.getDate())} ${MONTHS[startDate.getMonth()]}, ${startDate.getFullYear()}`;
+    case "This Week":
+      return `${ordinal(startDate.getDate())} ${MONTHS[startDate.getMonth()]} - ${ordinal(endDate.getDate())} ${MONTHS[endDate.getMonth()]}, ${endDate.getFullYear()}`;
+    case "Last Week":
+      return `${ordinal(startDate.getDate())} ${MONTHS[startDate.getMonth()]} - ${ordinal(endDate.getDate())} ${MONTHS[endDate.getMonth()]}, ${endDate.getFullYear()}`;
+    case "This Month":
+      return `${MONTHS[startDate.getMonth()]}, ${startDate.getFullYear()}`;
+    case "Last Month":
+      return `${MONTHS[startDate.getMonth()]}, ${startDate.getFullYear()}`;
+    case "This Quarter": {
+      const q = Math.floor(startDate.getMonth() / 3) + 1;
+      return `Q${q} ${startDate.getFullYear()}`;
+    }
+    case "This Year":
+      return `${startDate.getFullYear()}`;
+    case "Custom Date":
+      return `${ordinal(startDate.getDate())} ${MONTHS[startDate.getMonth()]} - ${ordinal(endDate.getDate())} ${MONTHS[endDate.getMonth()]}, ${endDate.getFullYear()}`;
+    default:
+      return filter;
+  }
+};
+
+export { getDateRange, getDateRangeISO, filterByDateRange, formatDateCaption };

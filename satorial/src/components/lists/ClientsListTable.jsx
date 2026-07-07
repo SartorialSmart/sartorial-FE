@@ -57,7 +57,8 @@ const ClientsList = forwardRef(({ searchQuery: propSearchQuery, filterBy: propFi
       setError(null);
       try {
         const data = await ClientService.getClients();
-        setClients(data);
+        const clientsData = Array.isArray(data) ? data : data?.results || [];
+        setClients(clientsData);
         if (needsRefresh) {
           clearRefreshFlag();
         }
