@@ -11,6 +11,7 @@ import {
   FileText,
   BarChart,
   HelpCircle,
+  DollarSign,
 } from "lucide-react";
 
 const ReportSideABrLayout = ({ children }) => {
@@ -51,6 +52,11 @@ const ReportSideABrLayout = ({ children }) => {
       icon: <BarChart />,
       label: "Performance Report",
       path: "/reports/staff/performance/report",
+    },
+    {
+      icon: <DollarSign />,
+      label: "Financial Report",
+      path: "/reports/financial/report",
     },
     { icon: <HelpCircle />, label: "Help Centre", path: "/help-centre" },
   ];
