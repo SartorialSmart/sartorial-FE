@@ -26,6 +26,8 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
   const vatRate = vatSettings.vatEnabled && !formData.vatExempt ? vatSettings.vatRate / 100 : 0;
   const vatPayable = Number(formData.price) * vatRate;
   const totalAmountPayable = Number(formData.price) + vatPayable;
+  const balanceDue = Math.max(0, totalAmountPayable - totalPaid) || 0;
+
   const hasInitialDeposit =
     Number(order.initial_deposit) > 0 ||
     (order.payments || []).some((p) => p.payment_type === "Initial Deposit");
@@ -51,8 +53,23 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
     }
   }, []);
 
+  // Prefill amount paid with balance due on mount
+  useEffect(() => {
+    const initialBalance = Math.max(0, Number(order.order_price || 0) - totalPaid) || 0;
+    if (initialBalance > 0) {
+      setFormData((prev) => ({ ...prev, amountPaid: String(Math.round(initialBalance)) }));
+    }
+  }, []);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === "amountPaid") {
+      const numValue = Number(value);
+      if (numValue > balanceDue) {
+        setFormData((prev) => ({ ...prev, [name]: String(Math.round(balanceDue)) }));
+        return;
+      }
+    }
     setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
     if (error) setError(null);
   };
@@ -163,6 +180,18 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
         />
       </div>
 
+      <div>
+        <label className="text-gray-600 text-sm font-medium">Balance Due</label>
+        <input
+          type="text"
+          value={formatCurrency(balanceDue)}
+          className={`w-full border p-2.5 rounded-md text-sm font-semibold ${
+            balanceDue > 0 ? "bg-amber-50 text-amber-800" : "bg-green-50 text-green-800"
+          }`}
+          readOnly
+        />
+      </div>
+
       {vatSettings.vatEnabled && (
         <label className="flex items-center gap-2 cursor-pointer">
           <input
@@ -239,10 +268,14 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
             name="amountPaid"
             value={formData.amountPaid}
             onChange={handleChange}
+            max={balanceDue}
             placeholder="0.00"
             className="w-full border p-3 pl-8 rounded-md"
           />
         </div>
+        {balanceDue > 0 && (
+          <p className="text-xs text-gray-500 mt-1">Max: {formatCurrency(balanceDue)}</p>
+        )}
       </div>
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
