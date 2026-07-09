@@ -11,7 +11,8 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  DollarSign
+  DollarSign,
+  Barcode
 } from "lucide-react";
 
 const UNIT_OPTIONS = [
@@ -37,6 +38,8 @@ const InventoryForm = ({
   categories = [],
 }) => {
   const [form, setForm] = useState({
+    sku: initialValues.sku || "",
+    barcode: initialValues.barcode || "",
     item_name: initialValues.item_name || "",
     category: initialValues.category || "",
     unit_of_measurement: initialValues.unit_of_measurement || "",
@@ -54,6 +57,7 @@ const InventoryForm = ({
 
   const validate = () => {
     const newErrors = {};
+    if (!form.sku) newErrors.sku = "Required";
     if (!form.item_name) newErrors.item_name = "Required";
     if (!form.category) newErrors.category = "Required";
     if (!form.unit_of_measurement) newErrors.unit_of_measurement = "Required";
@@ -71,6 +75,43 @@ const InventoryForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+          <Hash className="w-4 h-4" />
+          SKU
+        </label>
+        <input
+          name="sku"
+          value={form.sku}
+          onChange={handleChange}
+          className={`w-full border rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+            errors.sku ? 'border-red-300' : 'border-gray-300'
+          } ${initialValues.sku ? 'bg-gray-50 text-gray-500' : ''}`}
+          placeholder="Enter SKU"
+          disabled={!!initialValues.sku}
+        />
+        {errors.sku && (
+          <div className="text-red-500 text-xs mt-1 flex items-center gap-1">
+            <XCircle className="w-3 h-3" />
+            {errors.sku}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+          <Barcode className="w-4 h-4" />
+          Barcode <span className="text-gray-400 font-normal">(optional)</span>
+        </label>
+        <input
+          name="barcode"
+          value={form.barcode}
+          onChange={handleChange}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Enter barcode"
+        />
+      </div>
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
           <Package className="w-4 h-4" />

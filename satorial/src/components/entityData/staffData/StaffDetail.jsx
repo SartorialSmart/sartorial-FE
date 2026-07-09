@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import StaffService from "../../../services/staffServices/StaffService";
+import StaffRoleService from "../../../services/staffServices/StaffRoleService";
 import StaffReportService from "../../../services/staffServices/StaffReportService";
 import OrderService from "../../../services/OrderService";
 import dayjs from "dayjs";
@@ -84,9 +85,13 @@ const StaffDetail = () => {
     start_date: dayjs().subtract(30, 'days').format('YYYY-MM-DD'),
     end_date: dayjs().format('YYYY-MM-DD'),
   });
+  const [roles, setRoles] = useState([]);
 
   useEffect(() => {
     fetchStaffData();
+    StaffRoleService.listRoles()
+      .then((data) => setRoles(Array.isArray(data) ? data : data.results || []))
+      .catch(() => {});
   }, [slug]);
 
   useEffect(() => {
@@ -677,7 +682,7 @@ const StaffDetail = () => {
               <SelectField
                 label="Staff Role"
                 value={formData.staff_role}
-                options={["Tailor", "Designer", "Driver", "Accountant", "Procurement_Manager"]}
+                options={roles.map((r) => r.name)}
                 disabled={!isEditing}
                 onChange={(val) => handleInputChange("staff_role", val)}
                 required

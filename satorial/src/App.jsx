@@ -60,6 +60,7 @@ import AddVendorFormDisplay from "./pages/orderPages/AddVendorFormDisplay";
 
 import NotificationsListDisplay from "./pages/notificationPages/NotificationsListDisplay";
 import ProfileSettingsDisplay from "./pages/settingsPages/ProfileSettingsDisplay";
+import RoleSettingsDisplay from "./pages/settingsPages/RoleSettingsDisplay";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
 
@@ -142,6 +143,7 @@ const protectedRoutes = [
   { path: "/notifications", element: <NotificationsListDisplay /> },
 
   { path: "/settings", element: <ProfileSettingsDisplay /> },
+  { path: "/settings/roles", element: <RoleSettingsDisplay /> },
   { path: "/profile", element: <ProfileSettingsDisplay /> },
 
   { path: "/help-centre", element: <GetHelpDisplay /> },
