@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Search, Download, ChevronDown, Filter, Loader2, Users, CheckCircle, Clock, RotateCcw } from "lucide-react";
+import * as XLSX from "xlsx";
 import StaffReportService from "../../services/staffServices/StaffReportService";
 import StaffService from "../../services/staffServices/StaffService";
 import { getDateRangeISO, formatDateCaption } from "../../../utils/reportUtils";
@@ -97,30 +98,19 @@ const StaffPerformanceReport = () => {
       alert("No data to export");
       return;
     }
-    const headers = ["Name", "Role", "Assigned", "Completed", "Ongoing", "Not Started", "Reassigned"];
-    const csvContent = [
-      headers.join(","),
-      ...filteredStaff.map((p) =>
-        [
-          `"${p.name}"`,
-          `"${p.role}"`,
-          p.assigned,
-          p.completed,
-          p.ongoing,
-          p.not_started,
-          p.reassigned,
-        ].join(",")
-      ),
-    ].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `staff_performance_${new Date().toISOString().slice(0, 10)}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const rows = filteredStaff.map((p) => ({
+      Name: p.name,
+      Role: p.role,
+      Assigned: p.assigned,
+      Completed: p.completed,
+      Ongoing: p.ongoing,
+      "Not Started": p.not_started,
+      Reassigned: p.reassigned,
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Staff Performance");
+    XLSX.writeFile(wb, `staff_performance_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }, [filteredStaff]);
 
   const totalAssigned = staff.reduce((sum, p) => sum + (typeof p.assigned === "number" ? p.assigned : 0), 0);
@@ -285,7 +275,7 @@ const StaffPerformanceReport = () => {
               className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               <Download className="w-4 h-4" />
-              Export CSV
+              Export Excel
             </button>
           </div>
         </div>

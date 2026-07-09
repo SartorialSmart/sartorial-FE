@@ -72,6 +72,7 @@ const InventoryList = () => {
     if (searchTerm.trim()) {
       const normalizedSearch = searchTerm.toLowerCase().trim();
       const itemName = (item.item_name || item.itemName || "").toLowerCase();
+      const sku = (item.sku || "").toLowerCase();
       const categoryName = (
         categoryMap[item.category] ||
         item.category ||
@@ -82,6 +83,7 @@ const InventoryList = () => {
 
       searchMatch =
         itemName.includes(normalizedSearch) ||
+        sku.includes(normalizedSearch) ||
         categoryName.includes(normalizedSearch) ||
         quantity.includes(normalizedSearch) ||
         date.includes(normalizedSearch);
@@ -250,6 +252,7 @@ const InventoryList = () => {
                 </th>
                 {[
                   "Date",
+                  "SKU",
                   "Item Name",
                   "Inventory Category",
                   "Unit Cost",
@@ -276,6 +279,11 @@ const InventoryList = () => {
                     </td>
                     <td className="p-3">
                       {formatDate(item.date || item.created_at)}
+                    </td>
+                    <td className="p-3">
+                      <span className="font-mono text-xs px-2 py-1 bg-gray-100 rounded">
+                        {item.sku || "-"}
+                      </span>
                     </td>
                     <td className="p-3">
                       {item.item_name || item.itemName || "-"}
@@ -364,7 +372,7 @@ const InventoryList = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="p-8 text-center text-gray-500">
+                  <td colSpan="9" className="p-8 text-center text-gray-500">
                     {searchTerm.trim() || selectedFilter !== "All"
                       ? "No inventory items match your search criteria"
                       : "No inventory items found"}

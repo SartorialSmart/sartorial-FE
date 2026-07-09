@@ -26,6 +26,9 @@ const ClientService = {
   deleteClient: (clientId) =>
     apiDelete(API.CLIENT_MANAGEMENT.CLIENTS.DETAIL(clientId)),
 
+  bulkImportClients: (clients) =>
+    apiPost(API.CLIENT_MANAGEMENT.CLIENTS.BULK_IMPORT, { clients }),
+
   createClientAddress: (addressData) =>
     apiPost(API.CLIENT_MANAGEMENT.ADDRESSES.CREATE, addressData),
 

@@ -30,6 +30,15 @@ const ClientsList = forwardRef(({ searchQuery: propSearchQuery, filterBy: propFi
 
   useImperativeHandle(ref, () => ({
     handleExport,
+    refreshClients: async () => {
+      try {
+        const data = await ClientService.getClients();
+        const clientsData = Array.isArray(data) ? data : data?.results || [];
+        setClients(clientsData);
+      } catch (error) {
+        console.error("Failed to refresh clients:", error);
+      }
+    },
   }));
 
   // Search and Filter states

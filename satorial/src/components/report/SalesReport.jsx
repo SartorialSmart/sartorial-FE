@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Search,
   Download,
@@ -9,11 +9,6 @@ import {
   Loader2,
   ChevronDown,
   Printer,
-  Clock,
-  User,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
 } from "lucide-react";
 import PropTypes from "prop-types";
 import OrderService from "../../services/OrderService";
@@ -26,7 +21,7 @@ const toLocalDateStr = (date) => {
   return `${y}-${m}-${d}`;
 };
 
-const getDateRange = (filter) => {
+const getDateRange = (filter, customStart, customEnd) => {
   const now = new Date();
   const start = new Date(now);
   start.setHours(0, 0, 0, 0);
@@ -78,6 +73,19 @@ const getDateRange = (filter) => {
       end.setHours(23, 59, 59, 999);
       return result(start, end);
     }
+    case "Custom": {
+      if (customStart && customEnd) {
+        const cs = new Date(customStart);
+        cs.setHours(0, 0, 0, 0);
+        const ce = new Date(customEnd);
+        ce.setHours(23, 59, 59, 999);
+        return {
+          ...result(cs, ce),
+          label: `${toLocalDateStr(cs)} to ${toLocalDateStr(ce)}`
+        };
+      }
+      return result(start, end);
+    }
     case "All Time":
     default:
       return { startDate: null, endDate: null, startDateObj: null, endDateObj: null };
@@ -126,6 +134,8 @@ const SalesReport = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const printRef = useRef();
 
   // Time filter options
@@ -137,6 +147,7 @@ const SalesReport = () => {
     "This Month",
     "Last Month",
     "This Quarter",
+    "Custom",
     "All Time"
   ];
 
@@ -159,9 +170,13 @@ const SalesReport = () => {
 
   const handleFilterChange = useCallback((filter) => {
     setSelectedFilter(filter);
-    const range = getDateRange(filter);
+    if (filter !== "Custom") {
+      setCustomStartDate("");
+      setCustomEndDate("");
+    }
+    const range = getDateRange(filter, customStartDate, customEndDate);
     setDateRange(range);
-  }, []);
+  }, [customStartDate, customEndDate]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -225,14 +240,6 @@ const SalesReport = () => {
     sum + (parseFloat(order.order_price) || 0), 0
   );
 
-  const statusCounts = useMemo(() => {
-    const counts = {};
-    for (const s of ["Pending", "Assigned", "In Progress", "QA Check", "On Delivery", "Completed", "Cancelled"]) {
-      counts[s] = filteredOrders.filter(o => o.order_status === s).length;
-    }
-    return counts;
-  }, [filteredOrders]);
-
   // Export functionality
   const handleExport = () => {
     if (filteredOrders.length === 0) {
@@ -280,70 +287,7 @@ const SalesReport = () => {
       bg: "bg-blue-50",
       border: "border-blue-200",
       text: "text-blue-700"
-    },
-    {
-      title: "Pending",
-      value: statusCounts["Pending"].toLocaleString(),
-      subtitle: filterLabel,
-      icon: <Clock className="w-6 h-6" />,
-      bg: "bg-yellow-50",
-      border: "border-yellow-200",
-      text: "text-yellow-700"
-    },
-    {
-      title: "Assigned",
-      value: statusCounts["Assigned"].toLocaleString(),
-      subtitle: filterLabel,
-      icon: <User className="w-6 h-6" />,
-      bg: "bg-purple-50",
-      border: "border-purple-200",
-      text: "text-purple-700"
-    },
-    {
-      title: "In Progress",
-      value: statusCounts["In Progress"].toLocaleString(),
-      subtitle: filterLabel,
-      icon: <Loader2 className="w-6 h-6" />,
-      bg: "bg-orange-50",
-      border: "border-orange-200",
-      text: "text-orange-700"
-    },
-    {
-      title: "QA Check",
-      value: statusCounts["QA Check"].toLocaleString(),
-      subtitle: filterLabel,
-      icon: <AlertCircle className="w-6 h-6" />,
-      bg: "bg-cyan-50",
-      border: "border-cyan-200",
-      text: "text-cyan-700"
-    },
-    {
-      title: "On Delivery",
-      value: statusCounts["On Delivery"].toLocaleString(),
-      subtitle: filterLabel,
-      icon: <Package className="w-6 h-6" />,
-      bg: "bg-indigo-50",
-      border: "border-indigo-200",
-      text: "text-indigo-700"
-    },
-    {
-      title: "Completed",
-      value: statusCounts["Completed"].toLocaleString(),
-      subtitle: filterLabel,
-      icon: <CheckCircle className="w-6 h-6" />,
-      bg: "bg-green-50",
-      border: "border-green-200",
-      text: "text-green-700"
-    },
-    {
-      title: "Cancelled",
-      value: statusCounts["Cancelled"].toLocaleString(),
-      subtitle: filterLabel,
-      icon: <XCircle className="w-6 h-6" />,
-      bg: "bg-red-50",
-      border: "border-red-200",
-      text: "text-red-700"
-    },
+    }
   ];
 
   // Status badge component
@@ -396,6 +340,35 @@ const SalesReport = () => {
               </button>
             ))}
           </div>
+
+          {/* Custom Date Range Picker */}
+          {selectedFilter === "Custom" && (
+            <div className="no-print flex flex-wrap gap-2 mt-2 items-center">
+              <label className="text-sm text-gray-600">From:</label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                max={customEndDate || new Date().toISOString().split('T')[0]}
+              />
+              <label className="text-sm text-gray-600">To:</label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                min={customStartDate}
+                max={new Date().toISOString().split('T')[0]}
+              />
+              <button
+                onClick={() => handleFilterChange("Custom")}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                Apply
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Stats Cards */}
@@ -523,7 +496,15 @@ const SalesReport = () => {
               </button>
             </span>
           )}
-          {(searchQuery || selectedCategory !== "All" || statusFilter !== "all") && (
+          {selectedFilter === "Custom" && (customStartDate || customEndDate) && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
+              Custom: {customStartDate || "..."} to {customEndDate || "..."}
+              <button onClick={() => handleFilterChange("All Time")} className="hover:text-orange-900">
+                ×
+              </button>
+            </span>
+          )}
+          {(searchQuery || selectedCategory !== "All" || statusFilter !== "all" || (selectedFilter === "Custom" && (customStartDate || customEndDate))) && (
             <button
               onClick={() => {
                 setSearchQuery("");
