@@ -226,36 +226,36 @@ const AllocationListTable = ({ searchTerm }) => {
           {/* Stats Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <div className="text-2xl font-bold text-gray-900">{allocations.length}</div>
+              <div className="text-2xl font-bold text-gray-900">{filteredAllocations.length}</div>
               <div className="text-sm text-gray-500">Total</div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="text-2xl font-bold text-orange-600">
-                {allocations.filter(a => a.displayStatus === 'Assigned').length}
+                {filteredAllocations.filter(a => a.displayStatus === 'Assigned').length}
               </div>
               <div className="text-sm text-gray-500">Assigned</div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="text-2xl font-bold text-blue-600">
-                {allocations.filter(a => a.displayStatus === 'In Progress').length}
+                {filteredAllocations.filter(a => a.displayStatus === 'In Progress').length}
               </div>
               <div className="text-sm text-gray-500">In Progress</div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="text-2xl font-bold text-cyan-600">
-                {allocations.filter(a => a.displayStatus === 'QA Check').length}
+                {filteredAllocations.filter(a => a.displayStatus === 'QA Check').length}
               </div>
               <div className="text-sm text-gray-500">QA Check</div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="text-2xl font-bold text-green-600">
-                {allocations.filter(a => a.displayStatus === 'Completed').length}
+                {filteredAllocations.filter(a => a.displayStatus === 'Completed').length}
               </div>
               <div className="text-sm text-gray-500">Completed</div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="text-2xl font-bold text-red-600">
-                {allocations.filter(a => a.displayStatus === 'Cancelled').length}
+                {filteredAllocations.filter(a => a.displayStatus === 'Cancelled').length}
               </div>
               <div className="text-sm text-gray-500">Cancelled</div>
             </div>

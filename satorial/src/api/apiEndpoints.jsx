@@ -16,6 +16,7 @@ export const API = {
       LIST: "/client/clients/",
       DETAIL: (clientId) => `/client/clients/${clientId}/`,
       SEARCH: "/client/search/",
+      BULK_IMPORT: "/client/clients/bulk-import/",
     },
     ADDRESSES: {
       CREATE: "/client/addresses/",
@@ -158,6 +159,10 @@ export const API = {
       ADD: "/users/payroll/",
       LIST: "/users/payroll/",
       DETAIL: (payrollId) => `/users/payroll/${payrollId}/`,
+    },
+    ROLES: {
+      LIST: "/users/staff-roles/",
+      DETAIL: (roleId) => `/users/staff-roles/${roleId}/`,
     },
   },
   REPORT: {
