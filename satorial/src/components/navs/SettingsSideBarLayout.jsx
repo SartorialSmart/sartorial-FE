@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import Header from "./NavLayout/Header";
 import Sidebar from "./NavLayout/SideBar";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Settings, Shield } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 
 const SettingsSideBarLayout = ({ children }) => {
@@ -18,6 +18,7 @@ const SettingsSideBarLayout = ({ children }) => {
 
   const sidebarItems = [
     { icon: <Settings size={18} />, label: "Settings", path: "/settings" },
+    { icon: <Shield size={18} />, label: "Staff Roles", path: "/settings/roles" },
     { icon: <LogOut size={18} />, label: "Log out", path: "#", onClick: handleLogout },
   ];
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Loader2, ArrowLeft } from "lucide-react";
 import StaffService from "../../services/staffServices/StaffService";
+import StaffRoleService from "../../services/staffServices/StaffRoleService";
 import SettingsService from "../../services/settings";
 import { toast } from "react-toastify";
 import StaffSideBarLayout from "../../components/navs/StaffSideBarLayout";
@@ -13,6 +14,7 @@ const StaffEditDisplay = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [departments, setDepartments] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -27,9 +29,10 @@ const StaffEditDisplay = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [staffData, deptData] = await Promise.all([
+        const [staffData, deptData, roleData] = await Promise.all([
           StaffService.getStaffDetail(slug),
           SettingsService.Departments.getDepartments(),
+          StaffRoleService.listRoles(),
         ]);
         setFormData({
           first_name: staffData.first_name || "",
@@ -42,6 +45,7 @@ const StaffEditDisplay = () => {
           gender: staffData.gender || "Male",
         });
         setDepartments(Array.isArray(deptData) ? deptData : []);
+        setRoles(Array.isArray(roleData) ? roleData : roleData.results || []);
       } catch (error) {
         console.error("Error loading staff:", error);
         toast.error("Failed to load staff details");
@@ -188,11 +192,11 @@ const StaffEditDisplay = () => {
                   required
                 >
                   <option value="">Select Role</option>
-                  <option value="Tailor">Tailor</option>
-                  <option value="Designer">Designer</option>
-                  <option value="Driver">Driver</option>
-                  <option value="Accountant">Accountant</option>
-                  <option value="Procurement_Manager">Procurement Manager</option>
+                  {roles.map((role) => (
+                    <option key={role.id || role.name} value={role.name}>
+                      {role.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

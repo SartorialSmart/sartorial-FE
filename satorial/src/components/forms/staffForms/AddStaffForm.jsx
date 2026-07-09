@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { X, Upload, Eye, EyeOff, Loader2 } from "lucide-react";
 import StaffService from "../../../services/staffServices/StaffService";
+import StaffRoleService from "../../../services/staffServices/StaffRoleService";
 import SettingsService from "../../../services/settings";
 import { toast } from "react-toastify";
 import PropTypes from "prop-types";
@@ -28,6 +29,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [roles, setRoles] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
   const [successModal, setSuccessModal] = useState(null);
@@ -36,7 +38,24 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   // Fetch departments on component mount
   useEffect(() => {
     fetchDepartments();
+    fetchRoles();
   }, []);
+
+  const fetchRoles = async () => {
+    try {
+      const data = await StaffRoleService.listRoles();
+      setRoles(Array.isArray(data) ? data : data.results || []);
+    } catch {
+      // Fallback to default roles if fetch fails
+      setRoles([
+        { name: "Tailor" },
+        { name: "Designer" },
+        { name: "Driver" },
+        { name: "Accountant" },
+        { name: "Procurement_Manager" },
+      ]);
+    }
+  };
 
   const fetchDepartments = async () => {
     try {
@@ -421,11 +440,11 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 required
               >
                 <option value="">Select Role</option>
-                <option value="Tailor">Tailor</option>
-                <option value="Designer">Designer</option>
-                <option value="Driver">Driver</option>
-                <option value="Accountant">Accountant</option>
-                <option value="Procurement_Manager">Procurement Manager</option>
+                {roles.map((role) => (
+                  <option key={role.id || role.name} value={role.name}>
+                    {role.name}
+                  </option>
+                ))}
               </select>
             </div>
 
