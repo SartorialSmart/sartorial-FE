@@ -175,6 +175,14 @@ export const API = {
     SALES_BY_DURATION: "/report/total-sales-by-duration/",
   },
   INVENTORY_MANAGEMENT: {
+    LOCATIONS: {
+      LIST: "/inventories/locations/",
+      CREATE: "/inventories/locations/",
+      DETAIL: (id) => `/inventories/locations/${id}/`,
+      UPDATE: (id) => `/inventories/locations/${id}/`,
+      DELETE: (id) => `/inventories/locations/${id}/`,
+    },
+
     DISPENSE_INVENTORY: {
       LIST: "/inventories/dispense-inventory/",
       CREATE: "/inventories/dispense-inventory/",
@@ -185,6 +193,13 @@ export const API = {
       UPDATE_WITH_ID: (id) => `/inventories/dispense-inventory/${id}/`,
       DELETE_WITH_ID: (id) => `/inventories/dispense-inventory/${id}/`,
     },
+
+    STOCK_MOVEMENTS: {
+      LIST: "/inventories/stock-movements/",
+      CREATE: "/inventories/stock-movements/",
+      DETAIL: (id) => `/inventories/stock-movements/${id}/`,
+    },
+
     INVENTORY_CATEGORY: {
       LIST: "/inventories/inventory-category/",
       CREATE: "/inventories/inventory-category/",
