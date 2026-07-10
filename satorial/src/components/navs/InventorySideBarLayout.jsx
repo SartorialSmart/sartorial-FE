@@ -10,7 +10,8 @@ import {
   ShoppingBag,
   FileText,
   BarChart,
-  HelpCircle
+  HelpCircle,
+  Activity,
 } from "lucide-react";
 
 const InventorySideBarLayout = ({ children }) => {
@@ -21,6 +22,7 @@ const InventorySideBarLayout = ({ children }) => {
     { icon: <Clock />, label: "Inventory History", path: "/inventory/history" },
     { icon: <CreditCard />, label: "Inventory Category", path: "/inventory/category/list" },
     { icon: <CreditCard />, label: "Dispense Inventory", path: "/inventory/dispense/list" },
+    { icon: <Activity />, label: "Stock Movements", path: "/inventory/stock-movements" },
     { icon: <HelpCircle />, label: "Help Centre", path: "/help-centre" },
   ];
 
