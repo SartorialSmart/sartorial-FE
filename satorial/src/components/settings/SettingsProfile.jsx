@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import OrganizationProfile from "./OrganizationProfile";
 import UserProfile from "./UserProfile";
 import DepartmentsManagement from "./DepartmentsManagement";
+import LocationManagement from "./LocationManagement";
 import InvoiceContent from "./InvoiceContent";
 import FabricsContent from "./FabricsContent";
 import NotificationSettings from "./NotificationSettings";
@@ -16,6 +17,7 @@ const SettingsProfile = () => {
     { id: "Account", label: "Account" },
     { id: "Profile", label: "Organization Profile" },
     { id: "Departments", label: "Departments" },
+    { id: "Locations", label: "Locations" },
     { id: "Invoice", label: "Invoice Settings" },
     { id: "Fabrics", label: "Fabrics Catalog" },
     { id: "Notifications", label: "Notifications" },
@@ -29,6 +31,8 @@ const SettingsProfile = () => {
         return <OrganizationProfile />;
       case "Departments":
         return <DepartmentsManagement />;
+      case "Locations":
+        return <LocationManagement />;
       case "Invoice":
         return <InvoiceContent />;
       case "Fabrics":
