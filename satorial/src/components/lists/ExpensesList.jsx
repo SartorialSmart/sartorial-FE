@@ -17,20 +17,23 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ExpensesService from "../../services/expensesServices/ExpensesService";
+import ExpensesCategoryService from "../../services/expensesServices/ExpensesCategoryService";
 import ExpenseFormModal from "../modals/formModals/ExpenseFormModal";
 import SuccessModal from "../modals/SuccessModal";
 
 const ExpensesList = () => {
   const [expenses, setExpenses] = useState([]);
   const [filteredExpenses, setFilteredExpenses] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedRecurrence, setSelectedRecurrence] = useState("All");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [selectedExpenses, setSelectedExpenses] = useState([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -42,7 +45,21 @@ const ExpensesList = () => {
 
   useEffect(() => {
     filterExpenses();
-  }, [expenses, searchTerm, selectedCategory]);
+  }, [expenses, searchTerm, selectedCategory, selectedRecurrence]);
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await ExpensesCategoryService.getExpenseCategoriesList();
+        const list = Array.isArray(data) ? data : data.results || [];
+        setCategories(list);
+      } catch {
+        // silently handle
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const fetchData = async (filterStart, filterEnd) => {
     try {
@@ -97,6 +114,17 @@ const ExpensesList = () => {
       );
     }
 
+    // Recurrence type filter
+    if (selectedRecurrence !== "All") {
+      if (selectedRecurrence === "One-off") {
+        filtered = filtered.filter((expense) => !expense.recurrence_type);
+      } else {
+        filtered = filtered.filter(
+          (expense) => expense.recurrence_type === selectedRecurrence
+        );
+      }
+    }
+
     setFilteredExpenses(filtered);
   };
 
@@ -104,6 +132,7 @@ const ExpensesList = () => {
     try {
       const blob = await ExpensesService.exportExpenses({
         category: selectedCategory !== "All" ? selectedCategory : undefined,
+        recurrence: selectedRecurrence !== "All" ? selectedRecurrence : undefined,
         start_date: dateRange.start,
         end_date: dateRange.end,
       });
@@ -209,8 +238,6 @@ const ExpensesList = () => {
     if (amount > 50000) return "text-orange-600 bg-orange-50";
     return "text-green-600 bg-green-50";
   };
-
-  const categories = ["All", ...new Set(expenses.map((e) => e.category_name).filter(Boolean))];
 
   if (loading) {
     return (
@@ -394,7 +421,7 @@ const ExpensesList = () => {
               exit={{ height: 0, opacity: 0 }}
               className="mt-4 pt-4 border-t border-gray-200"
             >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category
@@ -404,11 +431,31 @@ const ExpensesList = () => {
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
+                    <option value="All">All Categories</option>
                     {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
                       </option>
                     ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Recurrence
+                  </label>
+                  <select
+                    value={selectedRecurrence}
+                    onChange={(e) => setSelectedRecurrence(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="All">All Types</option>
+                    <option value="One-off">One-off</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="biennially">Biennially</option>
+                    <option value="annually">Annually</option>
                   </select>
                 </div>
 
@@ -445,6 +492,7 @@ const ExpensesList = () => {
                 <button
                   onClick={() => {
                     setSelectedCategory("All");
+                    setSelectedRecurrence("All");
                     setDateRange({ start: "", end: "" });
                     setSearchTerm("");
                   }}
@@ -456,6 +504,47 @@ const ExpensesList = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Active Filter Tags */}
+        {(searchTerm || selectedCategory !== "All" || selectedRecurrence !== "All" || dateRange.start || dateRange.end) && (
+          <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
+            {searchTerm && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                Search: &ldquo;{searchTerm}&rdquo;
+                <button onClick={() => setSearchTerm("")} className="hover:text-blue-900 ml-1">&times;</button>
+              </span>
+            )}
+            {selectedCategory !== "All" && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                Category: {selectedCategory}
+                <button onClick={() => setSelectedCategory("All")} className="hover:text-green-900 ml-1">&times;</button>
+              </span>
+            )}
+            {selectedRecurrence !== "All" && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+                Recurrence: {selectedRecurrence}
+                <button onClick={() => setSelectedRecurrence("All")} className="hover:text-purple-900 ml-1">&times;</button>
+              </span>
+            )}
+            {(dateRange.start || dateRange.end) && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
+                Date: {dateRange.start || "…"} → {dateRange.end || "…"}
+                <button onClick={() => setDateRange({ start: "", end: "" })} className="hover:text-orange-900 ml-1">&times;</button>
+              </span>
+            )}
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedCategory("All");
+                setSelectedRecurrence("All");
+                setDateRange({ start: "", end: "" });
+              }}
+              className="text-sm text-gray-600 hover:text-gray-800 underline"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Expenses Table */}
@@ -485,6 +574,9 @@ const ExpensesList = () => {
                   Recurrence
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Period
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Amount
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -501,7 +593,7 @@ const ExpensesList = () => {
             <tbody className="divide-y divide-gray-200">
               {filteredExpenses.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
                     <FileText className="w-12 h-12 mx-auto text-gray-300 mb-2" />
                     <p className="text-sm">No expenses found</p>
                     <p className="text-xs text-gray-400 mt-1">
@@ -551,6 +643,15 @@ const ExpensesList = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                           </svg>
                           {expense.recurrence_interval_label || expense.recurrence_type}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {expense.recurrence_start_date && expense.recurrence_end_date ? (
+                        <span title={`${expense.recurrence_start_date} → ${expense.recurrence_end_date}`}>
+                          {formatDate(expense.recurrence_start_date)} → {formatDate(expense.recurrence_end_date)}
                         </span>
                       ) : (
                         <span className="text-xs text-gray-400">—</span>

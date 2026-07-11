@@ -477,6 +477,7 @@ const OrderReport = () => {
                 </th>
                 <th className="p-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">Client Name</th>
                 <th className="p-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">Order Name</th>
+                <th className="p-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">Status</th>
                 <th className="p-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">Amount</th>
                 <th className="p-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">Order Date</th>
                 <th className="p-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">Actions</th>
@@ -485,7 +486,7 @@ const OrderReport = () => {
             <tbody className="divide-y divide-gray-100">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center">
+                  <td colSpan={7} className="p-12 text-center">
                     <div className="flex flex-col items-center gap-3 text-gray-400">
                       <Package className="w-12 h-12" />
                       <p className="text-lg font-medium">No orders found</p>
@@ -525,6 +526,20 @@ const OrderReport = () => {
                             : order.order_category}
                         </div>
                       )}
+                    </td>
+                    <td className="p-6">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        order.order_status === "Completed" ? "bg-green-100 text-green-800" :
+                        order.order_status === "Cancelled" ? "bg-red-100 text-red-800" :
+                        order.order_status === "In Progress" ? "bg-yellow-100 text-yellow-800" :
+                        order.order_status === "On Delivery" ? "bg-orange-100 text-orange-800" :
+                        order.order_status === "QA Check" ? "bg-cyan-100 text-cyan-800" :
+                        order.order_status === "Assigned" ? "bg-purple-100 text-purple-800" :
+                        order.order_status === "Pending" ? "bg-gray-100 text-gray-800" :
+                        "bg-gray-100 text-gray-800"
+                      }`}>
+                        {order.order_status || "-"}
+                      </span>
                     </td>
                     <td className="p-6">
                       <div className="font-bold text-gray-900 text-lg">
