@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   Search,
   Download,
@@ -85,11 +85,6 @@ const getDateRange = (filter, customStartDate, customEndDate) => {
   }
 };
 
-const daysInRange = (range) => {
-  if (!range) return 365;
-  return range.days || Math.ceil((range.endDate - range.startDate) / (1000 * 60 * 60 * 24)) + 1;
-};
-
 const formatCurrency = (value) => {
   const num = parseFloat(value) || 0;
   return `₦${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -110,37 +105,46 @@ const FinancialReport = () => {
   const [orders, setOrders] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showFullPeriod, setShowFullPeriod] = useState(false);
   const printRef = useRef();
 
   const dateRange = useMemo(
     () => getDateRange(selectedFilter, customStartDate, customEndDate),
     [selectedFilter, customStartDate, customEndDate]
   );
-  const days = daysInRange(dateRange);
 
+  // Fetch all expenses once on mount (no date filter — proration is client-side)
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchExpenses = async () => {
+      try {
+        const expensesData = await ExpensesService.getExpenseList().catch(() => []);
+        const fetchedExpenses = Array.isArray(expensesData)
+          ? expensesData
+          : expensesData.results || expensesData.expenses || [];
+        setExpenses(fetchedExpenses);
+      } catch {
+        // silently handle — expenses will stay empty
+      }
+    };
+    fetchExpenses();
+  }, []);
+
+  // Fetch orders when date range changes
+  useEffect(() => {
+    const fetchOrders = async () => {
       setLoading(true);
       setError(null);
       try {
-        const params = {};
-        if (dateRange?.startDate) params.start_date = toLocalDateStr(dateRange.startDate);
-        if (dateRange?.endDate) params.end_date = toLocalDateStr(dateRange.endDate);
+        const orderParams = {};
+        if (dateRange?.startDate) orderParams.start_date = toLocalDateStr(dateRange.startDate);
+        if (dateRange?.endDate) orderParams.end_date = toLocalDateStr(dateRange.endDate);
 
-        const [ordersData, expensesData] = await Promise.all([
-          OrderService.getOrders(params),
-          ExpensesService.getExpenseList(params).catch(() => []),
-        ]);
+        const ordersData = await OrderService.getOrders(orderParams);
 
         const fetchedOrders = Array.isArray(ordersData)
           ? ordersData
           : ordersData.results || ordersData.orders || [];
         setOrders(fetchedOrders);
-
-        const fetchedExpenses = Array.isArray(expensesData)
-          ? expensesData
-          : expensesData.results || expensesData.expenses || [];
-        setExpenses(fetchedExpenses);
       } catch (err) {
         console.error("Error fetching financial data:", err);
         setError("Failed to load financial data. Please try again.");
@@ -148,7 +152,7 @@ const FinancialReport = () => {
         setLoading(false);
       }
     };
-    fetchData();
+    fetchOrders();
   }, [dateRange]);
 
   // Client-side date filter
@@ -160,9 +164,53 @@ const FinancialReport = () => {
     });
   }, [orders, dateRange]);
 
+  // Recurrence period helpers
+  const toMidnight = (d) => { const m = new Date(d); m.setHours(0, 0, 0, 0); return m; };
+
+  const overlapDays = useCallback((aStart, aEnd, bStart, bEnd) => {
+    const latest = aStart > bStart ? aStart : bStart;
+    const earliest = aEnd < bEnd ? aEnd : bEnd;
+    const diffDays = Math.round((toMidnight(earliest) - toMidnight(latest)) / (1000 * 60 * 60 * 24));
+    return Math.max(0, diffDays + 1);
+  }, []);
+
+  const prorateExpense = useCallback((expense, filterStart, filterEnd, periodDays) => {
+    const amt = parseFloat(expense.amount) || 0;
+    const recType = (expense.recurrence_type || "").toLowerCase();
+    if (!recType) return amt;
+
+    const rStart = expense.recurrence_start_date ? toMidnight(expense.recurrence_start_date) : null;
+    const rEnd = expense.recurrence_end_date ? toMidnight(expense.recurrence_end_date) : null;
+    if (!rStart || !rEnd) return amt;
+
+    const overlaps = rStart <= toMidnight(filterEnd) && rEnd >= toMidnight(filterStart);
+    if (!overlaps) return 0;
+
+    const totalDays = Math.max(Math.round((toMidnight(rEnd) - toMidnight(rStart)) / (1000 * 60 * 60 * 24)) + 1, 1);
+    const dailyRate = amt / totalDays;
+
+    if (showFullPeriod) {
+      return dailyRate * periodDays;
+    }
+
+    const overlap = overlapDays(rStart, rEnd, toMidnight(filterStart), toMidnight(filterEnd));
+    return dailyRate * overlap;
+  }, [showFullPeriod, overlapDays]);
+
+  // Include recurring expenses whose period overlaps the filter range, not just created_at
   const dateFilteredExpenses = useMemo(() => {
     if (!dateRange) return expenses;
+    const fStart = toMidnight(dateRange.startDate);
+    const fEnd = toMidnight(dateRange.endDate);
     return expenses.filter((e) => {
+      const recType = (e.recurrence_type || "").toLowerCase();
+      if (recType) {
+        const rStart = e.recurrence_start_date ? toMidnight(e.recurrence_start_date) : null;
+        const rEnd = e.recurrence_end_date ? toMidnight(e.recurrence_end_date) : null;
+        if (rStart && rEnd) {
+          return rStart <= fEnd && rEnd >= fStart;
+        }
+      }
       const d = new Date(e.created_at || e.date);
       return d >= dateRange.startDate && d <= dateRange.endDate;
     });
@@ -182,40 +230,31 @@ const FinancialReport = () => {
     [dateFilteredOrders]
   );
 
-  // Expenditure: expense amounts with annual proration
+  // Expenditure: expense amounts prorated by actual recurrence period overlap
   const grossExpenditure = useMemo(() => {
-    let total = 0;
-    for (const e of dateFilteredExpenses) {
-      const amt = parseFloat(e.amount) || 0;
-      const recType = (e.recurrence_type || "").toLowerCase();
-      if (recType === "yearly" || recType === "annual") {
-        total += (amt / 365) * days;
-      } else {
-        total += amt;
-      }
-    }
-    return total;
-  }, [dateFilteredExpenses, days]);
+    if (!dateRange) return dateFilteredExpenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+    return dateFilteredExpenses.reduce(
+      (sum, e) => sum + prorateExpense(e, dateRange.startDate, dateRange.endDate, dateRange.days),
+      0
+    );
+  }, [dateFilteredExpenses, dateRange, prorateExpense]);
 
   const netProfit = grossRevenue - grossExpenditure;
 
   // Breakdown items for the table
   const breakdownItems = useMemo(() => {
-    // Group expenses by category
     const categoryMap = {};
     for (const e of dateFilteredExpenses) {
       const cat = e.category_name || "Uncategorized";
-      const amt = parseFloat(e.amount) || 0;
-      const recType = (e.recurrence_type || "").toLowerCase();
-      const effectiveAmt = (recType === "yearly" || recType === "annual")
-        ? (amt / 365) * days
-        : amt;
+      const effectiveAmt = dateRange
+        ? prorateExpense(e, dateRange.startDate, dateRange.endDate, dateRange.days)
+        : parseFloat(e.amount) || 0;
       categoryMap[cat] = (categoryMap[cat] || 0) + effectiveAmt;
     }
     return Object.entries(categoryMap)
       .map(([name, amount]) => ({ name, amount }))
       .sort((a, b) => b.amount - a.amount);
-  }, [dateFilteredExpenses, days]);
+  }, [dateFilteredExpenses, dateRange, prorateExpense]);
 
   const totalExpenditureFromBreakdown = breakdownItems.reduce((s, i) => s + i.amount, 0);
 
@@ -297,6 +336,26 @@ const FinancialReport = () => {
             ))}
           </div>
         </div>
+
+        {selectedFilter !== "All Time" && (
+          <div className="no-print flex items-center gap-3 mb-4">
+            <button
+              onClick={() => setShowFullPeriod(!showFullPeriod)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                showFullPeriod ? "bg-blue-600" : "bg-gray-300"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  showFullPeriod ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+            <span className="text-sm text-gray-700 font-medium">
+              {showFullPeriod ? "Full filter period" : "Prorated to date"}
+            </span>
+          </div>
+        )}
 
         {selectedFilter === "Custom Date" && (
           <div className="no-print flex flex-col sm:flex-row items-start sm:items-center mb-6 gap-3 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
