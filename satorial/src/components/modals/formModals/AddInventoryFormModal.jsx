@@ -3,6 +3,8 @@ import { X, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import InventoryForm from "../../forms/InventoryForm";
 import InventoryService from "../../../services/InventoryService";
+import StockMovementService from "../../../services/StockMovementService";
+import { useAuth } from "../../../contexts/AuthContext";
 import PropTypes from "prop-types";
 
 const AddInventoryFormModal = ({
@@ -16,6 +18,7 @@ const AddInventoryFormModal = ({
   const [categories, setCategories] = useState([]);
   const [error, setError] = useState(null);
   const [formKey, setFormKey] = useState(0);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -38,6 +41,41 @@ const AddInventoryFormModal = ({
     try {
       if (initialValues && initialValues.id) {
         await InventoryService.updateInventory(initialValues.id, formData);
+
+        const oldQty = Number(initialValues.quantity) || 0;
+        const newQty = Number(formData.quantity) || 0;
+        if (oldQty !== newQty) {
+          const diff = newQty - oldQty;
+          const itemName = formData.item_name || initialValues.item_name || "";
+          const sku = formData.sku || initialValues.sku || "";
+
+          StockMovementService.createMovement({
+            movement_type: diff > 0 ? "stock_in" : "adjustment",
+            inventory: initialValues.id,
+            quantity: Math.abs(diff),
+            performed_by: user?.id || "",
+            reason: `Inventory updated — quantity changed from ${oldQty} to ${newQty}`,
+          }).catch(() => {});
+
+          try {
+            const LOCAL_KEY = "sartorial_stock_movements";
+            const existing = JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]");
+            existing.push({
+              id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              movement_type: diff > 0 ? "stock_in" : "adjustment",
+              inventory: initialValues.id,
+              inventory_item_name: itemName,
+              inventory_sku: sku,
+              quantity: Math.abs(diff),
+              from_location_name: "",
+              to_location_name: "",
+              performed_by_name: user?.email || "",
+              reason: `Inventory updated — quantity changed from ${oldQty} to ${newQty}`,
+              created_at: new Date().toISOString(),
+            });
+            localStorage.setItem(LOCAL_KEY, JSON.stringify(existing));
+          } catch { /* localStorage unavailable */ }
+        }
       } else {
         await InventoryService.createInventory(formData);
       }
