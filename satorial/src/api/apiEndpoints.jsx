@@ -198,6 +198,8 @@ export const API = {
       LIST: "/inventories/stock-movements/",
       CREATE: "/inventories/stock-movements/",
       DETAIL: (id) => `/inventories/stock-movements/${id}/`,
+      UPDATE: (id) => `/inventories/stock-movements/${id}/`,
+      DELETE: (id) => `/inventories/stock-movements/${id}/`,
     },
 
     INVENTORY_CATEGORY: {

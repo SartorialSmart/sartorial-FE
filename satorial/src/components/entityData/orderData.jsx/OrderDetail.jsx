@@ -176,14 +176,11 @@ const OrderDetail = () => {
   }, []);
 
   const handleSavePayment = async () => {
-    // AddPaymentForm already called PaymentService.createPayment — just refresh order state
-    try {
-      setShowPaymentModal(false);
-      const updatedOrder = await OrderService.getOrderById(orderId);
-      setOrder(preserveAllocation(updatedOrder));
-    } catch (err) {
-      console.error("Failed to refresh order after payment:", err);
-    }
+    // AddPaymentForm already called PaymentService.createPayment — refresh order in background
+    setShowPaymentModal(false);
+    OrderService.getOrderById(orderId)
+      .then((updatedOrder) => setOrder(preserveAllocation(updatedOrder)))
+      .catch((err) => console.error("Failed to refresh order after payment:", err));
   };
 
   const handleAssignOrder = async (payload) => {
