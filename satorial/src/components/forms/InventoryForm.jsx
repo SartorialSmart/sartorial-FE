@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import InventoryService from "../../services/InventoryService";
+import LocationService from "../../services/LocationService";
 import StaffService from "../../services/staffServices/StaffService";
 import PropTypes from "prop-types";
 import { 
@@ -12,7 +13,8 @@ import {
   XCircle,
   Loader2,
   DollarSign,
-  Barcode
+  Barcode,
+  MapPin
 } from "lucide-react";
 
 const UNIT_OPTIONS = [
@@ -36,12 +38,14 @@ const InventoryForm = ({
   onCancel,
   loading = false,
   categories = [],
+  locations = [],
 }) => {
   const [form, setForm] = useState({
     sku: initialValues.sku || "",
     barcode: initialValues.barcode || "",
     item_name: initialValues.item_name || "",
     category: initialValues.category || "",
+    location: initialValues.location || "",
     unit_of_measurement: initialValues.unit_of_measurement || "",
     quantity: initialValues.quantity || "",
     unit_cost: initialValues.unit_cost || "",
@@ -160,6 +164,35 @@ const InventoryForm = ({
           <div className="text-red-500 text-xs mt-1 flex items-center gap-1">
             <XCircle className="w-3 h-3" />
             {errors.category}
+          </div>
+        )}
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+          <MapPin className="w-4 h-4" />
+          Location <span className="text-gray-400 font-normal">(optional)</span>
+        </label>
+        <select
+          name="location"
+          value={form.location}
+          onChange={handleChange}
+          className={`w-full border rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+            errors.location ? 'border-red-300' : 'border-gray-300'
+          } ${initialValues.location ? 'bg-gray-50 text-gray-500' : ''}`}
+          disabled={!!initialValues.location}
+        >
+          <option value="">Select location</option>
+          {locations.map((loc) => (
+            <option key={loc.id} value={loc.id}>
+              {loc.name}
+            </option>
+          ))}
+        </select>
+        {errors.location && (
+          <div className="text-red-500 text-xs mt-1 flex items-center gap-1">
+            <XCircle className="w-3 h-3" />
+            {errors.location}
           </div>
         )}
       </div>
@@ -328,6 +361,7 @@ InventoryForm.propTypes = {
   onCancel: PropTypes.func,
   loading: PropTypes.bool,
   categories: PropTypes.array,
+  locations: PropTypes.array,
 };
 
 const DispenseInventoryForm = ({

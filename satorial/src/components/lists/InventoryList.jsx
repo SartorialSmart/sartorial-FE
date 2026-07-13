@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { MoreVertical, Search, Download, Plus, Package, AlertTriangle, CheckCircle, Layers, DollarSign } from "lucide-react";
 import InventoryService from "../../services/InventoryService";
 import AddInventoryFormModal from "../modals/formModals/AddInventoryFormModal";
@@ -17,6 +18,7 @@ function formatDate(dateString) {
 }
 
 const InventoryList = () => {
+  const navigate = useNavigate();
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [inventoryItems, setInventoryItems] = useState([]);
@@ -286,7 +288,12 @@ const InventoryList = () => {
                       </span>
                     </td>
                     <td className="p-3">
-                      {item.item_name || item.itemName || "-"}
+                      <button
+                        onClick={() => navigate(`/inventory/detail/${item.id}`)}
+                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium text-left transition-colors cursor-pointer"
+                      >
+                        {item.item_name || item.itemName || "-"}
+                      </button>
                     </td>
                     <td className="p-3">
                       {categoryMap[item.category] || item.category || "-"}

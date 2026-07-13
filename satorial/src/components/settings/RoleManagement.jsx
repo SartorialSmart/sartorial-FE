@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, Loader2, Shield, X, Check } from "lucide-react";
-import StaffRoleService from "../../services/staffServices/StaffRoleService";
+import RolesService from "../../services/settings/RolesService";
 import { toast } from "react-toastify";
 
 const RoleManagement = () => {
@@ -15,7 +15,7 @@ const RoleManagement = () => {
   const fetchRoles = async () => {
     setLoading(true);
     try {
-      const data = await StaffRoleService.listRoles();
+      const data = await RolesService.getRoles();
       setRoles(Array.isArray(data) ? data : data.results || []);
     } catch {
       toast.error("Failed to load roles");
@@ -49,10 +49,10 @@ const RoleManagement = () => {
     setSaving(true);
     try {
       if (editingRole) {
-        await StaffRoleService.updateRole(editingRole.id, { name: trimmed });
+        await RolesService.updateRole(editingRole.id, { name: trimmed });
         toast.success("Role updated");
       } else {
-        await StaffRoleService.addRole({ name: trimmed });
+        await RolesService.createRole({ name: trimmed });
         toast.success("Role created");
       }
       setShowModal(false);
@@ -68,7 +68,7 @@ const RoleManagement = () => {
   const handleDelete = async (role) => {
     setSaving(true);
     try {
-      await StaffRoleService.deleteRole(role.id);
+      await RolesService.deleteRole(role.id);
       toast.success("Role deleted");
       setDeleteConfirm(null);
       fetchRoles();
