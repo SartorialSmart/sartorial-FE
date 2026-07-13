@@ -103,10 +103,11 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
         ? (discountVal / 100) * total
         : discountVal;
       const priceAfterDiscount = Math.max(total - discount, 0);
+      const hasDeposit = prev.initial_deposit !== "" && prev.initial_deposit !== null && deposit > 0;
       return {
         ...prev,
         order_price: total > 0 ? total.toString() : prev.order_price,
-        balance: total > 0 ? Math.max(priceAfterDiscount - deposit, 0).toFixed(2) : prev.balance,
+        balance: total > 0 ? (hasDeposit ? Math.max(priceAfterDiscount - deposit, 0).toFixed(2) : "0.00") : prev.balance,
       };
     });
   }, [selectedItems]);
@@ -158,7 +159,8 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
           ? (discountVal / 100) * price
           : discountVal;
         const discountedPrice = Math.max(price - discount, 0);
-        updated.balance = Math.max(discountedPrice - deposit, 0).toFixed(2);
+        const hasDeposit = updated.initial_deposit !== "" && updated.initial_deposit !== null && deposit > 0;
+        updated.balance = hasDeposit ? Math.max(discountedPrice - deposit, 0).toFixed(2) : "0.00";
       }
       return updated;
     });
@@ -208,6 +210,7 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
 
       const orderResponse = await OrderService.createOrder({
         ...formData,
+        initial_deposit: formData.initial_deposit === "" || formData.initial_deposit === null ? 0 : parseFloat(formData.initial_deposit),
         order_description: buildReadyMadeDescription(itemsSummary),
         start_date: todayDate,
         end_date: todayDate,
@@ -217,24 +220,23 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
 
       const orderId = orderResponse?.id || orderResponse?.order_id || "";
 
-      // Auto-dispense each selected item from inventory
-      const dispensePromises = Object.values(selectedItems).map(
-        ({ item, quantity }) => {
-          const payload = {
-            item_name: item.id,
-            quantity_dispensed: quantity,
-            reason: orderId
-              ? `Ready Made Order - Order #${orderId}`
-              : "Ready Made Order",
-          };
-          if (staffId) payload.dispense_to = staffId;
-          return InventoryService.createDispenseInventory(payload);
-        }
-      );
-
-      await Promise.all(dispensePromises);
-
+      // Close immediately — dispense calls fire in the background
       if (onClose) onClose();
+
+      // Fire-and-forget: dispense each selected item from inventory
+      Object.values(selectedItems).forEach(({ item, quantity }) => {
+        const payload = {
+          item_name: item.id,
+          quantity_dispensed: quantity,
+          reason: orderId
+            ? `Ready Made Order - Order #${orderId}`
+            : "Ready Made Order",
+        };
+        if (staffId) payload.dispense_to = staffId;
+        InventoryService.createDispenseInventory(payload).catch(() => {
+          // Silently handle — order was already created successfully
+        });
+      });
     } catch (error) {
       setErrorTitle("Error");
       setErrorMessage(
@@ -526,12 +528,12 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
 
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
-                  Initial Deposit *
+                  Initial Deposit
                 </label>
                 <input
                   type="text"
                   name="initial_deposit"
-                  placeholder="₦ Enter Amount"
+                  placeholder="₦ Optional — leave blank if fully paid"
                   value={formData.initial_deposit}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"

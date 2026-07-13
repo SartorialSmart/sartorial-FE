@@ -176,13 +176,10 @@ const EditOrderForm = () => {
   };
 
   const handleSavePayment = async () => {
-    try {
-      setShowPaymentModal(false);
-      const updatedOrder = await OrderService.getOrderById(orderId);
-      setOrder(updatedOrder);
-    } catch (error) {
-      console.error("Failed to refresh order after payment:", error);
-    }
+    setShowPaymentModal(false);
+    OrderService.getOrderById(orderId)
+      .then((updatedOrder) => setOrder(updatedOrder))
+      .catch((error) => console.error("Failed to refresh order after payment:", error));
   };
 
   if (loading && !order) {

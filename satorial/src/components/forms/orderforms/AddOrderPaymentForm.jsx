@@ -115,8 +115,9 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
       };
 
       await PaymentService.createPayment(paymentData);
-      onSave(paymentData);
+      // Close immediately — refresh order in background
       onClose();
+      onSave(paymentData);
     } catch (err) {
       setError(extractErrorMessage(err, "Failed to process payment. Please try again."));
     } finally {
