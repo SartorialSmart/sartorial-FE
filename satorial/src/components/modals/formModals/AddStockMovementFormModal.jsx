@@ -21,24 +21,27 @@ const AddStockMovementFormModal = ({
   const handleSubmit = async (formData) => {
     setLoading(true);
     setError(null);
+    let apiCreatedId = null;
     try {
       if (initialValues && initialValues.id) {
         await StockMovementService.updateMovement(initialValues.id, formData);
       } else {
-        // Try API, but always cache locally as fallback
         try {
-          await StockMovementService.createMovement(formData);
-        } catch {
-          // Backend may not persist — cache locally
+          const result = await StockMovementService.createMovement(formData);
+          apiCreatedId = result?.id || result?.pk || null;
+        } catch (apiErr) {
+          console.error("[AddStockMovementFormModal] API create failed:", apiErr);
         }
 
         const localEntry = {
-          id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          id: apiCreatedId ? String(apiCreatedId) : `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           movement_type: formData.movement_type,
           inventory: formData.inventory,
           inventory_item_name: formData._inventory_item_name || "",
           inventory_sku: formData._inventory_sku || "",
           quantity: formData.quantity,
+          from_location: formData.from_location || "",
+          to_location: formData.to_location || "",
           from_location_name: formData._from_location_name || "",
           to_location_name: formData._to_location_name || "",
           performed_by_name: formData._performed_by_name || "",
