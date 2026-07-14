@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import StockMovementService from "../../services/StockMovementService";
 import InventoryService from "../../services/InventoryService";
+import LocationService from "../../services/LocationService";
 import AddStockMovementFormModal from "../modals/formModals/AddStockMovementFormModal";
 import { Menu, Transition } from "@headlessui/react";
 import { Fragment } from "react";
@@ -29,19 +30,37 @@ const getLocalMovements = () => {
   }
 };
 
-const normalizeMovement = (m) => ({
-  id: m.id || `gen-${Math.random().toString(36).slice(2)}`,
-  _source: m._source || "api",
-  movement_type: m.movement_type || "adjustment",
-  inventory_item_name: m.inventory_item_name || m.item_name || m.inventory_name || m.inventory_item?.item_name || m.inventory_item?.name || "",
-  inventory_sku: m.inventory_sku || m.sku || m.inventory_item?.sku || "",
-  quantity: Number(m.quantity) || 0,
-  from_location_name: m.from_location_name || m.from_location?.name || "",
-  to_location_name: m.to_location_name || m.to_location?.name || "",
-  performed_by_name: m.performed_by_name || m.performer_name || m.dispense_to_name || m.dispense_to || "",
-  reason: m.reason || "",
-  created_at: m.created_at || m.dispensed_at || m.date || m.updated_at || new Date().toISOString(),
-});
+const normalizeMovement = (m) => {
+  const resolveId = (val) => {
+    if (!val) return "";
+    if (typeof val === "object") return String(val.id || "");
+    const s = String(val);
+    if (s.includes("/")) {
+      const parts = s.replace(/\/$/, "").split("/");
+      const last = parts[parts.length - 1];
+      return last || "";
+    }
+    return s;
+  };
+  const rawFrom = m.from_location;
+  const rawTo = m.to_location;
+  return {
+    id: m.id || `gen-${Math.random().toString(36).slice(2)}`,
+    _source: m._source || "api",
+    movement_type: m.movement_type || "adjustment",
+    inventory: resolveId(m.inventory || m.inventory_item || m.inventory_item_id),
+    inventory_item_name: m.inventory_item_name || m.item_name || m.inventory_name || m.inventory_item?.item_name || m.inventory_item?.name || "",
+    inventory_sku: m.inventory_sku || m.sku || m.inventory_item?.sku || "",
+    quantity: Number(m.quantity) || 0,
+    from_location: resolveId(rawFrom),
+    to_location: resolveId(rawTo),
+    from_location_name: m.from_location_name || (typeof rawFrom === "object" ? rawFrom?.name : "") || "",
+    to_location_name: m.to_location_name || (typeof rawTo === "object" ? rawTo?.name : "") || "",
+    performed_by_name: m.performed_by_name || m.performer_name || m.dispense_to_name || m.dispense_to || "",
+    reason: m.reason || "",
+    created_at: m.created_at || m.dispensed_at || m.date || m.updated_at || new Date().toISOString(),
+  };
+};
 
 const StockMovementHistory = () => {
   const [apiMovements, setApiMovements] = useState([]);
@@ -61,11 +80,21 @@ const StockMovementHistory = () => {
   const fetchMovements = useCallback(async () => {
     setLoading(true);
     try {
-      const [rawMovements, dispenseData, inventoryData] = await Promise.allSettled([
+      const [rawMovements, dispenseData, inventoryData, locationsData] = await Promise.allSettled([
         StockMovementService.listMovements(),
         InventoryService.listDispenseInventory(),
         InventoryService.listInventory(),
+        LocationService.listLocations(),
       ]);
+
+      let locs = [];
+      if (locationsData.status === "fulfilled") {
+        const raw = locationsData.value;
+        locs = Array.isArray(raw) ? raw : raw?.results || [];
+      }
+
+      const locLookup = {};
+      locs.forEach((loc) => { locLookup[String(loc.id)] = loc.name; });
 
       const items = [];
 
@@ -120,6 +149,16 @@ const StockMovementHistory = () => {
       }
 
       items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      items.forEach((m) => {
+        if (!m.from_location_name && m.from_location) {
+          m.from_location_name = locLookup[m.from_location] || "";
+        }
+        if (!m.to_location_name && m.to_location) {
+          m.to_location_name = locLookup[m.to_location] || "";
+        }
+      });
+
       setApiMovements(items);
     } catch {
       toast.error("Failed to load stock movements.");

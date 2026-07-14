@@ -50,6 +50,7 @@ import ExpensesDashboardDisplay from "./pages/expensesPages/ExpensesDashboardDis
 import ExpensesCategoryListDisplay from "./pages/expensesPages/ExpensesCategoryListDisplay";
 
 import InventoryListDisplay from "./pages/inventories/InventoryListDisplay";
+import InventoryDetailDisplay from "./pages/inventories/InventoryDetailDisplay";
 import InventoryCategoryListDisplay from "./pages/inventories/InventoryCategoryListDisplay";
 import DispenseInventoryListDisplay from "./pages/inventories/DispenseInventoryListDisplay";
 import InventoryHistoryListDisplay from "./pages/inventories/InventoryHistoryListDisplay";
@@ -125,6 +126,7 @@ const protectedRoutes = [
   { path: "/expenses/category/list", element: <ExpensesCategoryListDisplay /> },
 
   { path: "/inventory/list/overview", element: <InventoryListDisplay /> },
+  { path: "/inventory/detail/:itemId", element: <InventoryDetailDisplay /> },
   {
     path: "/inventory/category/list",
     element: <InventoryCategoryListDisplay />,

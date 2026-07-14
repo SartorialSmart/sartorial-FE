@@ -106,8 +106,12 @@ const StockMovementForm = ({
     if (!form.quantity || parseFloat(form.quantity) <= 0) newErrors.quantity = "A valid quantity is required";
     if (!form.performed_by) newErrors.performed_by = "Staff member is required";
     if (!form.reason) newErrors.reason = "Reason is required";
-    if (form.movement_type === "transfer" && !form.to_location) {
-      newErrors.to_location = "Destination location is required for transfers";
+    if ((form.movement_type === "stock_in" || form.movement_type === "return") && !form.to_location) {
+      newErrors.to_location = "Destination location is required";
+    }
+    if (form.movement_type === "transfer") {
+      if (!form.from_location) newErrors.from_location = "Source location is required";
+      if (!form.to_location) newErrors.to_location = "Destination location is required";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -136,23 +140,27 @@ const StockMovementForm = ({
       _to_location_name: "",
     };
 
-    if (form.movement_type === "transfer") {
-      const fromLoc = locations.find((l) => l.id === form.from_location);
-      const toLoc = locations.find((l) => l.id === form.to_location);
-      if (form.from_location) {
-        payload.from_location = form.from_location;
-        payload._from_location_name = fromLoc?.name || "";
-      }
+    if (form.movement_type === "transfer" || form.movement_type === "stock_in" || form.movement_type === "return") {
+      const toLoc = locations.find((l) => String(l.id) === String(form.to_location));
       if (form.to_location) {
         payload.to_location = form.to_location;
         payload._to_location_name = toLoc?.name || "";
       }
     }
 
+    if (form.movement_type === "transfer") {
+      const fromLoc = locations.find((l) => String(l.id) === String(form.from_location));
+      if (form.from_location) {
+        payload.from_location = form.from_location;
+        payload._from_location_name = fromLoc?.name || "";
+      }
+    }
+
     onSubmit(payload);
   };
 
-  const showLocations = form.movement_type === "transfer";
+  const showToLocation = form.movement_type === "transfer" || form.movement_type === "stock_in" || form.movement_type === "return";
+  const showFromLocation = form.movement_type === "transfer";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -244,54 +252,65 @@ const StockMovementForm = ({
             )}
           </div>
 
-          {/* Locations (visible for transfers) */}
-          {showLocations && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  From Location
-                </label>
-                <select
-                  name="from_location"
-                  value={form.from_location}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select location</option>
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  To Location
-                </label>
-                <select
-                  name="to_location"
-                  value={form.to_location}
-                  onChange={handleChange}
-                  className={`w-full border rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.to_location ? "border-red-300" : "border-gray-300"
-                  }`}
-                >
-                  <option value="">Select location</option>
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.to_location && (
-                  <div className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                    <XCircle className="w-3 h-3" /> {errors.to_location}
-                  </div>
-                )}
-              </div>
+          {/* Locations */}
+          {(showFromLocation || showToLocation) && (
+            <div className={`grid ${showFromLocation ? "grid-cols-2" : "grid-cols-1"} gap-4`}>
+              {showFromLocation && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    From Location
+                  </label>
+                  <select
+                    name="from_location"
+                    value={form.from_location}
+                    onChange={handleChange}
+                    className={`w-full border rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.from_location ? "border-red-300" : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Select location</option>
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.from_location && (
+                    <div className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <XCircle className="w-3 h-3" /> {errors.from_location}
+                    </div>
+                  )}
+                </div>
+              )}
+              {showToLocation && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    {form.movement_type === "transfer" ? "To Location" : "Location"}
+                  </label>
+                  <select
+                    name="to_location"
+                    value={form.to_location}
+                    onChange={handleChange}
+                    className={`w-full border rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.to_location ? "border-red-300" : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Select location</option>
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.to_location && (
+                    <div className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <XCircle className="w-3 h-3" /> {errors.to_location}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
