@@ -12,11 +12,10 @@ const OrganizationProfileService = {
 
   /**
    * Update organization profile
-   * @param {Object} payload - Profile data
-   * @param {boolean} isFormData - Whether payload is FormData (for logo upload)
+   * @param {Object|FormData} payload - Profile data (plain object or FormData for logo upload)
    * @returns {Promise} Updated profile data
    */
-  updateProfile: (payload, isFormData = false) => {
+  updateProfile: (payload) => {
     return apiPut(API.SETTINGS.PROFILE.UPDATE, payload);
   },
 
