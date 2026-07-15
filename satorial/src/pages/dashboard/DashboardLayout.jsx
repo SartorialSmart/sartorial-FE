@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/navs/NavBar";
 import { useAuth } from "../../contexts/AuthContext";
+import { useSubscription } from "../../contexts/SubscriptionContext";
+import ClientService from "../../services/ClientService";
+import OrderService from "../../services/OrderService";
+import StaffService from "../../services/staffServices/StaffService";
+import ExpensesService from "../../services/expensesServices/ExpensesService";
+import InventoryService from "../../services/InventoryService";
 import {
   HelpCircle,
   Archive,
@@ -34,7 +40,9 @@ const VIEW_KEY_MAP = {
   "/settings": "settings",
 };
 
-const dashboardItems = [
+const formatCurrency = (amount) => `₦${Number(amount || 0).toLocaleString()}`;
+
+const getDashboardItems = (stats) => [
   {
     title: "Clients Management",
     description: "Manage clients and customer relationships",
@@ -44,7 +52,7 @@ const dashboardItems = [
     color: "from-blue-500 to-blue-600",
     bgColor: "bg-blue-500/10",
     borderColor: "border-blue-200",
-    stats: "42 Clients",
+    stats: stats.clients !== null ? `${stats.clients} Clients` : "—",
     textColor: "text-blue-900"
   },
   {
@@ -56,7 +64,7 @@ const dashboardItems = [
     color: "from-purple-500 to-purple-600",
     bgColor: "bg-purple-500/10",
     borderColor: "border-purple-200",
-    stats: "15 Pending",
+    stats: stats.pendingOrders !== null ? `${stats.pendingOrders} Pending` : "—",
     textColor: "text-purple-900"
   },
   {
@@ -68,7 +76,7 @@ const dashboardItems = [
     color: "from-green-500 to-green-600",
     bgColor: "bg-green-500/10",
     borderColor: "border-green-200",
-    stats: "7 Active",
+    stats: stats.activeStaff !== null ? `${stats.activeStaff} Active` : "—",
     textColor: "text-green-900"
   },
   {
@@ -80,7 +88,7 @@ const dashboardItems = [
     color: "from-orange-500 to-orange-600",
     bgColor: "bg-orange-500/10",
     borderColor: "border-orange-200",
-    stats: "12 Reports",
+    stats: "Analytics",
     textColor: "text-orange-900"
   },
   {
@@ -92,7 +100,7 @@ const dashboardItems = [
     color: "from-indigo-500 to-indigo-600",
     bgColor: "bg-indigo-500/10",
     borderColor: "border-indigo-200",
-    stats: "$8,250 Total",
+    stats: stats.expenses !== null ? `${formatCurrency(stats.expenses)} Total` : "—",
     textColor: "text-indigo-900"
   },
   {
@@ -104,7 +112,7 @@ const dashboardItems = [
     color: "from-pink-500 to-pink-600",
     bgColor: "bg-pink-500/10",
     borderColor: "border-pink-200",
-    stats: "156 Items",
+    stats: stats.inventoryItems !== null ? `${stats.inventoryItems} Items` : "—",
     textColor: "text-pink-900"
   },
   {
@@ -116,7 +124,7 @@ const dashboardItems = [
     color: "from-teal-500 to-teal-600",
     bgColor: "bg-teal-500/10",
     borderColor: "border-teal-200",
-    stats: "Active",
+    stats: stats.subscriptionStatus || "No Plan",
     textColor: "text-teal-900"
   },
   {
@@ -137,10 +145,19 @@ const ALLOWED_ROLES = ["super_admin", "admin", "organization"];
 
 const DashboardLayout = () => {
   const { user, fetchAuthenticatedUser } = useAuth();
+  const { subscription } = useSubscription();
   const isAdmin = ALLOWED_ROLES.includes(user?.role?.toLowerCase());
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState("");
   const refreshed = useRef(false);
+  const [stats, setStats] = useState({
+    clients: null,
+    pendingOrders: null,
+    activeStaff: null,
+    expenses: null,
+    inventoryItems: null,
+    subscriptionStatus: null,
+  });
 
   useEffect(() => {
     if (user && !isAdmin && !user?.staff_permissions && !refreshed.current) {
@@ -164,6 +181,66 @@ const DashboardLayout = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const fetchStats = async () => {
+      const results = await Promise.allSettled([
+        ClientService.getClientDashboard(),
+        OrderService.getOrders(),
+        StaffService.listStaff(),
+        ExpensesService.getExpenseSummary(),
+        InventoryService.listInventory(),
+      ]);
+
+      const [clientsRes, ordersRes, staffRes, expensesRes, inventoryRes] = results;
+
+      const clientCount = clientsRes.status === "fulfilled"
+        ? (clientsRes.value?.total_clients ?? clientsRes.value?.count ?? null)
+        : null;
+
+      const pendingOrders = ordersRes.status === "fulfilled"
+        ? (Array.isArray(ordersRes.value)
+            ? ordersRes.value.filter(o => o.order_status === "Not Started" || o.order_status === "Pending").length
+            : null)
+        : null;
+
+      const activeStaff = staffRes.status === "fulfilled"
+        ? (staffRes.value?.count ?? (Array.isArray(staffRes.value?.results) ? staffRes.value.results.length : null))
+        : null;
+
+      const totalExpenses = expensesRes.status === "fulfilled"
+        ? (expensesRes.value?.total_expense_amount ?? expensesRes.value?.total ?? expensesRes.value?.amount ?? null)
+        : null;
+
+      const inventoryCount = inventoryRes.status === "fulfilled"
+        ? (Array.isArray(inventoryRes.value) ? inventoryRes.value.length : inventoryRes.value?.count ?? null)
+        : null;
+
+      setStats({
+        clients: clientCount,
+        pendingOrders,
+        activeStaff,
+        expenses: totalExpenses,
+        inventoryItems: inventoryCount,
+        subscriptionStatus: null,
+      });
+    };
+
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
+    if (subscription) {
+      const status = subscription.status || subscription.plan?.status || null;
+      const label = status === "active" ? "Active"
+        : status === "trialing" ? "Trial"
+        : status === "cancelled" ? "Cancelled"
+        : status === "past_due" ? "Past Due"
+        : status ? status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ")
+        : "No Plan";
+      setStats(prev => ({ ...prev, subscriptionStatus: label }));
+    }
+  }, [subscription]);
+
   const handleHelpClick = () => {
     navigate("/help-centre");
   };
@@ -173,6 +250,7 @@ const DashboardLayout = () => {
   };
 
   const userPermissions = user?.staff_permissions;
+  const dashboardItems = getDashboardItems(stats);
   const visibleItems = isAdmin || !userPermissions
     ? dashboardItems
     : dashboardItems.filter((item) =>
