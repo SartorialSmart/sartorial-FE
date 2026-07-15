@@ -152,7 +152,7 @@ const OrganizationProfile = () => {
           }
         });
 
-        await SettingsService.Profile.updateProfile(formData, true);
+        await SettingsService.Profile.updateProfile(formData);
       } else {
         const { logo: _logo, logo_url, ...updateData } = profile;
         await SettingsService.Profile.updateProfile(updateData);
@@ -166,15 +166,11 @@ const OrganizationProfile = () => {
       fetchProfile();
     } catch (error) {
       console.error("Error updating profile:", error);
-      if (import.meta.env.DEV || location.hostname === "localhost") {
-        setSuccessModal({
-          title: "Profile Saved Locally",
-          message: "Could not reach the server, but your data has been saved locally for preview.",
-          buttonText: "Done",
-        });
-      } else {
-        message.error(error.response?.data?.detail || "Failed to update profile");
-      }
+      const detail = error.response?.data?.detail
+        || error.response?.data?.message
+        || error.message
+        || "Failed to update profile";
+      message.error(detail);
     } finally {
       setSaving(false);
     }

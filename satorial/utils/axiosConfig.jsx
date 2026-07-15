@@ -2,15 +2,18 @@ import axios from 'axios';
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 const PUBLIC_ENDPOINTS = ['/users/login/', '/users/register-organization/', '/users/forgot-password/', '/users/reset-password/'];
 
 axiosInstance.interceptors.request.use(
   async (config) => {
+    // Set JSON Content-Type for non-FormData requests
+    if (!(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+    // For FormData, let axios/browser auto-set multipart/form-data with boundary
+
     if (!PUBLIC_ENDPOINTS.some((ep) => config.url.includes(ep))) {
       let token = localStorage.getItem('accessToken');
       if (token) {
