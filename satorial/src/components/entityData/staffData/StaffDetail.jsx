@@ -29,6 +29,7 @@ import {
   DollarSign,
   Award,
   Target,
+  Landmark,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import StaffService from "../../../services/staffServices/StaffService";
@@ -119,6 +120,8 @@ const StaffDetail = () => {
         employment_date: data.employment_date,
         birthday_date: data.birthday_date,
         address: data.address || "",
+        bank_name: data.bank_name || "",
+        account_number: data.account_number || "",
       });
     } catch (error) {
       console.error("Failed to fetch staff detail:", error);
@@ -770,6 +773,31 @@ const StaffDetail = () => {
                 className="w-full"
                 placeholder="Enter staff address"
               />
+            </div>
+
+            {/* Bank Information */}
+            <div className="mt-6 pt-6 border-t">
+              <div className="flex items-center gap-2 mb-4">
+                <Landmark size={18} className="text-gray-600" />
+                <h4 className="text-base font-semibold text-gray-900">Bank Information</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField
+                  label="Bank Name"
+                  value={formData.bank_name}
+                  disabled={!isEditing}
+                  onChange={(e) => handleInputChange("bank_name", e.target.value)}
+                />
+                <InputField
+                  label="Account Number"
+                  value={formData.account_number}
+                  disabled={!isEditing}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                    handleInputChange("account_number", val);
+                  }}
+                />
+              </div>
             </div>
           </div>
         </TabPane>
