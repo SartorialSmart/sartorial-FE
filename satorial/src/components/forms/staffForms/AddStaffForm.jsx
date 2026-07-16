@@ -1,13 +1,41 @@
 // components/forms/staffForms/AddStaffForm.jsx
 
 import { useState, useRef, useEffect } from "react";
-import { X, Upload, Eye, EyeOff, Loader2 } from "lucide-react";
+import { X, Upload, Eye, EyeOff, Loader2, Landmark } from "lucide-react";
 import StaffService from "../../../services/staffServices/StaffService";
 import StaffRoleService from "../../../services/staffServices/StaffRoleService";
 import SettingsService from "../../../services/settings";
 import { toast } from "react-toastify";
 import PropTypes from "prop-types";
 import SuccessModal from "../../modals/SuccessModal";
+
+const NIGERIAN_BANKS = [
+  "Access Bank",
+  "Citibank Nigeria",
+  "Ecobank Nigeria",
+  "Fidelity Bank Nigeria",
+  "First Bank of Nigeria",
+  "First City Monument Bank",
+  "Globus Bank",
+  "Guaranty Trust Bank",
+  "Heritage Bank",
+  "Keystone Bank",
+  "Kuda Bank",
+  "Opay",
+  "Palmpay",
+  "Polaris Bank",
+  "Providus Bank",
+  "Stanbic IBTC Bank",
+  "Standard Chartered Bank",
+  "Sterling Bank",
+  "SunTrust Bank",
+  "Titan Trust Bank",
+  "Union Bank of Nigeria",
+  "United Bank for Africa",
+  "VFD Microfinance Bank",
+  "Wema Bank",
+  "Zenith Bank",
+];
 
 const AddStaffForm = ({ onClose, onStaffCreated }) => {
   const initialFormData = {
@@ -23,6 +51,9 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     birthdayDate: "",
     gender: "Male",
     avatar: null,
+    bank_name: "",
+    custom_bank_name: "",
+    account_number: "",
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -160,6 +191,17 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
       return false;
     }
 
+    // Bank account validation
+    if (formData.bank_name === "__other__" && !formData.custom_bank_name.trim()) {
+      toast.error("Please enter a custom bank name");
+      return false;
+    }
+
+    if (formData.account_number && !/^\d{10}$/.test(formData.account_number)) {
+      toast.error("Account number must be exactly 10 digits");
+      return false;
+    }
+
     // Date validation
     const employmentDate = new Date(formData.employmentDate);
     const birthdayDate = new Date(formData.birthdayDate);
@@ -208,6 +250,10 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
         birthday_date: formData.birthdayDate,
         gender: formData.gender,
         avatar: formData.avatar,
+        bank_name: formData.bank_name === "__other__"
+          ? formData.custom_bank_name.trim()
+          : formData.bank_name,
+        account_number: formData.account_number || "",
       };
 
       await StaffService.addStaff(staffData);
@@ -569,6 +615,86 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                   />
                   <span className="text-gray-700">Female</span>
                 </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Bank Information Section */}
+          <div className="pt-6 border-t">
+            <div className="flex items-center gap-2 mb-4">
+              <Landmark size={18} className="text-gray-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Bank Information</h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Optional — for salary payments</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Bank Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Bank Name
+                </label>
+                <select
+                  name="bank_name"
+                  value={formData.bank_name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                    transition-colors"
+                >
+                  <option value="">Select Bank</option>
+                  {NIGERIAN_BANKS.map((bank) => (
+                    <option key={bank} value={bank}>
+                      {bank}
+                    </option>
+                  ))}
+                  <option value="__other__">Other (type manually)</option>
+                </select>
+              </div>
+
+              {/* Custom Bank Name (shown when "Other" is selected) */}
+              {formData.bank_name === "__other__" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Custom Bank Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="custom_bank_name"
+                    value={formData.custom_bank_name}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                      transition-colors"
+                    placeholder="Enter bank name"
+                  />
+                </div>
+              )}
+
+              {/* Account Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Account Number
+                </label>
+                <input
+                  type="text"
+                  name="account_number"
+                  value={formData.account_number}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                    setFormData({ ...formData, account_number: val });
+                  }}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                    transition-colors"
+                  placeholder="0123456789"
+                  maxLength={10}
+                  inputMode="numeric"
+                />
+                {formData.account_number && formData.account_number.length !== 10 && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Must be exactly 10 digits ({formData.account_number.length}/10)
+                  </p>
+                )}
               </div>
             </div>
           </div>
