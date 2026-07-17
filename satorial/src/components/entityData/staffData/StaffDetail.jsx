@@ -30,11 +30,13 @@ import {
   Award,
   Target,
   Landmark,
+  MapPin,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import StaffService from "../../../services/staffServices/StaffService";
 import StaffRoleService from "../../../services/staffServices/StaffRoleService";
 import StaffReportService from "../../../services/staffServices/StaffReportService";
+import LocationService from "../../../services/LocationService";
 import OrderService from "../../../services/OrderService";
 import dayjs from "dayjs";
 import PropTypes from "prop-types";
@@ -87,11 +89,15 @@ const StaffDetail = () => {
     end_date: dayjs().format('YYYY-MM-DD'),
   });
   const [roles, setRoles] = useState([]);
+  const [locations, setLocations] = useState([]);
 
   useEffect(() => {
     fetchStaffData();
     StaffRoleService.listRoles()
       .then((data) => setRoles(Array.isArray(data) ? data : data.results || []))
+      .catch(() => {});
+    LocationService.listLocations()
+      .then((data) => setLocations(Array.isArray(data) ? data : data.results || []))
       .catch(() => {});
   }, [slug]);
 
@@ -122,6 +128,7 @@ const StaffDetail = () => {
         address: data.address || "",
         bank_name: data.bank_name || "",
         account_number: data.account_number || "",
+        location: data.location || null,
       });
     } catch (error) {
       console.error("Failed to fetch staff detail:", error);
@@ -757,6 +764,28 @@ const StaffDetail = () => {
                   disabled={!isEditing}
                   format="YYYY-MM-DD"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Location
+                </label>
+                <Select
+                  className="w-full"
+                  value={formData.location}
+                  onChange={(val) => handleInputChange("location", val)}
+                  disabled={!isEditing}
+                  placeholder="Select Location"
+                  allowClear
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {locations.map((loc) => (
+                    <Option key={loc.id} value={loc.id}>
+                      {loc.name} ({loc.category})
+                    </Option>
+                  ))}
+                </Select>
               </div>
             </div>
 
