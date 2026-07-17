@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import StaffService from "../../../services/staffServices/StaffService";
-import StaffRoleService from "../../../services/staffServices/StaffRoleService";
+import RolesService from "../../../services/settings/RolesService";
 import StaffReportService from "../../../services/staffServices/StaffReportService";
 import LocationService from "../../../services/LocationService";
 import OrderService from "../../../services/OrderService";
@@ -93,7 +93,7 @@ const StaffDetail = () => {
 
   useEffect(() => {
     fetchStaffData();
-    StaffRoleService.listRoles()
+    RolesService.getRoles()
       .then((data) => setRoles(Array.isArray(data) ? data : data.results || []))
       .catch(() => {});
     LocationService.listLocations()
