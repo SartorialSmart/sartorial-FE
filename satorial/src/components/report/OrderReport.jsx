@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Mail,
   User,
@@ -57,6 +58,7 @@ const getPaymentState = (order) => {
 };
 
 const OrderReport = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("all");
   const [selectedFilter, setSelectedFilter] = useState("All Time");
   const [customStartDate, setCustomStartDate] = useState("");
@@ -594,9 +596,10 @@ const OrderReport = () => {
       return (
         <tr
           key={order.id || index}
-          className="hover:bg-gray-50/50 transition-colors duration-150 group"
+          className="hover:bg-gray-50/50 transition-colors duration-150 group cursor-pointer"
+          onClick={() => order.id && navigate(`/order/detail/${order.id}`)}
         >
-          <td className="p-6 w-12">
+          <td className="p-6 w-12" onClick={(e) => e.stopPropagation()}>
             <input
               type="checkbox"
               className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 group-hover:border-gray-400"
@@ -661,9 +664,10 @@ const OrderReport = () => {
       return (
         <tr
           key={order.id || index}
-          className="hover:bg-gray-50/50 transition-colors duration-150 group"
+          className="hover:bg-gray-50/50 transition-colors duration-150 group cursor-pointer"
+          onClick={() => order.id && navigate(`/order/detail/${order.id}`)}
         >
-          <td className="p-6 w-12">
+          <td className="p-6 w-12" onClick={(e) => e.stopPropagation()}>
             <input
               type="checkbox"
               className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 group-hover:border-gray-400"
@@ -728,9 +732,10 @@ const OrderReport = () => {
     return (
       <tr
         key={order.id || index}
-        className="hover:bg-gray-50/50 transition-colors duration-150 group"
+        className="hover:bg-gray-50/50 transition-colors duration-150 group cursor-pointer"
+        onClick={() => order.id && navigate(`/order/detail/${order.id}`)}
       >
-        <td className="p-6 w-12">
+        <td className="p-6 w-12" onClick={(e) => e.stopPropagation()}>
           <input
             type="checkbox"
             className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 group-hover:border-gray-400"
@@ -788,8 +793,11 @@ const OrderReport = () => {
               : order.order_date || order.date || "-"}
           </div>
         </td>
-        <td className="p-6">
-          <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-150">
+        <td className="p-6" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => order.id && navigate(`/order/detail/${order.id}`)}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-150"
+          >
             <MoreVertical className="w-5 h-5" />
           </button>
         </td>
