@@ -1,10 +1,11 @@
 // components/forms/staffForms/AddStaffForm.jsx
 
 import { useState, useRef, useEffect } from "react";
-import { X, Upload, Eye, EyeOff, Loader2, Landmark } from "lucide-react";
+import { X, Upload, Eye, EyeOff, Loader2, Landmark, MapPin } from "lucide-react";
 import StaffService from "../../../services/staffServices/StaffService";
-import StaffRoleService from "../../../services/staffServices/StaffRoleService";
+import RolesService from "../../../services/settings/RolesService";
 import SettingsService from "../../../services/settings";
+import LocationService from "../../../services/LocationService";
 import { toast } from "react-toastify";
 import PropTypes from "prop-types";
 import SuccessModal from "../../modals/SuccessModal";
@@ -54,6 +55,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     bank_name: "",
     custom_bank_name: "",
     account_number: "",
+    location: "",
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -63,6 +65,8 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   const [roles, setRoles] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
+  const [locations, setLocations] = useState([]);
+  const [loadingLocations, setLoadingLocations] = useState(true);
   const [successModal, setSuccessModal] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -70,11 +74,12 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   useEffect(() => {
     fetchDepartments();
     fetchRoles();
+    fetchLocations();
   }, []);
 
   const fetchRoles = async () => {
     try {
-      const data = await StaffRoleService.listRoles();
+      const data = await RolesService.getRoles();
       setRoles(Array.isArray(data) ? data : data.results || []);
     } catch {
       // Fallback to default roles if fetch fails
@@ -106,6 +111,18 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
       ]);
     } finally {
       setLoadingDepartments(false);
+    }
+  };
+
+  const fetchLocations = async () => {
+    try {
+      setLoadingLocations(true);
+      const data = await LocationService.listLocations();
+      setLocations(Array.isArray(data) ? data : data.results || []);
+    } catch {
+      setLocations([]);
+    } finally {
+      setLoadingLocations(false);
     }
   };
 
@@ -254,6 +271,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
           ? formData.custom_bank_name.trim()
           : formData.bank_name,
         account_number: formData.account_number || "",
+        location: formData.location || null,
       };
 
       await StaffService.addStaff(staffData);
@@ -616,6 +634,40 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                   <span className="text-gray-700">Female</span>
                 </label>
               </div>
+            </div>
+
+            {/* Location */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Location
+              </label>
+              <div className="relative">
+                <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <select
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  disabled={loadingLocations}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg 
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                    transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed"
+                >
+                  <option value="">
+                    {loadingLocations ? "Loading locations..." : "Select Location"}
+                  </option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name} ({loc.category})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {loadingLocations && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                  <Loader2 size={14} className="animate-spin" />
+                  <span>Loading locations...</span>
+                </div>
+              )}
             </div>
           </div>
 
