@@ -2,47 +2,7 @@ import { useState, useEffect } from "react";
 import { Edit2, Save, X, Ruler, Check } from "lucide-react";
 import PropTypes from "prop-types";
 import ClientService from "../../../services/ClientService";
-
-// Import measurement images
-import M_1 from "../../../assets/images/measurement/mes-1.svg";
-import M_2 from "../../../assets/images/measurement/mes-2.svg";
-import M_3 from "../../../assets/images/measurement/mes-3.svg";
-import M_4 from "../../../assets/images/measurement/mes-4.svg";
-import M_5 from "../../../assets/images/measurement/mes-5.svg";
-import M_6 from "../../../assets/images/measurement/mes-6.svg";
-import M_7 from "../../../assets/images/measurement/mes-7.svg";
-import M_8 from "../../../assets/images/measurement/mes-8.svg";
-import M_9 from "../../../assets/images/measurement/mes-9.svg";
-import M_10 from "../../../assets/images/measurement/mes-10.svg";
-import M_11 from "../../../assets/images/measurement/mes-11.svg";
-
-const measurementLabels = {
-  length: "Length",
-  shoulder: "Shoulder",
-  upper_chest: "Upper Chest",
-  bust: "Bust",
-  waist: "Waist",
-  seat: "Seat",
-  armhole: "Armhole",
-  sleeve_length: "Sleeve Length",
-  sleeve_circumference: "Sleeve Circumference",
-  front_neck_depth: "Front Neck Depth",
-  back_neck_depth: "Back Neck Depth",
-};
-
-const measurementImages = {
-  length: M_1,
-  shoulder: M_7,
-  upper_chest: M_2,
-  bust: M_8,
-  waist: M_3,
-  seat: M_9,
-  armhole: M_4,
-  sleeve_length: M_10,
-  sleeve_circumference: M_5,
-  front_neck_depth: M_11,
-  back_neck_depth: M_6,
-};
+import { getMeasurementsForGender, MeasurementPlaceholder } from "../../../../utils/measurementConfig";
 
 const ClientMeasurementInfo = ({ clientId }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -69,6 +29,9 @@ const ClientMeasurementInfo = ({ clientId }) => {
     };
     fetchMeasurements();
   }, [clientId]);
+
+  const gender = measurements?.gender || "Female";
+  const measurementFields = getMeasurementsForGender(gender);
 
   const handleChange = (field, value) => {
     setEditedMeasurements((prev) => ({
@@ -109,7 +72,6 @@ const ClientMeasurementInfo = ({ clientId }) => {
 
   return (
     <div className="space-y-6">
-      {/* Success Message */}
       {saveSuccess && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3 animate-fade-in">
           <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
@@ -121,12 +83,11 @@ const ClientMeasurementInfo = ({ clientId }) => {
         </div>
       )}
 
-      {/* Measurements Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4 flex justify-between items-center">
           <h3 className="text-xl font-semibold text-white flex items-center">
             <Ruler size={20} className="mr-2" />
-            Body Measurements
+            {gender === "Male" ? "Male" : "Female"} Body Measurements
           </h3>
           <div className="flex space-x-3">
             {isEditing && (
@@ -172,22 +133,18 @@ const ClientMeasurementInfo = ({ clientId }) => {
 
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Object.keys(measurementLabels).map((key) => (
+            {measurementFields.map(({ key, label }) => (
               <div
                 key={key}
                 className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200 hover:shadow-md transition-all"
               >
                 <div className="flex items-center space-x-4">
                   <div className="flex-shrink-0 w-16 h-16 bg-indigo-100 rounded-lg flex items-center justify-center p-2">
-                    <img
-                      src={measurementImages[key]}
-                      alt={key}
-                      className="w-full h-full object-contain"
-                    />
+                    <MeasurementPlaceholder label={label} />
                   </div>
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {measurementLabels[key]}
+                      {label}
                     </label>
                     <div className="relative">
                       <input
@@ -214,7 +171,6 @@ const ClientMeasurementInfo = ({ clientId }) => {
         </div>
       </div>
 
-      {/* Info Card */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-start space-x-3">
           <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-0.5">
