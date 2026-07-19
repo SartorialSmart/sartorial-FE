@@ -3,10 +3,10 @@ import PropTypes from "prop-types";
 import ClientService from "@/services/ClientService";
 import { getMeasurementsForGender, MeasurementPlaceholder } from "../../../utils/measurementConfig";
 
-const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId }) => {
+const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId, gender: propGender }) => {
   const STORAGE_KEY = `client_measurements_${clientId}`;
 
-  const gender = localStorage.getItem("gender") || "Female";
+  const gender = propGender || "Female";
   const measurementFields = getMeasurementsForGender(gender);
 
   const buildInitial = () => {
@@ -150,6 +150,7 @@ AddClientMeasurementForm.propTypes = {
   onBack: PropTypes.func.isRequired,
   onNext: PropTypes.func.isRequired,
   clientId: PropTypes.number.isRequired,
+  gender: PropTypes.string,
 };
 
 export default AddClientMeasurementForm;

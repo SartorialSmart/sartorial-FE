@@ -213,7 +213,7 @@ const AddClientForm = ({ onNext, onClose }) => {
         });
         setPreview(null);
 
-        onNext(createdClient.id);
+        onNext(createdClient.id, formData.gender);
       }
 
       refreshClients();
