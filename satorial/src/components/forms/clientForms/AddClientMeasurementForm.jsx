@@ -72,7 +72,12 @@ const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId, gender: p
     setError(null);
 
     try {
-      const measurementData = { ...measurements, client: clientId, gender };
+      const measurementData = { client: clientId, gender };
+      Object.entries(measurements).forEach(([key, value]) => {
+        if (value !== "" && value !== null && value !== undefined) {
+          measurementData[key] = parseFloat(value);
+        }
+      });
       await ClientService.createMeasurement(measurementData);
       onNext();
     } catch (err) {
