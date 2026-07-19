@@ -360,23 +360,22 @@ const AddClientForm = ({ onNext, onClose }) => {
                 </div>
               </div>
 
-              <div className="flex items-end pb-1">
-                <div className="flex items-center gap-4">
-                  <label className="text-sm text-gray-600 font-medium">Unit:</label>
+              <div>
+                <label className="text-sm text-gray-600 font-medium block mb-1">
+                  Measurement Unit
+                </label>
+                <select
+                  name="measurement_unit"
+                  value={formData.measurement_unit}
+                  onChange={handleChange}
+                  className="border border-gray-300 rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors"
+                >
                   {MEASUREMENT_UNIT_OPTIONS.map((opt) => (
-                    <label key={opt.value} className="flex items-center text-sm text-gray-700 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="measurement_unit"
-                        value={opt.value}
-                        checked={formData.measurement_unit === opt.value}
-                        onChange={handleChange}
-                        className="mr-1.5 accent-blue-600"
-                      />
+                    <option key={opt.value} value={opt.value}>
                       {opt.label}
-                    </label>
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
             </div>
           </div>
