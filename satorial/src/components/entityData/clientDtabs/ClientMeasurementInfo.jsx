@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Edit2, Save, X, Ruler, Check } from "lucide-react";
 import PropTypes from "prop-types";
 import ClientService from "../../../services/ClientService";
-import { getMeasurementsForGender, MeasurementPlaceholder } from "../../../../utils/measurementConfig";
+import { getMeasurementsForGender, MeasurementPlaceholder } from "../../../utils/measurementConfig";
 
 const ClientMeasurementInfo = ({ clientId }) => {
   const [isEditing, setIsEditing] = useState(false);

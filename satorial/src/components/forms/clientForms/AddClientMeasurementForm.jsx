@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import ClientService from "@/services/ClientService";
-import { getMeasurementsForGender, MeasurementPlaceholder } from "../../../../utils/measurementConfig";
+import { getMeasurementsForGender, MeasurementPlaceholder } from "../../../utils/measurementConfig";
 
 const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId }) => {
   const STORAGE_KEY = `client_measurements_${clientId}`;
