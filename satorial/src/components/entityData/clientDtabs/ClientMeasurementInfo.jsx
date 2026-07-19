@@ -10,10 +10,12 @@ const ClientMeasurementInfo = ({ clientId }) => {
   const [editedMeasurements, setEditedMeasurements] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
     const fetchMeasurements = async () => {
       if (!clientId) return;
+      setFetching(true);
       try {
         const data = await ClientService.getMeasurementById(clientId);
 
@@ -25,6 +27,9 @@ const ClientMeasurementInfo = ({ clientId }) => {
         }
       } catch (error) {
         console.error("Error fetching client measurements:", error);
+        setMeasurements(null);
+      } finally {
+        setFetching(false);
       }
     };
     fetchMeasurements();
@@ -63,10 +68,21 @@ const ClientMeasurementInfo = ({ clientId }) => {
     setIsEditing(false);
   };
 
-  if (!measurements)
+  if (fetching)
     return (
       <div className="flex items-center justify-center p-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+
+  if (!measurements)
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center">
+        <Ruler size={48} className="text-gray-300 mb-4" />
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">No Measurements Yet</h3>
+        <p className="text-gray-500 text-sm max-w-md">
+          This client does not have any measurements recorded. Measurements are added during the client creation process.
+        </p>
       </div>
     );
 
