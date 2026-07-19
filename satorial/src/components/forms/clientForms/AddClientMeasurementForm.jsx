@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import ClientService from "@/services/ClientService";
-import { getMeasurementsForGender, MeasurementPlaceholder } from "../../../utils/measurementConfig";
+import { getMeasurementsForGender, getUnitLabel, MeasurementPlaceholder } from "../../../utils/measurementConfig";
 
-const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId, gender: propGender }) => {
+const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId, gender: propGender, unit: propUnit }) => {
   const STORAGE_KEY = `client_measurements_${clientId}`;
 
   const gender = propGender || "Female";
+  const unit = propUnit || "cm";
   const measurementFields = getMeasurementsForGender(gender);
 
   const buildInitial = () => {
@@ -94,7 +95,7 @@ const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId, gender: p
         {gender === "Male" ? "Male" : "Female"} Measurements
       </h2>
       <p className="text-gray-500 text-sm mb-5">
-        Enter body measurements for accurate tailoring ({measurementFields.length} measurements)
+        Enter body measurements in {getUnitLabel(unit)} for accurate tailoring ({measurementFields.length} measurements)
       </p>
 
       {error && (
@@ -111,18 +112,23 @@ const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId, gender: p
               <label className="text-gray-600 text-sm font-medium block mb-1">
                 {label}
               </label>
-              <input
-                type="number"
-                name={key}
-                value={measurements[key]}
-                onChange={handleChange}
-                placeholder="0.00"
-                className={`border ${
-                  errors[key] ? "border-red-500" : "border-gray-300"
-                } rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 ${
-                  errors[key] ? "focus:ring-red-200" : "focus:ring-blue-200"
-                } transition-colors`}
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  name={key}
+                  value={measurements[key]}
+                  onChange={handleChange}
+                  placeholder="0.00"
+                  className={`border ${
+                    errors[key] ? "border-red-500" : "border-gray-300"
+                  } rounded-lg px-3 py-2 pr-10 w-full text-sm focus:outline-none focus:ring-2 ${
+                    errors[key] ? "focus:ring-red-200" : "focus:ring-blue-200"
+                  } transition-colors`}
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">
+                  {unit}
+                </span>
+              </div>
               {errors[key] && (
                 <p className="text-red-500 text-xs mt-1">{errors[key]}</p>
               )}
@@ -156,6 +162,7 @@ AddClientMeasurementForm.propTypes = {
   onNext: PropTypes.func.isRequired,
   clientId: PropTypes.number.isRequired,
   gender: PropTypes.string,
+  unit: PropTypes.string,
 };
 
 export default AddClientMeasurementForm;

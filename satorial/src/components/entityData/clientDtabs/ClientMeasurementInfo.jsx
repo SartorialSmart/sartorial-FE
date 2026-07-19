@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import ClientService from "../../../services/ClientService";
 import {
   getMeasurementsForGender,
+  getUnitLabel,
   MeasurementPlaceholder,
 } from "../../../utils/measurementConfig";
 
@@ -17,6 +18,7 @@ const ClientMeasurementInfo = ({ clientId }) => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [clientGender, setClientGender] = useState("Female");
+  const [clientUnit, setClientUnit] = useState("cm");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,6 +32,9 @@ const ClientMeasurementInfo = ({ clientId }) => {
 
         if (clientData?.gender) {
           setClientGender(clientData.gender);
+        }
+        if (clientData?.measurement_unit) {
+          setClientUnit(clientData.measurement_unit);
         }
 
         if (Array.isArray(measurementData) && measurementData.length > 0) {
@@ -123,14 +128,19 @@ const ClientMeasurementInfo = ({ clientId }) => {
 
   const initCreateForm = async () => {
     let gender = clientGender;
+    let unit = clientUnit;
     try {
       const clientData = await ClientService.getClientById(clientId);
       if (clientData?.gender) {
         gender = clientData.gender;
         setClientGender(gender);
       }
+      if (clientData?.measurement_unit) {
+        unit = clientData.measurement_unit;
+        setClientUnit(unit);
+      }
     } catch {
-      // use existing clientGender
+      // use existing values
     }
     const fields = getMeasurementsForGender(gender);
     const initial = {};
@@ -235,7 +245,7 @@ const ClientMeasurementInfo = ({ clientId }) => {
                           className="w-full px-3 py-2 pr-12 border border-indigo-300 bg-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">
-                          cm
+                          {clientUnit}
                         </span>
                       </div>
                     </div>
@@ -340,7 +350,7 @@ const ClientMeasurementInfo = ({ clientId }) => {
                         }`}
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">
-                        cm
+                        {clientUnit}
                       </span>
                     </div>
                   </div>
@@ -371,7 +381,7 @@ const ClientMeasurementInfo = ({ clientId }) => {
               Measurement Guidelines
             </p>
             <p className="text-sm text-blue-800 mt-1">
-              All measurements are in centimeters (cm). Ensure accurate
+              All measurements are in {getUnitLabel(clientUnit)}. Ensure accurate
               measurements for the best garment fit. Click Edit to update any
               values.
             </p>
