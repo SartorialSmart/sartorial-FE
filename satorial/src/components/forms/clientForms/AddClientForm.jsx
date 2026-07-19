@@ -9,6 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import PropTypes from "prop-types";
 import { useClient } from "../../../contexts/ClientContext";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
+import { MEASUREMENT_UNIT_OPTIONS } from "../../../utils/measurementConfig";
 
 const AddClientForm = ({ onNext, onClose }) => {
   // const { user } = useAuth(); // user is not used
@@ -22,6 +23,7 @@ const AddClientForm = ({ onNext, onClose }) => {
     phone_number: localStorage.getItem("phone_number") || "",
     birthdate: localStorage.getItem("birthdate") || "",
     gender: localStorage.getItem("gender") || "Female",
+    measurement_unit: localStorage.getItem("measurement_unit") || "cm",
     house_number: localStorage.getItem("house_number") || "",
     street: localStorage.getItem("street") || "",
     city: localStorage.getItem("city") || "",
@@ -213,7 +215,7 @@ const AddClientForm = ({ onNext, onClose }) => {
         });
         setPreview(null);
 
-        onNext(createdClient.id, formData.gender);
+        onNext(createdClient.id, formData.gender, formData.measurement_unit);
       }
 
       refreshClients();
@@ -353,6 +355,25 @@ const AddClientForm = ({ onNext, onClose }) => {
                         className="mr-1.5 accent-blue-600"
                       />
                       {gender}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-end pb-1">
+                <div className="flex items-center gap-4">
+                  <label className="text-sm text-gray-600 font-medium">Unit:</label>
+                  {MEASUREMENT_UNIT_OPTIONS.map((opt) => (
+                    <label key={opt.value} className="flex items-center text-sm text-gray-700 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="measurement_unit"
+                        value={opt.value}
+                        checked={formData.measurement_unit === opt.value}
+                        onChange={handleChange}
+                        className="mr-1.5 accent-blue-600"
+                      />
+                      {opt.label}
                     </label>
                   ))}
                 </div>

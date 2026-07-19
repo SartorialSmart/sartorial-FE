@@ -2,6 +2,17 @@ import {
   Ruler,
 } from "lucide-react";
 
+export const MEASUREMENT_UNIT_OPTIONS = [
+  { value: "cm", label: "Centimeters (cm)" },
+  { value: "in", label: "Inches (in)" },
+  { value: "mm", label: "Millimeters (mm)" },
+];
+
+export const getUnitLabel = (unit) => {
+  const opt = MEASUREMENT_UNIT_OPTIONS.find((o) => o.value === unit);
+  return opt ? unit : "cm";
+};
+
 export const MALE_MEASUREMENTS = [
   { key: "length", label: "Length" },
   { key: "chest", label: "Chest" },
