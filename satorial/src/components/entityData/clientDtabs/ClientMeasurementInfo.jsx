@@ -121,8 +121,18 @@ const ClientMeasurementInfo = ({ clientId }) => {
     setIsEditing(false);
   };
 
-  const initCreateForm = () => {
-    const fields = getMeasurementsForGender(clientGender);
+  const initCreateForm = async () => {
+    let gender = clientGender;
+    try {
+      const clientData = await ClientService.getClientById(clientId);
+      if (clientData?.gender) {
+        gender = clientData.gender;
+        setClientGender(gender);
+      }
+    } catch {
+      // use existing clientGender
+    }
+    const fields = getMeasurementsForGender(gender);
     const initial = {};
     fields.forEach((f) => {
       initial[f.key] = "";
