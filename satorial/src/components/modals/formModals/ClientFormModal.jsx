@@ -16,6 +16,8 @@ const steps = [
 const ClientFormModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1);
   const [clientId, setClientId] = useState(null);
+  const [clientGender, setClientGender] = useState(null);
+  const [clientUnit, setClientUnit] = useState("cm");
 
   // Load clientId from localStorage on mount
   useEffect(() => {
@@ -25,10 +27,16 @@ const ClientFormModal = ({ isOpen, onClose }) => {
     }
   }, []);
 
-  const handleNext = (newClientId) => {
+  const handleNext = (newClientId, gender, unit) => {
     if (newClientId) {
       setClientId(newClientId);
       localStorage.setItem("clientId", newClientId);
+    }
+    if (gender) {
+      setClientGender(gender);
+    }
+    if (unit) {
+      setClientUnit(unit);
     }
     setStep((prev) => prev + 1);
   };
@@ -133,6 +141,8 @@ const ClientFormModal = ({ isOpen, onClose }) => {
               {step === 2 && (
                 <AddClientMeasurementForm
                   clientId={clientId}
+                  gender={clientGender}
+                  unit={clientUnit}
                   onBack={handleBack}
                   onNext={handleNext}
                   onClose={handleClose}
