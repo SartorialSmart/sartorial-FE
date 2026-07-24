@@ -105,9 +105,11 @@ const AddClientMeasurementForm = ({ onClose, onBack, onNext, clientId, gender: p
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-        {measurementFields.map(({ key, label }) => (
+        {measurementFields.map(({ key, label, icon }) => (
           <div key={key} className="flex items-center gap-3">
-            <MeasurementPlaceholder label={label} />
+            <div className="w-20 h-20 flex-shrink-0">
+              <MeasurementPlaceholder label={label} icon={icon} />
+            </div>
             <div className="flex-1">
               <label className="text-gray-600 text-sm font-medium block mb-1">
                 {label}
