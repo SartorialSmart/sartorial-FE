@@ -220,14 +220,14 @@ const ClientMeasurementInfo = ({ clientId }) => {
 
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {fields.map(({ key, label }) => (
+              {fields.map(({ key, label, icon }) => (
                 <div
                   key={key}
                   className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200 hover:shadow-md transition-all"
                 >
                   <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0 w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center p-2">
-                      <MeasurementPlaceholder label={label} />
+                    <div className="flex-shrink-0 w-24 h-24 bg-blue-100 rounded-lg flex items-center justify-center p-3">
+                      <MeasurementPlaceholder label={label} icon={icon} />
                     </div>
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -323,14 +323,14 @@ const ClientMeasurementInfo = ({ clientId }) => {
 
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {measurementFields.map(({ key, label }) => (
+            {measurementFields.map(({ key, label, icon }) => (
               <div
                 key={key}
                 className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200 hover:shadow-md transition-all"
               >
                 <div className="flex items-center space-x-4">
-                  <div className="flex-shrink-0 w-16 h-16 bg-indigo-100 rounded-lg flex items-center justify-center p-2">
-                    <MeasurementPlaceholder label={label} />
+                    <div className="flex-shrink-0 w-24 h-24 bg-indigo-100 rounded-lg flex items-center justify-center p-3">
+                    <MeasurementPlaceholder label={label} icon={icon} />
                   </div>
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
