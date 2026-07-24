@@ -9,6 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import PropTypes from "prop-types";
 import { useClient } from "../../../contexts/ClientContext";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
+import { MEASUREMENT_UNIT_OPTIONS } from "../../../utils/measurementConfig";
 
 const AddClientForm = ({ onNext, onClose }) => {
   // const { user } = useAuth(); // user is not used
@@ -22,6 +23,7 @@ const AddClientForm = ({ onNext, onClose }) => {
     phone_number: localStorage.getItem("phone_number") || "",
     birthdate: localStorage.getItem("birthdate") || "",
     gender: localStorage.getItem("gender") || "Female",
+    measurement_unit: localStorage.getItem("measurement_unit") || "cm",
     house_number: localStorage.getItem("house_number") || "",
     street: localStorage.getItem("street") || "",
     city: localStorage.getItem("city") || "",
@@ -213,7 +215,7 @@ const AddClientForm = ({ onNext, onClose }) => {
         });
         setPreview(null);
 
-        onNext(createdClient.id);
+        onNext(createdClient.id, formData.gender, formData.measurement_unit);
       }
 
       refreshClients();
@@ -356,6 +358,24 @@ const AddClientForm = ({ onNext, onClose }) => {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-600 font-medium block mb-1">
+                  Measurement Unit
+                </label>
+                <select
+                  name="measurement_unit"
+                  value={formData.measurement_unit}
+                  onChange={handleChange}
+                  className="border border-gray-300 rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors"
+                >
+                  {MEASUREMENT_UNIT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
