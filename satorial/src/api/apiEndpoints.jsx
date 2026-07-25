@@ -7,6 +7,7 @@ export const API = {
       UPDATE: "/users/me/",
       FORGOT_PASSWORD: "/users/forgot-password/",
       RESET_PASSWORD: "/users/reset-password/",
+      ACCEPT_INVITE: "/users/accept-invite/",
     },
   },
 
@@ -133,7 +134,11 @@ export const API = {
       ADD: "/users/add-staff/",
       UPDATE: (slug) => `/users/staff/${slug}/`,
       DELETE: (slug) => `/users/staff/${slug}/`,
+      INVITE: "/users/invite-staff/",
+      RESEND_INVITE: "/users/resend-invite/",
     },
+    PERMISSIONS_CATALOG: "/users/permissions-catalog/",
+    PERMISSIONS: (staffId) => `/users/staff-permissions/${staffId}/`,
 
     PERFORMANCE: {
       LIST: "/orders/staff/performance/",

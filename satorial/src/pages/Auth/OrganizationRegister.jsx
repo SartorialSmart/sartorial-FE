@@ -44,6 +44,8 @@ const OrganizationRegister = () => {
       setSuccessMessage(message);
       setShowModal(true);
 
+      // After first login, route the new organization to pick a plan.
+      localStorage.setItem("pendingPlanSelection", "1");
       setTimeout(() => {
         navigate("/login");
       }, 3000);
