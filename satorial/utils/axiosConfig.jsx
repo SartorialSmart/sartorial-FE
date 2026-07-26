@@ -4,7 +4,7 @@ const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
 });
 
-const PUBLIC_ENDPOINTS = ['/users/login/', '/users/register-organization/', '/users/forgot-password/', '/users/reset-password/'];
+const PUBLIC_ENDPOINTS = ['/users/login/', '/users/register-organization/', '/users/forgot-password/', '/users/reset-password/', '/users/accept-invite/'];
 
 axiosInstance.interceptors.request.use(
   async (config) => {
@@ -57,6 +57,20 @@ axiosInstance.interceptors.response.use(
         localStorage.removeItem('refreshToken');
         return Promise.reject(refreshError);
       }
+    }
+
+    // Plan-limit / feature-lock: the API returns 403 with upgrade_required.
+    // Surface a clear message with a path to the pricing page.
+    if (error.response?.status === 403 && error.response?.data?.upgrade_required) {
+      import("antd").then(({ message: antdMessage }) => {
+        antdMessage.warning({
+          content:
+            (error.response.data.message || "You've reached your plan limit.") +
+            " Upgrade your plan to continue.",
+          duration: 5,
+        });
+      });
+      return Promise.reject(error);
     }
 
     // Global error toasts for 500s and network failures

@@ -95,8 +95,11 @@ const Login = () => {
       setSuccessMessage("Login successful! Redirecting...");
       setShowModal(true);
 
+      // New organizations pick a plan right after their first login.
+      const pickPlan = localStorage.getItem("pendingPlanSelection") === "1";
+      localStorage.removeItem("pendingPlanSelection");
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate(pickPlan ? "/subscriptions/pricing/plan" : "/dashboard");
       }, 2000);
     } catch (error) {
       setErrorMessage(extractErrorMessage(error, "Login failed. Please check your credentials."));
