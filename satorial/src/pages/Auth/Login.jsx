@@ -3,7 +3,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import MessageModal from "../../components/modals/MessageModal";
 import loginBg from "../../assets/images/bg-2.jpg";
 import Logo from "../../assets/images/Logo-2.png";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import googleIcon from "../../assets/images/google-logo.svg";
 import twitterIcon from "../../assets/images/twitter-logo.svg";
 import { extractErrorMessage } from "../../../utils/errorUtils";
@@ -12,6 +12,7 @@ import SuccessModal from "../../components/modals/SuccessModal";
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Initialize all state as false/empty to prevent leftover state
   const [formData, setFormData] = useState({
@@ -98,8 +99,21 @@ const Login = () => {
       // New organizations pick a plan right after their first login.
       const pickPlan = localStorage.getItem("pendingPlanSelection") === "1";
       localStorage.removeItem("pendingPlanSelection");
+
+      // Otherwise return the user to the page they were on before logging out /
+      // being signed out. Router state is the fast path; localStorage is the
+      // fallback that survives a reload or the explicit logout redirect.
+      const savedRedirect = location.state?.from || localStorage.getItem("postLoginRedirect");
+      localStorage.removeItem("postLoginRedirect");
+      const isReusable = savedRedirect && !["/login", "/register", "/"].includes(savedRedirect);
+      const destination = pickPlan
+        ? "/subscriptions/pricing/plan"
+        : isReusable
+          ? savedRedirect
+          : "/dashboard";
+
       setTimeout(() => {
-        navigate(pickPlan ? "/subscriptions/pricing/plan" : "/dashboard");
+        navigate(destination, { replace: true });
       }, 2000);
     } catch (error) {
       setErrorMessage(extractErrorMessage(error, "Login failed. Please check your credentials."));
