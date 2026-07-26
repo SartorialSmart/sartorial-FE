@@ -9,9 +9,9 @@ const RESOURCES = [
   { key: "inventory", label: "Inventory items" },
 ];
 
-function barColor(pct, atLimit) {
+function barColor(pct, atLimit, warnAt) {
   if (atLimit) return "bg-red-500";
-  if (pct >= 80) return "bg-amber-500";
+  if (pct >= warnAt) return "bg-amber-500";
   return "bg-indigo-500";
 }
 
@@ -23,6 +23,9 @@ function barColor(pct, atLimit) {
 export default function UsageMeter({ compact = false }) {
   const { usage } = useSubscription();
   if (!usage) return null;
+
+  // Warning threshold is admin-configurable (PlatformConfig.usage_warning_pct).
+  const warnAt = usage.usage_warning_pct ?? 80;
 
   const anyAtLimit = RESOURCES.some(({ key }) => {
     const limit = usage[`${key}_limit`];
@@ -61,7 +64,7 @@ export default function UsageMeter({ compact = false }) {
             {!unlimited && (
               <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                 <div
-                  className={`h-2 rounded-full ${barColor(pct, atLimit)}`}
+                  className={`h-2 rounded-full ${barColor(pct, atLimit, warnAt)}`}
                   style={{ width: `${Math.min(pct, 100)}%` }}
                 />
               </div>
