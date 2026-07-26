@@ -77,19 +77,25 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     fetchLocations();
   }, []);
 
+  // The backend only accepts these staff_role values, so the dropdown must
+  // always offer them regardless of what /settings/roles/ returns.
+  const DEFAULT_STAFF_ROLES = [
+    { name: "Tailor" },
+    { name: "Designer" },
+    { name: "Driver" },
+    { name: "Accountant" },
+    { name: "Procurement_Manager" },
+  ];
+
   const fetchRoles = async () => {
     try {
       const data = await RolesService.getRoles();
-      setRoles(Array.isArray(data) ? data : data.results || []);
+      const fetched = Array.isArray(data) ? data : data.results || [];
+      // Fall back to the standard roles when the org has none defined (empty),
+      // not only on network error — otherwise the dropdown renders empty.
+      setRoles(fetched.length ? fetched : DEFAULT_STAFF_ROLES);
     } catch {
-      // Fallback to default roles if fetch fails
-      setRoles([
-        { name: "Tailor" },
-        { name: "Designer" },
-        { name: "Driver" },
-        { name: "Accountant" },
-        { name: "Procurement_Manager" },
-      ]);
+      setRoles(DEFAULT_STAFF_ROLES);
     }
   };
 
@@ -653,7 +659,11 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                   className="w-full appearance-none bg-white text-gray-900 pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <option value="">
-                    {loadingLocations ? "Loading locations..." : "Select Location"}
+                    {loadingLocations
+                      ? "Loading locations..."
+                      : locations.length === 0
+                        ? "No locations yet — add one under Inventory"
+                        : "Select Location"}
                   </option>
                   {locations.map((loc) => (
                     <option key={loc.id} value={loc.id}>
