@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, apiDelete } from "../../utils/serviceHelper";
+import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "../../utils/serviceHelper";
 import { API } from "../api/apiEndpoints";
 
 const OrderService = {
@@ -29,6 +29,14 @@ const OrderService = {
    * @returns {Promise}
    */
   updateOrder: (orderId, orderData) => apiPut(API.ORDER_MANAGEMENT.ORDERS.UPDATE(orderId), orderData),
+
+  /**
+   * Partially update an existing order (PATCH)
+   * @param {string} orderId
+   * @param {Object} orderData
+   * @returns {Promise}
+   */
+  patchOrder: (orderId, orderData) => apiPatch(API.ORDER_MANAGEMENT.ORDERS.UPDATE(orderId), orderData),
 
   /**
    * Delete an order
