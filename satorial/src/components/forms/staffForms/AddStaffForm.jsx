@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { X, Upload, Eye, EyeOff, Loader2, Landmark, MapPin } from "lucide-react";
 import StaffService from "../../../services/staffServices/StaffService";
-import RolesService from "../../../services/settings/RolesService";
+import StaffRoleService from "../../../services/staffServices/StaffRoleService";
 import SettingsService from "../../../services/settings";
 import LocationService from "../../../services/LocationService";
 import { toast } from "react-toastify";
@@ -79,7 +79,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
 
   const fetchRoles = async () => {
     try {
-      const data = await RolesService.getRoles();
+      const data = await StaffRoleService.listRoles();
       setRoles(Array.isArray(data) ? data : data.results || []);
     } catch {
       // Fallback to default roles if fetch fails
@@ -97,7 +97,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     try {
       setLoadingDepartments(true);
       const data = await SettingsService.Departments.getDepartments();
-      setDepartments(data);
+      setDepartments(Array.isArray(data) ? data : data.results || []);
     } catch (error) {
       console.error("Error fetching departments:", error);
       toast.error("Failed to load departments");
@@ -183,6 +183,17 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   };
 
   const validateForm = () => {
+    // Required field checks
+    if (!formData.firstName.trim()) {
+      toast.error("First name is required");
+      return false;
+    }
+
+    if (!formData.lastName.trim()) {
+      toast.error("Last name is required");
+      return false;
+    }
+
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
@@ -193,6 +204,18 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     // Phone validation (basic)
     if (formData.phone.length < 10) {
       toast.error("Please enter a valid phone number");
+      return false;
+    }
+
+    // Department validation
+    if (!formData.department) {
+      toast.error("Please select a department");
+      return false;
+    }
+
+    // Role validation
+    if (!formData.staff_role) {
+      toast.error("Please select a staff role");
       return false;
     }
 
@@ -315,25 +338,8 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 z-50">
-      <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 relative shadow-2xl">
-        <button
-          onClick={onClose}
-          disabled={isSubmitting}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 
-            hover:bg-gray-100 rounded-full p-2 transition-colors"
-        >
-          <X size={20} />
-        </button>
-
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Add New Staff</h2>
-          <p className="text-gray-600 mt-1">
-            Fill in the details to add a new staff member
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar Upload Section */}
           <div className="flex items-center gap-6 pb-6 border-b">
             <div className="relative">
@@ -476,7 +482,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                   {loadingDepartments ? "Loading departments..." : "Select Department"}
                 </option>
                 {departments.map((dept) => (
-                  <option key={dept.id} value={dept.name}>
+                  <option key={dept.id} value={dept.id}>
                     {dept.name}
                   </option>
                 ))}
@@ -780,7 +786,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
             </button>
           </div>
         </form>
-      </div>
       {successModal && (
         <SuccessModal
           {...successModal}
@@ -792,7 +797,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
           }}
         />
       )}
-    </div>
+    </>
   );
 };
 
