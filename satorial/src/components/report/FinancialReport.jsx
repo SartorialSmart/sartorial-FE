@@ -9,9 +9,12 @@ import {
   Printer,
   PieChart,
   Filter,
+  Percent,
 } from "lucide-react";
 import OrderService from "../../services/OrderService";
 import ExpensesService from "../../services/expensesServices/ExpensesService";
+import SettingsService from "../../services/settings";
+import { getLocalInvoiceSettings } from "../../utils/localImageService";
 import { formatDateCaption } from "../../../utils/reportUtils";
 
 const toLocalDateStr = (date) => {
@@ -106,6 +109,7 @@ const FinancialReport = () => {
   const [expenses, setExpenses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFullPeriod, setShowFullPeriod] = useState(false);
+  const [vatSettings, setVatSettings] = useState({ vatEnabled: false, vatRate: 7.5 });
   const printRef = useRef();
 
   const dateRange = useMemo(
@@ -127,6 +131,26 @@ const FinancialReport = () => {
       }
     };
     fetchExpenses();
+  }, []);
+
+  // Fetch VAT settings
+  useEffect(() => {
+    const local = getLocalInvoiceSettings();
+    if (local) {
+      setVatSettings({
+        vatEnabled: local.vatEnabled ?? false,
+        vatRate: local.vatRate ?? 7.5,
+      });
+    } else {
+      SettingsService.Invoice.getSettings()
+        .then((data) => {
+          setVatSettings({
+            vatEnabled: data.vat_enabled ?? false,
+            vatRate: data.vat_rate ?? 7.5,
+          });
+        })
+        .catch(() => {});
+    }
   }, []);
 
   // Fetch orders when date range changes
@@ -239,7 +263,10 @@ const FinancialReport = () => {
     );
   }, [dateFilteredExpenses, dateRange, prorateExpense]);
 
-  const netProfit = grossRevenue - grossExpenditure;
+  const grossProfit = grossRevenue - grossExpenditure;
+
+  const vatAmount = vatSettings.vatEnabled ? grossProfit * (vatSettings.vatRate / 100) : 0;
+  const netProfit = grossProfit - vatAmount;
 
   // Breakdown items for the table
   const breakdownItems = useMemo(() => {
@@ -261,11 +288,15 @@ const FinancialReport = () => {
   const handleExport = () => {
     const rows = [
       ["Metric", "Amount"],
-      [`Gross Revenue (${dateFilteredOrders.length} orders)`, `₦${grossRevenue.toLocaleString()}`],
+      [`Revenue (${dateFilteredOrders.length} orders)`, `₦${grossRevenue.toLocaleString()}`],
       ...breakdownItems.map((i) => [`  Expense: ${i.name}`, `₦${i.amount.toLocaleString()}`]),
-      ["Gross Expenditure", `₦${grossExpenditure.toLocaleString()}`],
-      ["Net Profit", `₦${netProfit.toLocaleString()}`],
+      ["Expenditure", `₦${grossExpenditure.toLocaleString()}`],
+      ["Gross Profit", `₦${grossProfit.toLocaleString()}`],
     ];
+    if (vatSettings.vatEnabled) {
+      rows.push([`VAT (${vatSettings.vatRate}%)`, `₦${vatAmount.toLocaleString()}`]);
+    }
+    rows.push(["Net Profit", `₦${netProfit.toLocaleString()}`]);
     const csvContent = rows.map((r) => r.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
@@ -317,7 +348,7 @@ const FinancialReport = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Financial Report</h1>
             <p className="text-gray-600">
-              Gross revenue, expenditures &amp; net profit overview
+              Revenue, expenditures &amp; profit overview
             </p>
           </div>
           <div className="no-print flex gap-2 flex-wrap">
@@ -382,7 +413,7 @@ const FinancialReport = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 transition-all hover:shadow-md">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 rounded-xl bg-green-100 text-green-700">
@@ -393,7 +424,7 @@ const FinancialReport = () => {
               <div className="text-sm text-gray-500 mt-1">{filterLabel}</div>
             </div>
           </div>
-          <h3 className="font-semibold text-gray-900">Gross Revenue</h3>
+          <h3 className="font-semibold text-gray-900">Revenue</h3>
         </div>
 
         <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 transition-all hover:shadow-md">
@@ -406,28 +437,53 @@ const FinancialReport = () => {
               <div className="text-sm text-gray-500 mt-1">{dateFilteredExpenses.length} expense{dateFilteredExpenses.length !== 1 ? "s" : ""}</div>
             </div>
           </div>
-          <h3 className="font-semibold text-gray-900">Gross Expenditure</h3>
+          <h3 className="font-semibold text-gray-900">Expenditure</h3>
         </div>
 
         <div className={`rounded-2xl p-6 transition-all hover:shadow-md border-2 ${
-          netProfit >= 0
+          grossProfit >= 0
             ? "bg-blue-50 border-blue-200"
             : "bg-orange-50 border-orange-200"
         }`}>
           <div className="flex items-center justify-between mb-4">
             <div className={`p-3 rounded-xl ${
-              netProfit >= 0 ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"
+              grossProfit >= 0 ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"
             }`}>
               <DollarSign className="w-6 h-6" />
             </div>
             <div className="text-right">
               <div className={`text-2xl font-bold ${
-                netProfit >= 0 ? "text-blue-700" : "text-orange-700"
+                grossProfit >= 0 ? "text-blue-700" : "text-orange-700"
+              }`}>
+                {formatCurrency(grossProfit)}
+              </div>
+              <div className="text-sm text-gray-500 mt-1">
+                {grossProfit >= 0 ? "Profit" : "Loss"}
+              </div>
+            </div>
+          </div>
+          <h3 className="font-semibold text-gray-900">Gross Profit</h3>
+        </div>
+
+        <div className={`rounded-2xl p-6 transition-all hover:shadow-md border-2 ${
+          netProfit >= 0
+            ? "bg-purple-50 border-purple-200"
+            : "bg-orange-50 border-orange-200"
+        }`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className={`p-3 rounded-xl ${
+              netProfit >= 0 ? "bg-purple-100 text-purple-700" : "bg-orange-100 text-orange-700"
+            }`}>
+              <Percent className="w-6 h-6" />
+            </div>
+            <div className="text-right">
+              <div className={`text-2xl font-bold ${
+                netProfit >= 0 ? "text-purple-700" : "text-orange-700"
               }`}>
                 {formatCurrency(netProfit)}
               </div>
               <div className="text-sm text-gray-500 mt-1">
-                {netProfit >= 0 ? "Profit" : "Loss"}
+                {vatSettings.vatEnabled ? `${vatSettings.vatRate}% VAT` : "No VAT"}
               </div>
             </div>
           </div>
@@ -494,7 +550,7 @@ const FinancialReport = () => {
           </thead>
           <tbody className="divide-y divide-gray-100">
             <tr className="hover:bg-gray-50">
-              <td className="p-4 font-medium text-gray-900">Gross Revenue</td>
+              <td className="p-4 font-medium text-gray-900">Revenue</td>
               <td className="p-4 text-right font-semibold text-green-600">{formatCurrency(grossRevenue)}</td>
             </tr>
             <tr className="hover:bg-gray-50 bg-gray-50/50">
@@ -504,7 +560,7 @@ const FinancialReport = () => {
             {breakdownItems.length > 0 && (
               <>
                 <tr className="hover:bg-gray-50">
-                  <td className="p-4 font-medium text-gray-900">Gross Expenditure</td>
+                  <td className="p-4 font-medium text-gray-900">Expenditure</td>
                   <td className="p-4 text-right font-semibold text-red-600">{formatCurrency(totalExpenditureFromBreakdown)}</td>
                 </tr>
                 {breakdownItems.map((item, i) => (
@@ -516,11 +572,25 @@ const FinancialReport = () => {
               </>
             )}
             <tr className={`hover:bg-gray-50 border-t-2 ${
-              netProfit >= 0 ? "bg-blue-50/50 border-blue-200" : "bg-orange-50/50 border-orange-200"
+              grossProfit >= 0 ? "bg-blue-50/50 border-blue-200" : "bg-orange-50/50 border-orange-200"
+            }`}>
+              <td className="p-4 font-bold text-gray-900">Gross Profit</td>
+              <td className={`p-4 text-right font-bold ${
+                grossProfit >= 0 ? "text-blue-700" : "text-orange-700"
+              }`}>{formatCurrency(grossProfit)}</td>
+            </tr>
+            {vatSettings.vatEnabled && (
+              <tr className="hover:bg-gray-50 bg-gray-50/50">
+                <td className="p-4 font-medium text-gray-700">VAT ({vatSettings.vatRate}%)</td>
+                <td className="p-4 text-right font-semibold text-red-600">{formatCurrency(vatAmount)}</td>
+              </tr>
+            )}
+            <tr className={`hover:bg-gray-50 border-t-2 ${
+              netProfit >= 0 ? "bg-purple-50/50 border-purple-200" : "bg-orange-50/50 border-orange-200"
             }`}>
               <td className="p-4 font-bold text-gray-900">Net Profit</td>
               <td className={`p-4 text-right font-bold ${
-                netProfit >= 0 ? "text-blue-700" : "text-orange-700"
+                netProfit >= 0 ? "text-purple-700" : "text-orange-700"
               }`}>{formatCurrency(netProfit)}</td>
             </tr>
           </tbody>

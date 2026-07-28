@@ -209,7 +209,7 @@ const OrderDetail = () => {
     if (!shouldComplete) {
       setUpdatingStatus(true);
       try {
-        await OrderService.updateOrder(orderId, { order_status: qaStatus });
+        await OrderService.patchOrder(orderId, { order_status: qaStatus });
         const updatedOrder = await OrderService.getOrderById(orderId);
         setOrder(preserveAllocation(updatedOrder));
       } catch (err) {
@@ -232,7 +232,7 @@ const OrderDetail = () => {
         formData.append("order_completion_image", completeOrderImage);
         await OrderService.updateOrder(orderId, formData);
       } else {
-        await OrderService.updateOrder(orderId, updateData);
+      await OrderService.patchOrder(orderId, updateData);
       }
       const updatedOrder = await OrderService.getOrderById(orderId);
       setOrder(preserveAllocation(updatedOrder));

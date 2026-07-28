@@ -7,7 +7,8 @@ import {
   TrendingUp,
   TrendingDown,
   PieChart,
-  Building2
+  Building2,
+  Percent
 } from "lucide-react";
 import PropTypes from "prop-types";
 import ReportService from "../../services/ReportService";
@@ -181,13 +182,13 @@ const FinancialReportModal = ({ isOpen, onClose, dateRange }) => {
                 </div>
 
                 {/* Financial Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 print-break-inside">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="p-2 bg-green-100 rounded-xl">
                         <TrendingUp className="w-6 h-6 text-green-700" />
                       </div>
-                      <h3 className="font-semibold text-gray-700">Gross Revenue</h3>
+                      <h3 className="font-semibold text-gray-700">Revenue</h3>
                     </div>
                     <p className="text-3xl font-bold text-green-700">
                       {formatCurrency(profitData?.revenue || 0)}
@@ -199,7 +200,7 @@ const FinancialReportModal = ({ isOpen, onClose, dateRange }) => {
                       <div className="p-2 bg-red-100 rounded-xl">
                         <TrendingDown className="w-6 h-6 text-red-700" />
                       </div>
-                      <h3 className="font-semibold text-gray-700">Total Expenses</h3>
+                      <h3 className="font-semibold text-gray-700">Expenditure</h3>
                     </div>
                     <p className="text-3xl font-bold text-red-700">
                       {formatCurrency(
@@ -224,9 +225,21 @@ const FinancialReportModal = ({ isOpen, onClose, dateRange }) => {
                       <div className="p-2 bg-blue-100 rounded-xl">
                         <DollarSign className="w-6 h-6 text-blue-700" />
                       </div>
-                      <h3 className="font-semibold text-gray-700">Net Profit</h3>
+                      <h3 className="font-semibold text-gray-700">Gross Profit</h3>
                     </div>
                     <p className="text-3xl font-bold text-blue-700">
+                      {formatCurrency(profitData?.gross_profit || 0)}
+                    </p>
+                  </div>
+
+                  <div className="bg-purple-50 border-2 border-purple-200 rounded-2xl p-6 print-break-inside">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="p-2 bg-purple-100 rounded-xl">
+                        <Percent className="w-6 h-6 text-purple-700" />
+                      </div>
+                      <h3 className="font-semibold text-gray-700">Net Profit</h3>
+                    </div>
+                    <p className="text-3xl font-bold text-purple-700">
                       {formatCurrency(profitData?.net_profit || 0)}
                     </p>
                   </div>
