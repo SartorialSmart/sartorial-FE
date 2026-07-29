@@ -40,6 +40,16 @@ const StaffService = {
   // Update staff salary
   updateSalary: (payload) =>
     apiPost(API.STAFF_MANAGEMENT.SALARY.UPDATE, payload),
+
+  // Invite a member by email + role + permissions (they set up their own account).
+  inviteStaff: (payload) => apiPost(API.STAFF_MANAGEMENT.STAFF.INVITE, payload),
+
+  // Resend an invite to a not-yet-activated member.
+  resendInvite: (staffId) =>
+    apiPost(API.STAFF_MANAGEMENT.STAFF.RESEND_INVITE, { staff_id: staffId }),
+
+  // Public: the invitee sets their password + details to activate their account.
+  acceptInvite: (payload) => apiPost(API.USER_MANAGEMENT.AUTH.ACCEPT_INVITE, payload),
 };
 
 export default StaffService;
