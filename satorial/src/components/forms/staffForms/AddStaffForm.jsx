@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { X, Upload, Eye, EyeOff, Loader2, Landmark, MapPin, ChevronDown } from "lucide-react";
 import StaffService from "../../../services/staffServices/StaffService";
-import RolesService from "../../../services/settings/RolesService";
+import StaffRoleService from "../../../services/staffServices/StaffRoleService";
 import SettingsService from "../../../services/settings";
 import LocationService from "../../../services/LocationService";
 import { toast } from "react-toastify";
@@ -103,7 +103,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     try {
       setLoadingDepartments(true);
       const data = await SettingsService.Departments.getDepartments();
-      setDepartments(data);
+      setDepartments(Array.isArray(data) ? data : data.results || []);
     } catch (error) {
       console.error("Error fetching departments:", error);
       toast.error("Failed to load departments");
@@ -189,6 +189,17 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   };
 
   const validateForm = () => {
+    // Required field checks
+    if (!formData.firstName.trim()) {
+      toast.error("First name is required");
+      return false;
+    }
+
+    if (!formData.lastName.trim()) {
+      toast.error("Last name is required");
+      return false;
+    }
+
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
@@ -199,6 +210,18 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     // Phone validation (basic)
     if (formData.phone.length < 10) {
       toast.error("Please enter a valid phone number");
+      return false;
+    }
+
+    // Department validation
+    if (!formData.department) {
+      toast.error("Please select a department");
+      return false;
+    }
+
+    // Role validation
+    if (!formData.staff_role) {
+      toast.error("Please select a staff role");
       return false;
     }
 
