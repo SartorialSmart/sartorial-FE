@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom";
 import Header from "./NavLayout/Header";
 import Sidebar from "./NavLayout/SideBar";
 import { useAuth } from "../../contexts/AuthContext";
-import { Users, LogOut, DollarSign, HelpCircle } from "lucide-react";
+import { Users, LogOut, DollarSign, HelpCircle, ShieldCheck } from "lucide-react";
 
 const ALLOWED_ROLES = ["super_admin", "admin", "organization"];
 
@@ -20,6 +20,7 @@ const StaffSideBarLayout = ({ children }) => {
 
   const sidebarItems = [
     { icon: <Users size={18} />, label: "Staffs", path: "/staff/staff-list" },
+    { icon: <ShieldCheck size={18} />, label: "Team & Roles", path: "/staff/team" },
     { icon: <LogOut size={18} />, label: "Exit Staff", path: "/staff/exited-staffs-list" },
     { icon: <DollarSign size={18} />, label: "Payroll", path: "/staff/payroll-list" },
     { icon: <HelpCircle size={18} />, label: "Help Centre", path: "/client/help-centre" },

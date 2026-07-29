@@ -1,7 +1,7 @@
 // components/forms/staffForms/AddStaffForm.jsx
 
 import { useState, useRef, useEffect } from "react";
-import { X, Upload, Eye, EyeOff, Loader2, Landmark, MapPin } from "lucide-react";
+import { X, Upload, Eye, EyeOff, Loader2, Landmark, MapPin, ChevronDown } from "lucide-react";
 import StaffService from "../../../services/staffServices/StaffService";
 import StaffRoleService from "../../../services/staffServices/StaffRoleService";
 import SettingsService from "../../../services/settings";
@@ -77,19 +77,25 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     fetchLocations();
   }, []);
 
+  // The backend only accepts these staff_role values, so the dropdown must
+  // always offer them regardless of what /settings/roles/ returns.
+  const DEFAULT_STAFF_ROLES = [
+    { name: "Tailor" },
+    { name: "Designer" },
+    { name: "Driver" },
+    { name: "Accountant" },
+    { name: "Procurement_Manager" },
+  ];
+
   const fetchRoles = async () => {
     try {
-      const data = await StaffRoleService.listRoles();
-      setRoles(Array.isArray(data) ? data : data.results || []);
+      const data = await RolesService.getRoles();
+      const fetched = Array.isArray(data) ? data : data.results || [];
+      // Fall back to the standard roles when the org has none defined (empty),
+      // not only on network error — otherwise the dropdown renders empty.
+      setRoles(fetched.length ? fetched : DEFAULT_STAFF_ROLES);
     } catch {
-      // Fallback to default roles if fetch fails
-      setRoles([
-        { name: "Tailor" },
-        { name: "Designer" },
-        { name: "Driver" },
-        { name: "Accountant" },
-        { name: "Procurement_Manager" },
-      ]);
+      setRoles(DEFAULT_STAFF_ROLES);
     }
   };
 
@@ -338,8 +344,25 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   };
 
   return (
-    <>
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 z-50">
+      <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 relative shadow-2xl">
+        <button
+          onClick={onClose}
+          disabled={isSubmitting}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 
+            hover:bg-gray-100 rounded-full p-2 transition-colors"
+        >
+          <X size={20} />
+        </button>
+
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Add New Staff</h2>
+          <p className="text-gray-600 mt-1">
+            Fill in the details to add a new staff member
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar Upload Section */}
           <div className="flex items-center gap-6 pb-6 border-b">
             <div className="relative">
@@ -468,25 +491,26 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Department <span className="text-red-500">*</span>
               </label>
-              <select
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-                disabled={loadingDepartments}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed"
-                required
-              >
-                <option value="">
-                  {loadingDepartments ? "Loading departments..." : "Select Department"}
-                </option>
-                {departments.map((dept) => (
-                  <option key={dept.id} value={dept.id}>
-                    {dept.name}
+              <div className="relative">
+                <select
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  disabled={loadingDepartments}
+                  className="w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed cursor-pointer"
+                  required
+                >
+                  <option value="">
+                    {loadingDepartments ? "Loading departments..." : "Select Department"}
                   </option>
-                ))}
-              </select>
+                  {departments.map((dept) => (
+                    <option key={dept.id} value={dept.name}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              </div>
               {loadingDepartments && (
                 <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
                   <Loader2 size={14} className="animate-spin" />
@@ -500,22 +524,23 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Staff Role <span className="text-red-500">*</span>
               </label>
-              <select
-                name="staff_role"
-                value={formData.staff_role}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors"
-                required
-              >
-                <option value="">Select Role</option>
-                {roles.map((role) => (
-                  <option key={role.id || role.name} value={role.name}>
-                    {role.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  name="staff_role"
+                  value={formData.staff_role}
+                  onChange={handleChange}
+                  className="w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
+                  required
+                >
+                  <option value="">Select Role</option>
+                  {roles.map((role) => (
+                    <option key={role.id || role.name} value={role.name}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              </div>
             </div>
 
             {/* Password */}
@@ -648,18 +673,20 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 Location
               </label>
               <div className="relative">
-                <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <MapPin size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
                 <select
                   name="location"
                   value={formData.location}
                   onChange={handleChange}
                   disabled={loadingLocations}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg 
-                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                    transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed"
+                  className="w-full appearance-none bg-white text-gray-900 pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <option value="">
-                    {loadingLocations ? "Loading locations..." : "Select Location"}
+                    {loadingLocations
+                      ? "Loading locations..."
+                      : locations.length === 0
+                        ? "No locations yet — add one under Inventory"
+                        : "Select Location"}
                   </option>
                   {locations.map((loc) => (
                     <option key={loc.id} value={loc.id}>
@@ -667,6 +694,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                     </option>
                   ))}
                 </select>
+                <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
               {loadingLocations && (
                 <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
@@ -786,6 +814,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
             </button>
           </div>
         </form>
+      </div>
       {successModal && (
         <SuccessModal
           {...successModal}
@@ -797,7 +826,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
           }}
         />
       )}
-    </>
+    </div>
   );
 };
 
