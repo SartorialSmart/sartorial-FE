@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { X, Upload, Eye, EyeOff, Loader2, Landmark, MapPin } from "lucide-react";
 import StaffService from "../../../services/staffServices/StaffService";
-import StaffRoleService from "../../../services/staffServices/StaffRoleService";
+import RolesService from "../../../services/settings/RolesService";
 import SettingsService from "../../../services/settings";
 import LocationService from "../../../services/LocationService";
 import { toast } from "react-toastify";
@@ -79,7 +79,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
 
   const fetchRoles = async () => {
     try {
-      const data = await StaffRoleService.listRoles();
+      const data = await RolesService.getRoles();
       setRoles(Array.isArray(data) ? data : data.results || []);
     } catch {
       // Fallback to default roles if fetch fails
