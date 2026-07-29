@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { X, Upload, Eye, EyeOff, Loader2, Landmark, MapPin, ChevronDown } from "lucide-react";
 import StaffService from "../../../services/staffServices/StaffService";
-import StaffRoleService from "../../../services/staffServices/StaffRoleService";
+import RolesService from "../../../services/settings/RolesService";
 import SettingsService from "../../../services/settings";
 import LocationService from "../../../services/LocationService";
 import { toast } from "react-toastify";
@@ -91,8 +91,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     try {
       const data = await RolesService.getRoles();
       const fetched = Array.isArray(data) ? data : data.results || [];
-      // Fall back to the standard roles when the org has none defined (empty),
-      // not only on network error — otherwise the dropdown renders empty.
       setRoles(fetched.length ? fetched : DEFAULT_STAFF_ROLES);
     } catch {
       setRoles(DEFAULT_STAFF_ROLES);
@@ -344,25 +342,8 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 z-50">
-      <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 relative shadow-2xl">
-        <button
-          onClick={onClose}
-          disabled={isSubmitting}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 
-            hover:bg-gray-100 rounded-full p-2 transition-colors"
-        >
-          <X size={20} />
-        </button>
-
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Add New Staff</h2>
-          <p className="text-gray-600 mt-1">
-            Fill in the details to add a new staff member
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar Upload Section */}
           <div className="flex items-center gap-6 pb-6 border-b">
             <div className="relative">
@@ -504,7 +485,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                     {loadingDepartments ? "Loading departments..." : "Select Department"}
                   </option>
                   {departments.map((dept) => (
-                    <option key={dept.id} value={dept.name}>
+                    <option key={dept.id} value={dept.id}>
                       {dept.name}
                     </option>
                   ))}
@@ -814,7 +795,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
             </button>
           </div>
         </form>
-      </div>
       {successModal && (
         <SuccessModal
           {...successModal}
@@ -826,7 +806,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
           }}
         />
       )}
-    </div>
+    </>
   );
 };
 
