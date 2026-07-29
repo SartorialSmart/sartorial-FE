@@ -31,6 +31,8 @@ import OrderDetailDisplay from "./pages/orderPages/OrderDetailDisplay";
 import EditOrderFormDisplay from "./pages/orderPages/EditOrderFormDisplay";
 
 import StaffListDisplay from "./pages/staffPages/StaffListDisplay";
+import TeamManagementDisplay from "./pages/staffPages/TeamManagementDisplay";
+import AcceptInvite from "./pages/Auth/AcceptInvite";
 import StaffDetailDisplay from "./pages/staffPages/StaffDetailDisplay";
 import StaffEditDisplay from "./pages/staffPages/StaffEditDisplay";
 import ExitedStaffsListDisplay from "./pages/staffPages/ExitedStaffsListDisplay";
@@ -65,6 +67,7 @@ import RoleSettingsDisplay from "./pages/settingsPages/RoleSettingsDisplay";
 import StockMovementHistoryDisplay from "./pages/inventories/StockMovementHistoryDisplay";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
+import PlanNoticeGate from "./components/Subscriptions/PlanNoticeGate";
 
 const dashboards = [
   "client",
@@ -104,6 +107,7 @@ const protectedRoutes = [
   { path: "/order/edit/:orderId", element: <EditOrderFormDisplay /> },
 
   { path: "/staff/staff-list", element: <StaffListDisplay />, admin: true },
+  { path: "/staff/team", element: <TeamManagementDisplay />, admin: true },
   { path: "/staff/staff-detail/:slug", element: <StaffDetailDisplay />, admin: true },
   { path: "/staff/edit/:slug", element: <StaffEditDisplay />, admin: true },
   { path: "/staff/exited-staffs-list", element: <ExitedStaffsListDisplay />, admin: true },
@@ -166,6 +170,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/accept-invite" element={<AcceptInvite />} />
 
         {dashboards.map((dashboard, index) => (
           <Route
@@ -195,6 +200,7 @@ const App = () => {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <PlanNoticeGate />
     </Router>
     </ErrorBoundary>
   );
