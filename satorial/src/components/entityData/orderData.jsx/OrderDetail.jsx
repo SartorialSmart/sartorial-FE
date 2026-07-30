@@ -290,7 +290,7 @@ const OrderDetail = () => {
         order_status: apiStatus
       };
 
-      await OrderService.updateOrder(orderId, updateData);
+      await OrderService.patchOrder(orderId, updateData);
       const updatedOrder = await OrderService.getOrderById(orderId);
       setOrder(preserveAllocation(updatedOrder));
     } catch (err) {
@@ -1006,7 +1006,7 @@ const OrderDetail = () => {
               const IconComponent = status.icon;
               const isCompleted = index <= currentStatusIndex;
               const isCurrent = order.order_status === status.key;
-              const isClickable = !isReadyMade && index <= currentStatusIndex + 1 && !isCancelled && (status.key !== "QA Check" || canAccessQA);
+              const isClickable = index <= currentStatusIndex + 1 && !isCancelled && (status.key !== "QA Check" || canAccessQA);
               
               return (
                 <div key={status.key} className="flex flex-col items-center relative z-10">
