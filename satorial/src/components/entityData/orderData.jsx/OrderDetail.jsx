@@ -69,7 +69,6 @@ const OrderDetail = () => {
 
   const STATUS_API_MAP = {
     "QA Check": "Processing",
-    "On Delivery": "Delivered",
   };
   const REVERSE_STATUS_API_MAP = Object.fromEntries(
     Object.entries(STATUS_API_MAP).map(([k, v]) => [v, k])
@@ -209,7 +208,7 @@ const OrderDetail = () => {
     if (!shouldComplete) {
       setUpdatingStatus(true);
       try {
-        await OrderService.patchOrder(orderId, { order_status: qaStatus });
+        await OrderService.updateOrder(orderId, { ...order, order_status: qaStatus });
         const updatedOrder = await OrderService.getOrderById(orderId);
         setOrder(preserveAllocation(updatedOrder));
       } catch (err) {
@@ -225,14 +224,13 @@ const OrderDetail = () => {
     setShowCompleteUploadModal(false);
     setUpdatingStatus(true);
     try {
-      const updateData = { order_status: "Completed" };
       if (completeOrderImage) {
         const formData = new FormData();
         formData.append("order_status", "Completed");
         formData.append("order_completion_image", completeOrderImage);
         await OrderService.updateOrder(orderId, formData);
       } else {
-      await OrderService.patchOrder(orderId, updateData);
+      await OrderService.updateOrder(orderId, { ...order, order_status: "Completed" });
       }
       const updatedOrder = await OrderService.getOrderById(orderId);
       setOrder(preserveAllocation(updatedOrder));
@@ -287,10 +285,11 @@ const OrderDetail = () => {
     try {
       const apiStatus = STATUS_API_MAP[newStatus] || newStatus;
       const updateData = {
+        ...order,
         order_status: apiStatus
       };
 
-      await OrderService.patchOrder(orderId, updateData);
+      await OrderService.updateOrder(orderId, updateData);
       const updatedOrder = await OrderService.getOrderById(orderId);
       setOrder(preserveAllocation(updatedOrder));
     } catch (err) {
