@@ -56,8 +56,13 @@ const PermissionsModal = ({ staff, isOpen, onClose }) => {
       );
       message.success("Permissions updated successfully");
       onClose();
-    } catch {
-      message.error("Failed to update permissions");
+    } catch (error) {
+      const msg =
+        error?.response?.data?.permissions?.[0] ||
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        "Failed to update permissions";
+      message.error(msg);
     } finally {
       setSaving(false);
     }

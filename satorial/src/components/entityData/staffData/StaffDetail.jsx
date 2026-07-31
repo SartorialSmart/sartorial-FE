@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  Upload,
   Select,
   Radio,
   DatePicker,
@@ -35,12 +34,14 @@ import {
 import { motion } from "framer-motion";
 import StaffService from "../../../services/staffServices/StaffService";
 import RolesService from "../../../services/settings/RolesService";
+import SettingsService from "../../../services/settings";
 import StaffReportService from "../../../services/staffServices/StaffReportService";
 import LocationService from "../../../services/LocationService";
 import OrderService from "../../../services/OrderService";
 import dayjs from "dayjs";
 import PropTypes from "prop-types";
 import SuccessModal from "../../modals/SuccessModal";
+import EditStaffFormModal from "../../modals/formModals/EditStaffFormModal";
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -79,9 +80,8 @@ const StaffDetail = () => {
   const [performance, setPerformance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [performanceLoading, setPerformanceLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [formData, setFormData] = useState({});
-  const [fileList, setFileList] = useState([]);
   const [user, setUser] = useState({ avatar: "" });
   const [successModal, setSuccessModal] = useState(null);
   const [dateRange, setDateRange] = useState({
@@ -90,6 +90,16 @@ const StaffDetail = () => {
   });
   const [roles, setRoles] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [departments, setDepartments] = useState([]);
+
+  // Resolve a stored department value (name or legacy ID) to its display name.
+  const resolveDepartment = (value) => {
+    if (!value) return value;
+    const match =
+      departments.find((d) => d.id === value) ||
+      departments.find((d) => d.name?.toLowerCase() === String(value).toLowerCase());
+    return match?.name || value;
+  };
 
   useEffect(() => {
     fetchStaffData();
@@ -98,6 +108,9 @@ const StaffDetail = () => {
       .catch(() => {});
     LocationService.listLocations()
       .then((data) => setLocations(Array.isArray(data) ? data : data.results || []))
+      .catch(() => {});
+    SettingsService.Departments.getDepartments()
+      .then((data) => setDepartments(Array.isArray(data) ? data : data.results || []))
       .catch(() => {});
   }, [slug]);
 
@@ -179,48 +192,6 @@ const StaffDetail = () => {
     }));
   };
 
-  const handleSave = async () => {
-    try {
-      setLoading(true);
-      const formPayload = new FormData();
-
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-          const val =
-            (key === "employment_date" || key === "birthday_date") && value
-              ? dayjs(value).format("YYYY-MM-DD")
-              : value;
-          formPayload.append(key, val);
-        }
-      });
-
-      if (fileList.length > 0 && fileList[0].originFileObj) {
-        formPayload.append("avatar", fileList[0].originFileObj);
-      }
-
-      await StaffService.updateStaff(staff.slug, formPayload, true);
-
-      setSuccessModal({
-        title: "Staff Updated",
-        message: "Staff details have been updated successfully.",
-        buttonText: "Done",
-      });
-      setIsEditing(false);
-      setFileList([]);
-
-      await fetchStaffData();
-    } catch (error) {
-      console.error("Failed to update staff:", error);
-      message.error("Failed to update staff details");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUploadChange = ({ fileList }) => {
-    setFileList(fileList);
-  };
-
   const handleDateRangeChange = (start, end) => {
     setDateRange({
       start_date: start ? dayjs(start).format('YYYY-MM-DD') : dayjs().subtract(30, 'days').format('YYYY-MM-DD'),
@@ -297,49 +268,27 @@ const StaffDetail = () => {
                   {staff.first_name} {staff.last_name}
                 </h1>
                 <p className="text-gray-600">
-                  {staff.staff_role} • {staff.department}
+                  {staff.staff_role} • {resolveDepartment(staff.department)}
                 </p>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            {!isEditing && (
-              <button
-                onClick={() => fetchPerformanceData()}
-                disabled={performanceLoading}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
-              >
-                <RefreshCw size={16} className={performanceLoading ? 'animate-spin' : ''} />
-                Refresh
-              </button>
-            )}
-            {isEditing ? (
-              <>
-                <button
-                  onClick={() => {
-                    setIsEditing(false);
-                    setFileList([]);
-                  }}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Save Changes
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Edit Profile
-              </button>
-            )}
+            <button
+              onClick={() => fetchPerformanceData()}
+              disabled={performanceLoading}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+            >
+              <RefreshCw size={16} className={performanceLoading ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+            <button
+              onClick={() => setEditOpen(true)}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Edit Profile
+            </button>
           </div>
         </div>
       </motion.div>
@@ -608,7 +557,7 @@ const StaffDetail = () => {
         {/* Personal Details Tab */}
         <TabPane tab="Personal Details" key="2">
           <div className="space-y-6">
-            {/* Avatar Upload */}
+            {/* Avatar Display */}
             <div className="flex items-center gap-6 pb-6 border-b">
               {user?.avatar ? (
                 <img
@@ -624,25 +573,9 @@ const StaffDetail = () => {
 
               <div>
                 <h3 className="font-medium text-gray-900 mb-2">Profile Picture</h3>
-                <Upload
-                  fileList={fileList}
-                  onChange={handleUploadChange}
-                  beforeUpload={() => false}
-                  disabled={!isEditing}
-                  showUploadList={false}
-                  accept="image/*"
-                >
-                  {isEditing && (
-                    <button className="px-4 py-2 border border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
-                      Upload New Photo
-                    </button>
-                  )}
-                </Upload>
-                {fileList.length > 0 && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    {fileList[0].name}
-                  </p>
-                )}
+                <p className="text-sm text-gray-500">
+                  Use &quot;Edit Profile&quot; to change the profile photo.
+                </p>
               </div>
             </div>
 
@@ -651,7 +584,7 @@ const StaffDetail = () => {
               <InputField
                 label="First Name"
                 value={formData.first_name}
-                disabled={!isEditing}
+                disabled
                 onChange={(e) => handleInputChange("first_name", e.target.value)}
                 required
               />
@@ -659,7 +592,7 @@ const StaffDetail = () => {
               <InputField
                 label="Last Name"
                 value={formData.last_name}
-                disabled={!isEditing}
+                disabled
                 onChange={(e) => handleInputChange("last_name", e.target.value)}
                 required
               />
@@ -667,7 +600,7 @@ const StaffDetail = () => {
               <InputField
                 label="Email Address"
                 value={formData.email}
-                disabled={!isEditing}
+                disabled
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 required
               />
@@ -675,16 +608,16 @@ const StaffDetail = () => {
               <InputField
                 label="Phone Number"
                 value={formData.phone_number}
-                disabled={!isEditing}
+                disabled
                 onChange={(e) => handleInputChange("phone_number", e.target.value)}
                 required
               />
 
               <SelectField
                 label="Department"
-                value={formData.department}
-                options={["HR", "Finance", "IT", "Marketing", "Sales"]}
-                disabled={!isEditing}
+                value={resolveDepartment(formData.department)}
+                options={departments.map((d) => d.name)}
+                disabled
                 onChange={(val) => handleInputChange("department", val)}
                 required
               />
@@ -693,7 +626,7 @@ const StaffDetail = () => {
                 label="Staff Role"
                 value={formData.staff_role}
                 options={roles.map((r) => r.name)}
-                disabled={!isEditing}
+                disabled
                 onChange={(val) => handleInputChange("staff_role", val)}
                 required
               />
@@ -710,7 +643,7 @@ const StaffDetail = () => {
                     `₦${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                   }
                   parser={(value) => value.replace(/₦\s?|(,*)/g, "")}
-                  disabled={!isEditing}
+                  disabled
                 />
               </div>
 
@@ -721,7 +654,7 @@ const StaffDetail = () => {
                 <Radio.Group
                   value={formData.gender}
                   onChange={(e) => handleInputChange("gender", e.target.value)}
-                  disabled={!isEditing}
+                  disabled
                 >
                   <Radio value="Male">Male</Radio>
                   <Radio value="Female">Female</Radio>
@@ -742,7 +675,7 @@ const StaffDetail = () => {
                   onChange={(date) =>
                     handleInputChange("employment_date", date ?? null)
                   }
-                  disabled={!isEditing}
+                  disabled
                   format="YYYY-MM-DD"
                 />
               </div>
@@ -761,7 +694,7 @@ const StaffDetail = () => {
                   onChange={(date) =>
                     handleInputChange("birthday_date", date ?? null)
                   }
-                  disabled={!isEditing}
+                  disabled
                   format="YYYY-MM-DD"
                 />
               </div>
@@ -774,7 +707,7 @@ const StaffDetail = () => {
                   className="w-full"
                   value={formData.location}
                   onChange={(val) => handleInputChange("location", val)}
-                  disabled={!isEditing}
+                  disabled
                   placeholder="Select Location"
                   allowClear
                   showSearch
@@ -797,7 +730,7 @@ const StaffDetail = () => {
               <Input.TextArea
                 value={formData.address}
                 onChange={(e) => handleInputChange("address", e.target.value)}
-                disabled={!isEditing}
+                disabled
                 rows={3}
                 className="w-full"
                 placeholder="Enter staff address"
@@ -814,13 +747,13 @@ const StaffDetail = () => {
                 <InputField
                   label="Bank Name"
                   value={formData.bank_name}
-                  disabled={!isEditing}
+                  disabled
                   onChange={(e) => handleInputChange("bank_name", e.target.value)}
                 />
                 <InputField
                   label="Account Number"
                   value={formData.account_number}
-                  disabled={!isEditing}
+                  disabled
                   onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, "").slice(0, 10);
                     handleInputChange("account_number", val);
@@ -837,6 +770,12 @@ const StaffDetail = () => {
           onClose={() => setSuccessModal(null)}
         />
       )}
+      <EditStaffFormModal
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+        staff={staff}
+        onSaved={fetchStaffData}
+      />
     </div>
   );
 };
