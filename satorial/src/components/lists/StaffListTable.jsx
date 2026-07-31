@@ -7,6 +7,7 @@ import { Spin, Tag, Tooltip, Progress, message } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import StaffService from "../../services/staffServices/StaffService";
 import StaffReportService from "../../services/staffServices/StaffReportService";
+import SettingsService from "../../services/settings";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
 import SuccessModal from "../modals/SuccessModal";
@@ -27,9 +28,39 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [successModal, setSuccessModal] = useState(null);
   const [permissionsModalStaff, setPermissionsModalStaff] = useState(null);
+  const [departmentMap, setDepartmentMap] = useState({});
 
   const dropdownRef = useRef(null);
   const rowRefs = useRef({});
+
+  // Build a lookup so a department value (name or stored ID) resolves to its
+  // display name. Backend stores the name, but some legacy records have IDs.
+  const resolveDepartment = (value) => {
+    if (!value) return value;
+    if (departmentMap[value]) return departmentMap[value].name;
+    const lowered = String(value).toLowerCase();
+    if (departmentMap[lowered]) return departmentMap[lowered].name;
+    return value;
+  };
+
+  const fetchDepartments = useCallback(async () => {
+    try {
+      const data = await SettingsService.Departments.getDepartments();
+      const list = Array.isArray(data) ? data : data.results || [];
+      const map = {};
+      list.forEach((dept) => {
+        map[dept.id] = dept;
+        if (dept.name) map[String(dept.name).toLowerCase()] = dept;
+      });
+      setDepartmentMap(map);
+    } catch {
+      // Non-fatal: fall back to showing the raw value.
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDepartments();
+  }, [fetchDepartments]);
 
   const fetchStaffList = useCallback(async () => {
     setLoading(true);
@@ -420,7 +451,7 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
 
                     <td className="px-6 py-4">
                       <Tag color="blue" className="font-medium">
-                        {staff.department}
+                        {resolveDepartment(staff.department)}
                       </Tag>
                     </td>
 
@@ -562,7 +593,7 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
                       {staffToDelete.first_name} {staffToDelete.last_name}
                     </p>
                     <p className="text-sm text-gray-600">{staffToDelete.email}</p>
-                    <p className="text-sm text-gray-500">{staffToDelete.department} • {staffToDelete.staff_role}</p>
+                    <p className="text-sm text-gray-500">{resolveDepartment(staffToDelete.department)} • {staffToDelete.staff_role}</p>
                   </div>
                 </div>
                 <p className="text-gray-600">

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Loader2, ArrowLeft } from "lucide-react";
 import StaffService from "../../services/staffServices/StaffService";
 import StaffRoleService from "../../services/staffServices/StaffRoleService";
+import RolesService from "../../services/settings/RolesService";
 import SettingsService from "../../services/settings";
 import { toast } from "react-toastify";
 import StaffSideBarLayout from "../../components/navs/StaffSideBarLayout";
@@ -29,23 +30,69 @@ const StaffEditDisplay = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [staffData, deptData, roleData] = await Promise.all([
+        // allSettled so a single failing sub-request (e.g. roles/departments)
+        // never blanks the whole page with "failed to load staff details".
+        const [staffRes, deptRes, roleRes, usersRoleRes] = await Promise.allSettled([
           StaffService.getStaffDetail(slug),
           SettingsService.Departments.getDepartments(),
+          RolesService.getRoles(),
           StaffRoleService.listRoles(),
         ]);
+
+        const staffData = staffRes.status === "fulfilled" ? staffRes.value : null;
+        if (!staffData) {
+          toast.error("Failed to load staff details");
+          return;
+        }
+
+        const departments = Array.isArray(deptRes.value)
+          ? deptRes.value
+          : deptRes.value?.results || [];
+        setDepartments(departments);
+
+        // Resolve the stored department value (name or legacy ID) to its
+        // display name so the department select shows the correct option.
+        let departmentValue = staffData.department || "";
+        const departmentMatch =
+          departments.find((d) => d.id === departmentValue) ||
+          departments.find(
+            (d) => d.name?.toLowerCase() === String(departmentValue).toLowerCase()
+          );
+        if (departmentMatch) departmentValue = departmentMatch.name;
+
         setFormData({
           first_name: staffData.first_name || "",
           last_name: staffData.last_name || "",
           email: staffData.email || "",
           phone_number: staffData.phone_number || "",
-          department: staffData.department || "",
+          department: departmentValue,
           staff_role: staffData.staff_role || "",
           salary: staffData.salary || "",
           gender: staffData.gender || "Male",
         });
-        setDepartments(Array.isArray(deptData) ? deptData : []);
-        setRoles(Array.isArray(roleData) ? roleData : roleData.results || []);
+
+        // Prefer /settings/roles (custom roles), fall back to /users/staff-roles.
+        const settingsRoles =
+          roleRes.status === "fulfilled"
+            ? Array.isArray(roleRes.value)
+              ? roleRes.value
+              : roleRes.value?.results || []
+            : [];
+        const usersRoles =
+          usersRoleRes.status === "fulfilled"
+            ? Array.isArray(usersRoleRes.value)
+              ? usersRoleRes.value
+              : usersRoleRes.value?.results || []
+            : [];
+        const merged = [...settingsRoles, ...usersRoles];
+        const seen = new Set();
+        const uniqueRoles = merged.filter((role) => {
+          const key = role.name?.toLowerCase() || role.id;
+          if (!key || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        setRoles(uniqueRoles);
       } catch (error) {
         console.error("Error loading staff:", error);
         toast.error("Failed to load staff details");

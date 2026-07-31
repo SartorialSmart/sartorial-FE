@@ -1,25 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Shield, Check } from "lucide-react";
+import { X, Shield } from "lucide-react";
 import { Spin, message } from "antd";
 import PropTypes from "prop-types";
 import StaffPermissionsService from "../../services/staffServices/StaffPermissionsService";
-
-const AVAILABLE_VIEWS = [
-  { key: "clients", label: "Clients Management" },
-  { key: "orders", label: "Orders Management" },
-  { key: "staff", label: "Staff Management" },
-  { key: "reports", label: "Reports & Analytics" },
-  { key: "expenses", label: "Expenses" },
-  { key: "inventory", label: "Inventory Management" },
-  { key: "subscriptions", label: "Subscription" },
-  { key: "settings", label: "Settings" },
-  { key: "notifications", label: "Notifications" },
-  { key: "qa_checklist", label: "Q/A Checklist" },
-];
+import PermissionPicker from "../permissions/PermissionPicker";
 
 const PermissionsModal = ({ staff, isOpen, onClose }) => {
-  const [selectedViews, setSelectedViews] = useState([]);
+  const [catalog, setCatalog] = useState([]);
+  const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -32,19 +21,17 @@ const PermissionsModal = ({ staff, isOpen, onClose }) => {
   const fetchPermissions = async () => {
     setLoading(true);
     try {
-      const data = await StaffPermissionsService.getStaffPermissions(staff.id);
-      setSelectedViews(data.permissions || []);
+      const [perms, cat] = await Promise.all([
+        StaffPermissionsService.getStaffPermissions(staff.id),
+        StaffPermissionsService.getPermissionCatalog(),
+      ]);
+      setCatalog(cat);
+      setSelectedPermissions(perms.permissions || []);
     } catch {
-      setSelectedViews(AVAILABLE_VIEWS.map((v) => v.key));
+      setSelectedPermissions([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const toggleView = (key) => {
-    setSelectedViews((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    );
   };
 
   const handleSave = async () => {
@@ -52,12 +39,17 @@ const PermissionsModal = ({ staff, isOpen, onClose }) => {
     try {
       await StaffPermissionsService.updateStaffPermissions(
         staff.id,
-        selectedViews
+        selectedPermissions
       );
       message.success("Permissions updated successfully");
       onClose();
-    } catch {
-      message.error("Failed to update permissions");
+    } catch (error) {
+      const msg =
+        error?.response?.data?.permissions?.[0] ||
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        "Failed to update permissions";
+      message.error(msg);
     } finally {
       setSaving(false);
     }
@@ -110,32 +102,13 @@ const PermissionsModal = ({ staff, isOpen, onClose }) => {
               ) : (
                 <div>
                   <p className="text-sm text-gray-600 mb-4">
-                    Select the views this staff member can access:
+                    Select the modules this staff member can access:
                   </p>
-                  <div className="grid grid-cols-2 gap-1">
-                    {AVAILABLE_VIEWS.map((view) => (
-                      <label
-                        key={view.key}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                      >
-                        <div
-                          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors shrink-0 ${
-                            selectedViews.includes(view.key)
-                              ? "bg-blue-600 border-blue-600"
-                              : "border-gray-300"
-                          }`}
-                          onClick={() => toggleView(view.key)}
-                        >
-                          {selectedViews.includes(view.key) && (
-                            <Check size={14} className="text-white" />
-                          )}
-                        </div>
-                        <span className="text-sm font-medium text-gray-700">
-                          {view.label}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
+                  <PermissionPicker
+                    catalog={catalog}
+                    value={selectedPermissions}
+                    onChange={setSelectedPermissions}
+                  />
                 </div>
               )}
             </div>

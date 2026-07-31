@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import PropTypes from "prop-types";
-import { Table, Modal, Button, Checkbox, Tag, Select, Input, message, Tooltip } from "antd";
+import { Table, Modal, Button, Tag, Select, Input, message, Tooltip } from "antd";
 import { UserPlus, ShieldCheck, Send } from "lucide-react";
 import StaffSideBarLayout from "../../components/navs/StaffSideBarLayout";
+import PermissionPicker from "../../components/permissions/PermissionPicker";
 import StaffService from "../../services/staffServices/StaffService";
 import StaffPermissionsService from "../../services/staffServices/StaffPermissionsService";
 
@@ -11,55 +11,6 @@ const STAFF_ROLES = ["Tailor", "Designer", "Driver", "Accountant", "Procurement_
 function fullName(row) {
   return row.full_name || `${row.first_name || ""} ${row.last_name || ""}`.trim() || "—";
 }
-
-// Grid of permission checkboxes grouped by module, driven by the catalog.
-function PermissionPicker({ catalog, value, onChange }) {
-  const selected = new Set(value);
-  const toggle = (perm, checked) => {
-    const next = new Set(selected);
-    if (checked) next.add(perm);
-    else next.delete(perm);
-    onChange([...next]);
-  };
-  const toggleModule = (mod, checked) => {
-    const next = new Set(selected);
-    mod.permissions.forEach((p) => (checked ? next.add(p) : next.delete(p)));
-    onChange([...next]);
-  };
-  return (
-    <div className="max-h-[360px] overflow-y-auto space-y-3 pr-1">
-      {catalog.map((mod) => {
-        const allOn = mod.permissions.every((p) => selected.has(p));
-        return (
-          <div key={mod.module} className="rounded-lg border border-slate-200 p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold capitalize text-slate-800">{mod.module}</span>
-              <Checkbox checked={allOn} onChange={(e) => toggleModule(mod, e.target.checked)}>
-                <span className="text-xs text-slate-500">All</span>
-              </Checkbox>
-            </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {mod.actions.map((action) => {
-                const perm = `${mod.module}.${action}`;
-                return (
-                  <Checkbox key={perm} checked={selected.has(perm)} onChange={(e) => toggle(perm, e.target.checked)}>
-                    <span className="text-xs capitalize">{action}</span>
-                  </Checkbox>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-PermissionPicker.propTypes = {
-  catalog: PropTypes.array.isRequired,
-  value: PropTypes.array.isRequired,
-  onChange: PropTypes.func.isRequired,
-};
 
 export default function TeamManagementDisplay() {
   const [staff, setStaff] = useState([]);
@@ -90,8 +41,8 @@ export default function TeamManagementDisplay() {
     (async () => {
       setLoading(true);
       try {
-        const [, cat] = await Promise.all([loadStaff(), StaffPermissionsService.getPermissionsCatalog()]);
-        setCatalog(cat?.catalog || []);
+        const [, cat] = await Promise.all([loadStaff(), StaffPermissionsService.getPermissionCatalog()]);
+        setCatalog(cat);
       } finally {
         setLoading(false);
       }
