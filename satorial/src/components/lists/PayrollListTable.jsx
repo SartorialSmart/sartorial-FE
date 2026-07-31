@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import PayRollService from "../../services/staffServices/PayRolService";
+import StaffService from "../../services/staffServices/StaffService";
+import SettingsService from "../../services/settings";
 
 const PayrollListTable = () => {
   const columns = [
@@ -13,16 +15,61 @@ const PayrollListTable = () => {
   const [employees, setEmployees] = useState([]);
   const [error, setError] = useState(null);
 
+  // Resolve a department value (name or legacy ID) to its display name.
+  const resolveDepartment = (value, departmentMap) => {
+    if (!value) return "N/A";
+    const match =
+      departmentMap[value] ||
+      departmentMap[String(value).toLowerCase()];
+    return match?.name || value;
+  };
+
   useEffect(() => {
     const fetchPayrolls = async () => {
       try {
-        const data = await PayRollService.listPayrolls();
-        const formattedData = data.map((item) => ({
-          name: item.employee.full_name || "N/A",
-          base_salary: `₦${Number(item.base_salary).toLocaleString()}`,
-          role: item.employee.role || "N/A",
-          department: item.employee.department || "N/A",
-        }));
+        const [payrollData, staffData, deptData] = await Promise.allSettled([
+          PayRollService.listPayrolls(),
+          StaffService.listStaff(),
+          SettingsService.Departments.getDepartments(),
+        ]);
+
+        // Backend returns employee as an ID; join against the staff list.
+        const staffList = Array.isArray(staffData.value?.results)
+          ? staffData.value.results
+          : Array.isArray(staffData.value)
+            ? staffData.value
+            : [];
+        const staffMap = {};
+        staffList.forEach((s) => {
+          if (s.id) staffMap[String(s.id)] = s;
+          if (s.slug) staffMap[s.slug] = s;
+        });
+
+        const deptList = Array.isArray(deptData.value)
+          ? deptData.value
+          : deptData.value?.results || [];
+        const departmentMap = {};
+        deptList.forEach((d) => {
+          departmentMap[d.id] = d;
+          if (d.name) departmentMap[String(d.name).toLowerCase()] = d;
+        });
+
+        const payrolls = Array.isArray(payrollData.value)
+          ? payrollData.value
+          : payrollData.value?.results || [];
+
+        const formattedData = payrolls.map((item) => {
+          const employee = staffMap[String(item.employee)] || {};
+          return {
+            name:
+              employee.full_name ||
+              `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
+              "N/A",
+            base_salary: `₦${Number(item.base_salary).toLocaleString()}`,
+            role: employee.staff_role || employee.role || "N/A",
+            department: resolveDepartment(employee.department, departmentMap),
+          };
+        });
         setEmployees(formattedData);
       } catch (err) {
         console.error("Error loading payrolls:", err);
