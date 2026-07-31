@@ -250,12 +250,21 @@ const DashboardLayout = () => {
   };
 
   const userPermissions = user?.staff_permissions;
+  // Accept both the legacy view keys ("staff") and the RBAC catalog keys
+  // ("staff.view_staff") that the permissions UI now saves.
+  const hasModule = (moduleKey) => {
+    if (!userPermissions || !moduleKey) return true;
+    return (
+      userPermissions.includes(moduleKey) ||
+      userPermissions.some(
+        (p) => p === moduleKey || p.startsWith(`${moduleKey}.`)
+      )
+    );
+  };
   const dashboardItems = getDashboardItems(stats);
   const visibleItems = isAdmin || !userPermissions
     ? dashboardItems
-    : dashboardItems.filter((item) =>
-        userPermissions.includes(VIEW_KEY_MAP[item.button_link])
-      );
+    : dashboardItems.filter((item) => hasModule(VIEW_KEY_MAP[item.button_link]));
 
   return (
     <div className="min-h-screen bg-gray-50">
