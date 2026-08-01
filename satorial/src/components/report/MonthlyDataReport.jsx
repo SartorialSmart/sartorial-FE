@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import { ChevronDown } from "lucide-react";
 import ReportService from "../../services/ReportService";
+import LocationFilter from "../filters/LocationFilter";
 import PropTypes from "prop-types";
 
 const FILTERS = [
@@ -107,6 +108,7 @@ CustomBarChart.propTypes = {
 const MonthlyDataReport = () => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
   const [customYear, setCustomYear] = useState(new Date().getFullYear().toString());
+  const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [salesData, setSalesData] = useState([]);
@@ -121,7 +123,9 @@ const MonthlyDataReport = () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await ReportService.getMonthlyStatistics();
+        const params = {};
+        if (location) params.location = location;
+        const data = await ReportService.getMonthlyStatistics(params);
         const items = Array.isArray(data) ? data : data?.results || [];
         setAllSalesData(
           items.map((item) => ({ month: item.month, value: item.sales }))
@@ -139,7 +143,7 @@ const MonthlyDataReport = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [location]);
 
   useEffect(() => {
     if (selectedFilter === "All Time") {
@@ -168,7 +172,8 @@ const MonthlyDataReport = () => {
     <div className="p-6 bg-gray-100 min-h-screen">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Monthly Data Report</h2>
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 items-center">
+          <LocationFilter value={location} onChange={setLocation} />
           {FILTERS.map((filter) => (
             <button
               key={filter}

@@ -13,6 +13,7 @@ import {
 import PropTypes from "prop-types";
 import OrderService from "../../services/OrderService";
 import OrderCategoryService from "../../services/OrderCategoryService";
+import LocationFilter from "../filters/LocationFilter";
 
 const toLocalDateStr = (date) => {
   const y = date.getFullYear();
@@ -127,6 +128,7 @@ const formatDateCaption = (filter, startDateObj, endDateObj) => {
 
 const SalesReport = () => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
+  const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -186,6 +188,7 @@ const SalesReport = () => {
         const params = {};
         if (dateRange.startDate) params.start_date = dateRange.startDate;
         if (dateRange.endDate) params.end_date = dateRange.endDate;
+        if (location) params.location = location;
 
         // Fetch orders for the period
         const ordersData = await OrderService.getOrders(params);
@@ -205,7 +208,7 @@ const SalesReport = () => {
       }
     };
     fetchData();
-  }, [dateRange]);
+  }, [dateRange, location]);
 
   // Apply date-range filter client-side as fallback (server may not support date params)
   const dateFilteredOrders = orders.filter((order) => {
@@ -416,6 +419,9 @@ const SalesReport = () => {
 
           {/* Filter Group */}
           <div className="flex flex-wrap gap-3 w-full lg:w-auto">
+            {/* Location Filter */}
+            <LocationFilter value={location} onChange={setLocation} />
+
             {/* Category Filter */}
             <div className="relative">
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />

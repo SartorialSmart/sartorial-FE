@@ -6,8 +6,10 @@ import AddOrderCategoryForm from "./AddOrderCategoryForm";
 import OrderCategoryService from "../../../services/OrderCategoryService";
 import ClientService from "../../../services/ClientService";
 import OrderService from "../../../services/OrderService";
+import LocationService from "../../../services/LocationService";
 import SuccessModal from "../../modals/SuccessModal";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
+import { isAdminRole } from "../../../utils/permissions";
 
 const getTodayDateString = () => {
   const today = new Date();
@@ -21,12 +23,14 @@ const AddOrderForm = ({ onClose }) => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [clients, setClients] = useState([]);
+  const [locations, setLocations] = useState([]);
 
   // State for error modal
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [errorTitle, setErrorTitle] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const { user } = useAuth();
+  const isAdmin = isAdminRole(user?.role);
   const todayDate = getTodayDateString();
 
   const [formData, setFormData] = useState({
@@ -42,6 +46,7 @@ const AddOrderForm = ({ onClose }) => {
     order_type: "Single",
     initial_deposit: "",
     balance: "",
+    location: isAdmin ? "" : user?.location || "",
   });
 
   const handleChange = (e) => {
@@ -136,6 +141,12 @@ const AddOrderForm = ({ onClose }) => {
       return false;
     }
 
+    if (isAdmin && !formData.location) {
+      setErrorTitle("Validation Error");
+      setErrorMessage("Please select a location.");
+      return false;
+    }
+
     return true;
   };
 
@@ -169,6 +180,7 @@ const AddOrderForm = ({ onClose }) => {
         order_type: "Single",
         initial_deposit: "",
         balance: "",
+        location: isAdmin ? "" : user?.location || "",
       });
       setSelectedCategory(null); // Reset selected category
 
@@ -223,8 +235,19 @@ const AddOrderForm = ({ onClose }) => {
       }
     };
 
+    const fetchLocations = async () => {
+      try {
+        const response = await LocationService.listLocations();
+        const list = Array.isArray(response) ? response : response?.results || [];
+        setLocations(list);
+      } catch {
+        // Location fetch failure shouldn't block the form; staff still use their profile location.
+      }
+    };
+
     fetchCategories();
     fetchClients();
+    fetchLocations();
   }, []);
 
   return (
@@ -267,6 +290,35 @@ const AddOrderForm = ({ onClose }) => {
                 disabled={loading}
               />
             </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-gray-700 font-medium mb-2">
+              Location *
+            </label>
+            {isAdmin ? (
+              <select
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                disabled={loading}
+              >
+                <option value="">Select Location</option>
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={locations.find((loc) => String(loc.id) === String(user?.location))?.name || user?.location || "Your location"}
+                readOnly
+                className="w-full border border-gray-300 rounded-md p-3 bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+              />
+            )}
           </div>
 
           <div className="mt-4">
