@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  ShoppingBag,
   Minus,
   Plus,
   Package,
@@ -12,9 +11,11 @@ import { useAuth } from "../../../contexts/AuthContext";
 import ClientService from "../../../services/ClientService";
 import InventoryService from "../../../services/InventoryService";
 import OrderService from "../../../services/OrderService";
+import LocationService from "../../../services/LocationService";
 import StaffService from "../../../services/staffServices/StaffService";
 import SuccessModal from "../../modals/SuccessModal";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
+import { isAdminRole } from "../../../utils/permissions";
 import { buildReadyMadeDescription } from "../../../../utils/orderUtils";
 
 const getTodayDateString = () => {
@@ -35,6 +36,7 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [staffId, setStaffId] = useState("");
   const { user } = useAuth();
+  const isAdmin = isAdminRole(user?.role);
   const todayDate = getTodayDateString();
 
   const [formData, setFormData] = useState({
@@ -49,24 +51,30 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
     balance: "",
     order_status: "Completed",
     order_type: "Single",
+    location: user?.location || "",
   });
 
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [locations, setLocations] = useState([]);
 
   useEffect(() => {
     const init = async () => {
       try {
-        const [clientsData, itemsData, staffData, categoriesData] = await Promise.all([
+        const [clientsData, itemsData, staffData, categoriesData, locationsData] = await Promise.all([
           ClientService.getClients(),
           InventoryService.listInventory(),
           StaffService.listStaff(),
           InventoryService.listInventoryCategory(),
+          LocationService.listLocations(),
         ]);
 
         setClients(Array.isArray(clientsData) ? clientsData : []);
         setInventoryItems(Array.isArray(itemsData) ? itemsData : []);
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        setLocations(
+          Array.isArray(locationsData) ? locationsData : locationsData?.results || []
+        );
 
         const staffList = Array.isArray(staffData?.results)
           ? staffData.results
@@ -186,6 +194,13 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
     if (Object.keys(selectedItems).length === 0) {
       setErrorTitle("Validation Error");
       setErrorMessage("Please select at least one inventory item.");
+      setIsErrorModalOpen(true);
+      return false;
+    }
+
+    if (isAdmin && !formData.location) {
+      setErrorTitle("Validation Error");
+      setErrorMessage("Please select a location.");
       setIsErrorModalOpen(true);
       return false;
     }
@@ -326,6 +341,35 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                 className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
                 disabled={loading}
               />
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-gray-700 font-medium mb-2">
+                Location *
+              </label>
+              {isAdmin ? (
+                <select
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                  disabled={loading}
+                >
+                  <option value="">Select Location</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={locations.find((loc) => String(loc.id) === String(user?.location))?.name || user?.location || "Your location"}
+                  readOnly
+                  className="w-full border border-gray-300 rounded-md p-3 bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+                />
+              )}
             </div>
 
             <div className="mt-6">

@@ -58,6 +58,11 @@ const ReportSideABrLayout = ({ children }) => {
       label: "Financial Report",
       path: "/reports/financial/report",
     },
+    {
+      icon: <DollarSign />,
+      label: "Expenses Report",
+      path: "/reports/expenses/report",
+    },
     { icon: <HelpCircle />, label: "Help Centre", path: "/help-centre" },
   ];
 

@@ -3,8 +3,8 @@ import { API } from "../api/apiEndpoints";
 
 const ReportService = {
   // Fetch monthly statistics report
-  getMonthlyStatistics: async () => {
-    const response = await axiosInstance.get(API.REPORT.MONTHLY_STATISTICS);
+  getMonthlyStatistics: async (params = {}) => {
+    const response = await axiosInstance.get(API.REPORT.MONTHLY_STATISTICS, { params });
     return response.data;
   },
 
@@ -31,6 +31,12 @@ const ReportService = {
     const response = await axiosInstance.get(API.REPORT.PROFIT_REPORT, {
       params,
     });
+    return response.data;
+  },
+
+  // Fetch aggregated expenses report
+  getExpensesReport: async (params = {}) => {
+    const response = await axiosInstance.get(API.REPORT.EXPENSES_REPORT, { params });
     return response.data;
   },
 

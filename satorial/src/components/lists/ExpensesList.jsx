@@ -20,8 +20,12 @@ import ExpensesService from "../../services/expensesServices/ExpensesService";
 import ExpensesCategoryService from "../../services/expensesServices/ExpensesCategoryService";
 import ExpenseFormModal from "../modals/formModals/ExpenseFormModal";
 import SuccessModal from "../modals/SuccessModal";
+import LocationFilter from "../filters/LocationFilter";
+import { usePermissions } from "../../utils/permissions";
 
 const ExpensesList = () => {
+  const { canPerform } = usePermissions();
+  const canManageExpenses = canPerform("expenses", "manage_expenses");
   const [expenses, setExpenses] = useState([]);
   const [filteredExpenses, setFilteredExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -32,6 +36,7 @@ const ExpensesList = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedRecurrence, setSelectedRecurrence] = useState("All");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  const [location, setLocation] = useState("");
   const [selectedExpenses, setSelectedExpenses] = useState([]);
   const [showFilters, setShowFilters] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -61,16 +66,18 @@ const ExpensesList = () => {
     fetchCategories();
   }, []);
 
-  const fetchData = async (filterStart, filterEnd) => {
+  const fetchData = async (filterStart, filterEnd, filterLocation) => {
     try {
       setLoading(true);
       const listParams = {};
       if (filterStart) listParams.start_date = filterStart;
       if (filterEnd) listParams.end_date = filterEnd;
+      if (filterLocation) listParams.location = filterLocation;
 
       const summaryParams = {};
       if (filterStart) summaryParams.start_date = filterStart;
       if (filterEnd) summaryParams.end_date = filterEnd;
+      if (filterLocation) summaryParams.location = filterLocation;
 
       const [expensesData, summaryData] = await Promise.all([
         ExpensesService.getExpenseList(listParams),
@@ -88,11 +95,11 @@ const ExpensesList = () => {
     }
   };
 
-  // Fetch on mount + re-fetch when date filters change (server-side for recurrence-aware summary)
+  // Fetch on mount + re-fetch when date/location filters change (server-side for recurrence-aware summary)
   useEffect(() => {
-    fetchData(dateRange.start || undefined, dateRange.end || undefined);
+    fetchData(dateRange.start || undefined, dateRange.end || undefined, location || undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateRange.start, dateRange.end]);
+  }, [dateRange.start, dateRange.end, location]);
 
   const filterExpenses = () => {
     let filtered = [...expenses];
@@ -135,6 +142,7 @@ const ExpensesList = () => {
         recurrence: selectedRecurrence !== "All" ? selectedRecurrence : undefined,
         start_date: dateRange.start,
         end_date: dateRange.end,
+        location: location || undefined,
       });
 
       const url = window.URL.createObjectURL(blob);
@@ -404,7 +412,9 @@ const ExpensesList = () => {
                 setExpenseToEdit(null);
                 setIsFormOpen(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              disabled={!canManageExpenses}
+              title={!canManageExpenses ? "You do not have permission to add expenses" : undefined}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={18} />
               Add Expense
@@ -421,7 +431,9 @@ const ExpensesList = () => {
               exit={{ height: 0, opacity: 0 }}
               className="mt-4 pt-4 border-t border-gray-200"
             >
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <LocationFilter value={location} onChange={setLocation} />
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category
@@ -686,8 +698,9 @@ const ExpensesList = () => {
                         
                         <button
                           onClick={() => handleEdit(expense)}
-                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors group/tooltip relative"
-                          title="Edit"
+                          disabled={!canManageExpenses}
+                          title={!canManageExpenses ? "You do not have permission to edit expenses" : "Edit"}
+                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors group/tooltip relative disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <Edit size={18} />
                           <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
@@ -700,8 +713,9 @@ const ExpensesList = () => {
                             setExpenseToDelete(expense);
                             setShowDeleteConfirm(true);
                           }}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors group/tooltip relative"
-                          title="Delete"
+                          disabled={!canManageExpenses}
+                          title={!canManageExpenses ? "You do not have permission to delete expenses" : "Delete"}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors group/tooltip relative disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <Trash2 size={18} />
                           <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
