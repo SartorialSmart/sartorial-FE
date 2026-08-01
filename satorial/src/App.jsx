@@ -47,6 +47,7 @@ import OrderReportDisplay from "./pages/reportPages/OrderReportDisplay";
 import BillsReportDisplay from "./pages/reportPages/BillsReportDisplay";
 import StaffPerformanceReportDisplay from "./pages/reportPages/StaffPerformanceReportDisplay";
 import FinancialReportDisplay from "./pages/reportPages/FinancialReportDisplay";
+import ExpensesReportDisplay from "./pages/reportPages/ExpensesReportDisplay";
 
 import ExpensesDashboardDisplay from "./pages/expensesPages/ExpensesDashboardDisplay";
 import ExpensesCategoryListDisplay from "./pages/expensesPages/ExpensesCategoryListDisplay";
@@ -125,6 +126,7 @@ const protectedRoutes = [
     element: <StaffPerformanceReportDisplay />,
   },
   { path: "/reports/financial/report", element: <FinancialReportDisplay /> },
+  { path: "/reports/expenses/report", element: <ExpensesReportDisplay /> },
 
   { path: "/expenses/overview", element: <ExpensesDashboardDisplay /> },
   { path: "/expenses/category/list", element: <ExpensesCategoryListDisplay /> },

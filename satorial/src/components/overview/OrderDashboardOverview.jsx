@@ -99,7 +99,7 @@ const calculateDashboardData = (orders) => {
   };
 };
 
-const OrderDashboardOverview = ({ dateFilter, customDateRange }) => {
+const OrderDashboardOverview = ({ dateFilter, customDateRange, location }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -112,7 +112,9 @@ const OrderDashboardOverview = ({ dateFilter, customDateRange }) => {
         setLoading(true);
         
         // Fetch all orders from the API
-        const orders = await OrderService.getOrders();
+        const params = {};
+        if (location) params.location = location;
+        const orders = await OrderService.getOrders(params);
         
         // Calculate dashboard data from orders
         const allData = calculateDashboardData(orders);
@@ -130,7 +132,7 @@ const OrderDashboardOverview = ({ dateFilter, customDateRange }) => {
     };
 
     fetchDashboardData();
-  }, [dateFilter, customDateRange]);
+  }, [dateFilter, customDateRange, location]);
 
   const cards = [
     { 
@@ -300,6 +302,7 @@ OrderDashboardOverview.propTypes = {
     start: PropTypes.string,
     end: PropTypes.string,
   }),
+  location: PropTypes.string,
 };
 
 export default OrderDashboardOverview;

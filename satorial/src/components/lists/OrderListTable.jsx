@@ -13,6 +13,8 @@ import TrackOrderStatusModal from "../modals/formModals/TrackOrderStatusModal";
 import OrderInvoiceModal from "../modals/formModals/OrderInvoiceModal";
 import AssignOrderModal from "../allocationModals/AssignOrderModal";
 import AddOrderFormModal from "../modals/formModals/AddOrderFormModal";
+import LocationFilter from "../filters/LocationFilter";
+import { usePermissions } from "../../utils/permissions";
 import { isReadyMadeOrder } from "../../../utils/orderUtils";
 
 const columns = [
@@ -103,6 +105,8 @@ const getStatusClass = (status) => {
 };
 
 const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = true, title = "Orders Management", clientView = false }) => {
+  const { canPerform } = usePermissions();
+  const canManageOrders = canPerform("orders", "manage_orders");
   const [isModalOpen, setIsModalOpen] = useState(false);
   // Data states
   const [orders, setOrders] = useState([]);
@@ -119,6 +123,7 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
   const [dateFilter, setDateFilter] = useState("all");
   const [amountFilter, setAmountFilter] = useState("all");
   const [selectedTags, setSelectedTags] = useState([]);
+  const [location, setLocation] = useState("");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
   // UI states
@@ -179,13 +184,16 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
   // Fetch orders
   useEffect(() => {
     fetchOrders();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await OrderService.getOrders();
+      const params = {};
+      if (location) params.location = location;
+      const data = await OrderService.getOrders(params);
       setOrders(data);
       dropdownRefs.current = new Array(data.length).fill(null);
       buttonRefs.current = new Array(data.length).fill(null);
@@ -542,7 +550,9 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
           {showAddButton && (
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm hover:shadow"
+              disabled={!canManageOrders}
+              title={!canManageOrders ? "You do not have permission to add orders" : undefined}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={16} />
               Add Order
@@ -640,6 +650,8 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
 
             {/* Filter Buttons */}
             <div className="flex gap-2">
+              <LocationFilter value={location} onChange={setLocation} className="min-w-44" />
+
               <button
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                 className={`px-4 py-2 rounded-lg flex items-center gap-1.5 transition-all text-sm font-medium ${
@@ -1008,7 +1020,7 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
                   </div>
                 </Link>
               </li>
-              {showEditAction && (
+              {showEditAction && canManageOrders && (
                 <li>
                   <Link
                     to={`/order/edit/${filteredOrders[activeDropdown]?.id}`}

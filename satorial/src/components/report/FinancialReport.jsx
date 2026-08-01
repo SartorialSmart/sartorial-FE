@@ -15,6 +15,7 @@ import OrderService from "../../services/OrderService";
 import ExpensesService from "../../services/expensesServices/ExpensesService";
 import SettingsService from "../../services/settings";
 import { getLocalInvoiceSettings } from "../../utils/localImageService";
+import LocationFilter from "../filters/LocationFilter";
 import { formatDateCaption } from "../../../utils/reportUtils";
 
 const toLocalDateStr = (date) => {
@@ -109,6 +110,7 @@ const FinancialReport = () => {
   const [expenses, setExpenses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFullPeriod, setShowFullPeriod] = useState(false);
+  const [location, setLocation] = useState("");
   const [vatSettings, setVatSettings] = useState({ vatEnabled: false, vatRate: 7.5 });
   const printRef = useRef();
 
@@ -121,7 +123,9 @@ const FinancialReport = () => {
   useEffect(() => {
     const fetchExpenses = async () => {
       try {
-        const expensesData = await ExpensesService.getExpenseList().catch(() => []);
+        const expensesParams = {};
+        if (location) expensesParams.location = location;
+        const expensesData = await ExpensesService.getExpenseList(expensesParams).catch(() => []);
         const fetchedExpenses = Array.isArray(expensesData)
           ? expensesData
           : expensesData.results || expensesData.expenses || [];
@@ -131,7 +135,7 @@ const FinancialReport = () => {
       }
     };
     fetchExpenses();
-  }, []);
+  }, [location]);
 
   // Fetch VAT settings
   useEffect(() => {
@@ -162,6 +166,7 @@ const FinancialReport = () => {
         const orderParams = {};
         if (dateRange?.startDate) orderParams.start_date = toLocalDateStr(dateRange.startDate);
         if (dateRange?.endDate) orderParams.end_date = toLocalDateStr(dateRange.endDate);
+        if (location) orderParams.location = location;
 
         const ordersData = await OrderService.getOrders(orderParams);
 
@@ -177,7 +182,7 @@ const FinancialReport = () => {
       }
     };
     fetchOrders();
-  }, [dateRange]);
+  }, [dateRange, location]);
 
   // Client-side date filter
   const dateFilteredOrders = useMemo(() => {
@@ -351,7 +356,8 @@ const FinancialReport = () => {
               Revenue, expenditures &amp; profit overview
             </p>
           </div>
-          <div className="no-print flex gap-2 flex-wrap">
+          <div className="no-print flex gap-2 flex-wrap items-center">
+            <LocationFilter value={location} onChange={setLocation} />
             {FILTERS.map((filter) => (
               <button
                 key={filter}

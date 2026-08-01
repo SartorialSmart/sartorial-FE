@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import OrderService from "../../services/OrderService";
 import OrderCategoryService from "../../services/OrderCategoryService";
+import LocationFilter from "../filters/LocationFilter";
 import { formatDateCaption } from "../../../utils/reportUtils";
 
 const FILTERS = [
@@ -70,13 +71,16 @@ const OrderReport = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [location, setLocation] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-        const ordersData = await OrderService.getOrders();
+        const params = {};
+        if (location) params.location = location;
+        const ordersData = await OrderService.getOrders(params);
         setOrders(
           Array.isArray(ordersData) ? ordersData : ordersData.orders || []
         );
@@ -89,7 +93,7 @@ const OrderReport = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [location]);
 
   const matchDate = useCallback(
     (order) => {
@@ -817,7 +821,7 @@ const OrderReport = () => {
               Track and analyze order activities
             </p>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
             {FILTERS.map((filter) => (
               <button
                 key={filter}
@@ -925,6 +929,15 @@ const OrderReport = () => {
           </div>
 
           <div className="flex flex-wrap gap-3 w-full lg:w-auto">
+            {/* Location Filter */}
+            <LocationFilter
+              value={location}
+              onChange={setLocation}
+              hideLabel
+              leadingIcon
+              selectClassName="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50/50 appearance-none min-w-40"
+            />
+
             <div className="relative">
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <select

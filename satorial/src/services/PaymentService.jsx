@@ -12,9 +12,11 @@ const PaymentService = {
 
   /**
    * Fetch all payments.
+   * @param {Object} params - Query parameters (e.g. location).
    * @returns {Promise<Array>} - List of payments.
    */
-  getAllPayments: () => apiGet(API.ORDER_MANAGEMENT.ORDER_PAYMENTS.LIST),
+  getAllPayments: (params = {}) =>
+    apiGet(API.ORDER_MANAGEMENT.ORDER_PAYMENTS.LIST, { params }),
 
   /**
    * Fetch details of a specific payment by ID.

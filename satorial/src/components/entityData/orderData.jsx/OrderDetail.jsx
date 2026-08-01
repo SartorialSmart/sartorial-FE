@@ -18,6 +18,7 @@ import { isReadyMadeOrder, getCleanDescription } from "../../../../utils/orderUt
 import SuccessModal from "../../modals/SuccessModal";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
 import { useAuth } from "../../../contexts/AuthContext";
+import { canViewModule } from "../../../utils/permissions";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
@@ -47,8 +48,7 @@ const OrderDetail = () => {
   const { user } = useAuth();
   const ALLOWED_ROLES = ["super_admin", "admin", "organization"];
   const isAdmin = ALLOWED_ROLES.includes(user?.role?.toLowerCase());
-  const userPermissions = user?.staff_permissions;
-  const canAccessQA = isAdmin || !userPermissions || userPermissions.includes("qa_checklist");
+  const canAccessQA = isAdmin || canViewModule(user, "qa_checklist");
 
   // Define all possible statuses in order (Completed before On Delivery)
   const STATUS_FLOW = [

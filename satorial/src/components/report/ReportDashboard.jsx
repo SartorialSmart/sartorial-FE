@@ -12,6 +12,7 @@ import {
   Cell,
 } from "recharts";
 import ReportService from "../../services/ReportService";
+import LocationFilter from "../filters/LocationFilter";
 import { getDateRangeISO } from "../../../utils/reportUtils";
 
 const COLORS = ["#42A5F5", "#66BB6A"];
@@ -34,8 +35,9 @@ const ReportDashboard = () => {
   const [summary, setSummary] = useState({});
   const [profitReport, setProfitReport] = useState(null);
   const [monthlyStats, setMonthlyStats] = useState([]);
+  const [location, setLocation] = useState("");
 
-  const fetchData = async (filter, startDate, endDate) => {
+  const fetchData = async (filter, startDate, endDate, loc) => {
     setLoading(true);
     setError(null);
     try {
@@ -46,17 +48,18 @@ const ReportDashboard = () => {
           end_date: dr.endDate?.split("T")[0],
         };
       })();
+      if (loc) params.location = loc;
 
       const [summaryData, monthly] = await Promise.all([
         ReportService.getReportSummary(params),
-        ReportService.getMonthlyStatistics(),
+        ReportService.getMonthlyStatistics(params),
       ]);
       setSummary(summaryData || {});
       setMonthlyStats(Array.isArray(monthly) ? monthly : []);
 
       let profit = null;
       if (filter === "All Time") {
-        profit = await ReportService.getProfitReport();
+        profit = await ReportService.getProfitReport(loc ? { location: loc } : {});
       } else {
         profit = await ReportService.getProfitReport(params);
       }
@@ -69,21 +72,21 @@ const ReportDashboard = () => {
   };
 
   useEffect(() => {
-    fetchData(selectedFilter, customStartDate, customEndDate);
-  }, []);
+    fetchData(selectedFilter, customStartDate, customEndDate, location);
+  }, [location]);
 
   const handleFilterClick = (filter) => {
     setSelectedFilter(filter);
     if (filter !== "Custom Date") {
       setCustomStartDate("");
       setCustomEndDate("");
-      fetchData(filter, "", "");
+      fetchData(filter, "", "", location);
     }
   };
 
   const handleCustomDateFilter = () => {
     if (customStartDate && customEndDate) {
-      fetchData("Custom Date", customStartDate, customEndDate);
+      fetchData("Custom Date", customStartDate, customEndDate, location);
     }
   };
 
@@ -151,7 +154,8 @@ const ReportDashboard = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-light">Dashboard</h1>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
+          <LocationFilter value={location} onChange={setLocation} />
           {FILTERS.map((filter) => (
             <button
               key={filter}

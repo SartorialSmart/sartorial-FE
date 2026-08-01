@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import PaymentService from "../../services/PaymentService";
 import OrderService from "../../services/OrderService";
+import LocationFilter from "../filters/LocationFilter";
 import { filterByDateRange, formatDateCaption } from "../../../utils/reportUtils";
 
 const FILTERS = [
@@ -39,15 +40,22 @@ const PaymentsReport = () => {
   const [payments, setPayments] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [location, setLocation] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
+        const paymentParams = {};
+        const orderParams = {};
+        if (location) {
+          paymentParams.location = location;
+          orderParams.location = location;
+        }
         const [paymentsData, ordersData] = await Promise.all([
-          PaymentService.getAllPayments(),
-          OrderService.getOrders(),
+          PaymentService.getAllPayments(paymentParams),
+          OrderService.getOrders(orderParams),
         ]);
 
         const ordersList = Array.isArray(ordersData)
@@ -98,7 +106,7 @@ const PaymentsReport = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [location]);
 
   const dateFilteredPayments = useMemo(() => {
     return filterByDateRange(payments, "payment_date", selectedFilter, customStartDate, customEndDate);
@@ -226,7 +234,8 @@ const PaymentsReport = () => {
               Track and analyze payment activities
             </p>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
+            <LocationFilter value={location} onChange={setLocation} />
             {FILTERS.map((filter) => (
               <button
                 key={filter}
