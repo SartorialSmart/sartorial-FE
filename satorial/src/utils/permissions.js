@@ -11,20 +11,19 @@ const getPermissions = (user) => {
 
 // View-level access: grant access when the user has the legacy bare module key
 // ("staff"), the view action ("staff.view_staff"), or any action under the
-// module ("staff.manage_staff").
+// module ("staff.manage_staff"). An empty permission list grants nothing.
 export const canViewModule = (user, moduleKey) => {
   if (isAdminRole(user?.role)) return true;
   const perms = getPermissions(user);
-  if (perms.length === 0) return true;
   return perms.some((p) => p === moduleKey || p.startsWith(`${moduleKey}.`));
 };
 
 // Action-level access (create/edit/delete/export): requires the specific
-// "<module>.<action>" permission, or the legacy bare module key.
+// "<module>.<action>" permission, or the legacy bare module key. An empty
+// permission list grants nothing.
 export const canPerformAction = (user, moduleKey, action) => {
   if (isAdminRole(user?.role)) return true;
   const perms = getPermissions(user);
-  if (perms.length === 0) return true;
   const full = `${moduleKey}.${action}`;
   return perms.some((p) => p === full || p === moduleKey);
 };
