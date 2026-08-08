@@ -58,7 +58,8 @@ export default function AcceptInvite() {
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <h1 className="text-xl font-bold text-slate-900">Set up your account</h1>
         <p className="mt-1 text-sm text-slate-600">
-          You've been invited to join a team on Sartorial Smart. Choose a password and add your details.
+          You&apos;ve been given access to Sartorial Smart. Confirm your details and choose a password — then you
+          can sign in and get to work on whatever your organization has given you access to.
         </p>
 
         {invalidLink ? (

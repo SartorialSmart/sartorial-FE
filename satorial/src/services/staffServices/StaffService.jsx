@@ -31,7 +31,7 @@ const StaffService = {
     return apiPost(API.STAFF_MANAGEMENT.STAFF.ADD, formData);
   },
 
-  updateStaff: (slug, updatedData, isFormData = false) => {
+  updateStaff: (slug, updatedData) => {
     return apiPut(API.STAFF_MANAGEMENT.STAFF.UPDATE(slug), updatedData);
   },
 
@@ -43,6 +43,15 @@ const StaffService = {
 
   // Invite a member by email + role + permissions (they set up their own account).
   inviteStaff: (payload) => apiPost(API.STAFF_MANAGEMENT.STAFF.INVITE, payload),
+
+  // Turn an existing staff *record* into a user of the system. Takes a plan seat
+  // and emails them an invite to finish their profile and set a password.
+  grantLoginAccess: (staffId, payload) =>
+    apiPost(API.STAFF_MANAGEMENT.STAFF.GRANT_LOGIN(staffId), payload),
+
+  // Remove someone's sign-in without removing them from the business.
+  revokeLoginAccess: (staffId) =>
+    apiPost(API.STAFF_MANAGEMENT.STAFF.REVOKE_LOGIN(staffId), {}),
 
   // Resend an invite to a not-yet-activated member.
   resendInvite: (staffId) =>

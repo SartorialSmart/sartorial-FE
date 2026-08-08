@@ -163,7 +163,8 @@ const SubscriptionPanel = () => {
       color: "purple",
     },
     {
-      label: "Staff",
+      // Logins, not headcount: staff records don't count against the plan.
+      label: "User logins",
       icon: UserCheck,
       count: usage?.staff_count || 0,
       limit: usage?.staff_limit ?? 1,

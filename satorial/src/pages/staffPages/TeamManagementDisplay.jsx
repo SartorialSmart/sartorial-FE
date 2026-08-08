@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { Table, Modal, Button, Tag, Select, Input, message, Tooltip } from "antd";
-import { UserPlus, ShieldCheck, Send } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Table, Modal, Button, Tag, Select, Input, Segmented, message, Tooltip } from "antd";
+import { UserPlus, ShieldCheck, Send, Ban } from "lucide-react";
 import StaffSideBarLayout from "../../components/navs/StaffSideBarLayout";
 import PermissionPicker from "../../components/permissions/PermissionPicker";
 import StaffService from "../../services/staffServices/StaffService";
@@ -8,18 +8,25 @@ import StaffPermissionsService from "../../services/staffServices/StaffPermissio
 
 const STAFF_ROLES = ["Tailor", "Designer", "Driver", "Accountant", "Procurement_Manager"];
 
+// Two ways to add a user: invite someone new by email, or promote a staff member
+// who is already on the books.
+const MODE_NEW = "Someone new";
+const MODE_EXISTING = "Existing staff";
+
 function fullName(row) {
   return row.full_name || `${row.first_name || ""} ${row.last_name || ""}`.trim() || "—";
 }
 
 export default function TeamManagementDisplay() {
   const [staff, setStaff] = useState([]);
+  const [records, setRecords] = useState([]);
   const [catalog, setCatalog] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Invite modal
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [invite, setInvite] = useState({ email: "", staff_role: undefined, permissions: [] });
+  const [mode, setMode] = useState(MODE_NEW);
+  const [invite, setInvite] = useState({ email: "", staff_role: undefined, permissions: [], staffId: undefined });
   const [inviting, setInviting] = useState(false);
 
   // Permissions editor modal
@@ -28,13 +35,22 @@ export default function TeamManagementDisplay() {
   const [permValue, setPermValue] = useState([]);
   const [savingPerms, setSavingPerms] = useState(false);
 
+  // This page is about users of the system, so it lists only staff who can sign
+  // in. `records` is the rest of the workforce — the pool you can promote from.
   const loadStaff = async () => {
     try {
       const data = await StaffService.listStaff();
-      setStaff(Array.isArray(data) ? data : data?.results || []);
+      const all = Array.isArray(data) ? data : data?.results || [];
+      setStaff(all.filter((s) => s.has_login_access));
+      setRecords(all.filter((s) => !s.has_login_access));
     } catch {
       message.error("Failed to load team.");
     }
+  };
+
+  const resetInvite = () => {
+    setInvite({ email: "", staff_role: undefined, permissions: [], staffId: undefined });
+    setMode(MODE_NEW);
   };
 
   useEffect(() => {
@@ -50,17 +66,28 @@ export default function TeamManagementDisplay() {
   }, []);
 
   const submitInvite = async () => {
+    const promoting = mode === MODE_EXISTING;
+    if (promoting && !invite.staffId) return message.error("Choose a staff member to give access to.");
     if (!invite.email) return message.error("Email is required.");
+
     setInviting(true);
     try {
-      await StaffService.inviteStaff({
-        email: invite.email,
-        staff_role: invite.staff_role,
-        permissions: invite.permissions,
-      });
+      if (promoting) {
+        // Existing employee record → grant a seat and invite them to finish setup.
+        await StaffService.grantLoginAccess(invite.staffId, {
+          email: invite.email,
+          permissions: invite.permissions,
+        });
+      } else {
+        await StaffService.inviteStaff({
+          email: invite.email,
+          staff_role: invite.staff_role,
+          permissions: invite.permissions,
+        });
+      }
       message.success("Invitation sent.");
       setInviteOpen(false);
-      setInvite({ email: "", staff_role: undefined, permissions: [] });
+      resetInvite();
       loadStaff();
     } catch (err) {
       if (!err?.response?.data?.upgrade_required) {
@@ -69,6 +96,24 @@ export default function TeamManagementDisplay() {
     } finally {
       setInviting(false);
     }
+  };
+
+  const revokeAccess = (row) => {
+    Modal.confirm({
+      title: "Remove system access?",
+      content: `${fullName(row)} will no longer be able to sign in. They stay on your staff list, and the seat is freed up for someone else.`,
+      okText: "Remove access",
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          await StaffService.revokeLoginAccess(row.id);
+          message.success("System access removed.");
+          loadStaff();
+        } catch (err) {
+          message.error(err?.response?.data?.message || "Could not remove access.");
+        }
+      },
+    });
   };
 
   const openPermissions = async (row) => {
@@ -105,54 +150,57 @@ export default function TeamManagementDisplay() {
     }
   };
 
-  const columns = useMemo(
-    () => [
-      { title: "Name", key: "name", render: (_, row) => <span className="font-medium">{fullName(row)}</span> },
-      { title: "Email", dataIndex: "email", key: "email" },
-      {
-        title: "Role",
-        dataIndex: "staff_role",
-        key: "role",
-        render: (r) => (r ? <span className="capitalize">{String(r).replace("_", " ")}</span> : "—"),
-      },
-      {
-        title: "Status",
-        key: "status",
-        render: (_, row) =>
-          row.is_active === false ? <Tag color="orange">Pending invite</Tag> : <Tag color="green">Active</Tag>,
-      },
-      {
-        title: "Actions",
-        key: "actions",
-        render: (_, row) => (
-          <div className="flex items-center gap-2">
-            <Tooltip title="Permissions">
-              <Button size="small" icon={<ShieldCheck size={14} />} onClick={() => openPermissions(row)}>
-                Permissions
-              </Button>
+  const columns = [
+    { title: "Name", key: "name", render: (_, row) => <span className="font-medium">{fullName(row)}</span> },
+    { title: "Email", dataIndex: "email", key: "email" },
+    {
+      title: "Role",
+      dataIndex: "staff_role",
+      key: "role",
+      render: (r) => (r ? <span className="capitalize">{String(r).replace("_", " ")}</span> : "—"),
+    },
+    {
+      title: "Status",
+      key: "status",
+      render: (_, row) =>
+        row.is_active === false ? <Tag color="orange">Pending invite</Tag> : <Tag color="green">Active</Tag>,
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, row) => (
+        <div className="flex items-center gap-2">
+          <Tooltip title="Permissions">
+            <Button size="small" icon={<ShieldCheck size={14} />} onClick={() => openPermissions(row)}>
+              Permissions
+            </Button>
+          </Tooltip>
+          {row.is_active === false && (
+            <Tooltip title="Resend invite">
+              <Button size="small" icon={<Send size={14} />} onClick={() => resend(row)} />
             </Tooltip>
-            {row.is_active === false && (
-              <Tooltip title="Resend invite">
-                <Button size="small" icon={<Send size={14} />} onClick={() => resend(row)} />
-              </Tooltip>
-            )}
-          </div>
-        ),
-      },
-    ],
-    []
-  );
+          )}
+          <Tooltip title="Remove system access (keeps their staff record)">
+            <Button size="small" danger icon={<Ban size={14} />} onClick={() => revokeAccess(row)} />
+          </Tooltip>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <StaffSideBarLayout>
     <div className="p-4 sm:p-6">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Team</h1>
-          <p className="text-sm text-slate-600">Invite members and control what each can access.</p>
+          <h1 className="text-xl font-bold text-slate-900">Users</h1>
+          <p className="text-sm text-slate-600">
+            The people who can sign in to Sartorial, and what each of them may do. Staff who only need to be
+            on the payroll live under <span className="font-medium">Staff</span> — they don&apos;t use a seat.
+          </p>
         </div>
         <Button type="primary" icon={<UserPlus size={16} />} onClick={() => setInviteOpen(true)}>
-          Invite member
+          Add user
         </Button>
       </div>
 
@@ -164,38 +212,86 @@ export default function TeamManagementDisplay() {
         pagination={{ pageSize: 10 }}
       />
 
-      {/* Invite modal */}
+      {/* Add-user modal: invite someone new, or promote existing staff */}
       <Modal
-        title="Invite a team member"
+        title="Add a user"
         open={inviteOpen}
-        onCancel={() => setInviteOpen(false)}
+        onCancel={() => {
+          setInviteOpen(false);
+          resetInvite();
+        }}
         onOk={submitInvite}
         okText="Send invitation"
         confirmLoading={inviting}
         width={640}
       >
         <div className="space-y-4 pt-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Email</label>
-              <Input
-                type="email"
-                placeholder="member@example.com"
-                value={invite.email}
-                onChange={(e) => setInvite((s) => ({ ...s, email: e.target.value }))}
-              />
+          <Segmented
+            block
+            options={[MODE_NEW, MODE_EXISTING]}
+            value={mode}
+            onChange={(v) => {
+              setMode(v);
+              setInvite((s) => ({ ...s, staffId: undefined, email: "" }));
+            }}
+          />
+
+          {mode === MODE_EXISTING ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Staff member</label>
+                <Select
+                  className="w-full"
+                  showSearch
+                  optionFilterProp="label"
+                  placeholder={records.length ? "Select staff" : "No staff without access"}
+                  disabled={!records.length}
+                  value={invite.staffId}
+                  onChange={(id) => {
+                    const picked = records.find((r) => r.id === id);
+                    // Reuse the email already on their record when there is one.
+                    setInvite((s) => ({ ...s, staffId: id, email: picked?.email || "" }));
+                  }}
+                  options={records.map((r) => ({
+                    value: r.id,
+                    label: `${fullName(r)}${r.staff_role ? ` · ${String(r.staff_role).replace("_", " ")}` : ""}`,
+                  }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Email</label>
+                <Input
+                  type="email"
+                  placeholder="member@example.com"
+                  value={invite.email}
+                  onChange={(e) => setInvite((s) => ({ ...s, email: e.target.value }))}
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Role</label>
-              <Select
-                className="w-full"
-                placeholder="Select role"
-                value={invite.staff_role}
-                onChange={(v) => setInvite((s) => ({ ...s, staff_role: v }))}
-                options={STAFF_ROLES.map((r) => ({ value: r, label: r.replace("_", " ") }))}
-              />
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Email</label>
+                <Input
+                  type="email"
+                  placeholder="member@example.com"
+                  value={invite.email}
+                  onChange={(e) => setInvite((s) => ({ ...s, email: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Role</label>
+                <Select
+                  className="w-full"
+                  placeholder="Select role"
+                  value={invite.staff_role}
+                  onChange={(v) => setInvite((s) => ({ ...s, staff_role: v }))}
+                  options={STAFF_ROLES.map((r) => ({ value: r, label: r.replace("_", " ") }))}
+                />
+              </div>
             </div>
-          </div>
+          )}
+
           <div>
             <p className="text-xs font-semibold text-slate-700 mb-2">Permissions</p>
             <PermissionPicker
@@ -205,7 +301,10 @@ export default function TeamManagementDisplay() {
             />
           </div>
           <p className="text-xs text-slate-500">
-            The member will receive an email to set up their own account (password, phone, name).
+            {mode === MODE_EXISTING
+              ? "They'll get an email to set a password and confirm their details. Their staff record — payroll, orders, history — stays exactly as it is."
+              : "They'll receive an email to set up their own account (password, phone, name), and a staff record is created for them."}{" "}
+            This uses one of your plan&apos;s user seats.
           </p>
         </div>
       </Modal>

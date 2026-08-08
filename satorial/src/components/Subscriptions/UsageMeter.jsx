@@ -5,7 +5,8 @@ import { useSubscription } from "../../contexts/SubscriptionContext";
 const RESOURCES = [
   { key: "clients", label: "Clients" },
   { key: "orders", label: "Orders" },
-  { key: "staff", label: "Team members" },
+  // The plan meters logins, not headcount — staff records are unlimited.
+  { key: "staff", label: "User logins" },
   { key: "inventory", label: "Inventory items" },
 ];
 
@@ -68,6 +69,13 @@ export default function UsageMeter({ compact = false }) {
                   style={{ width: `${Math.min(pct, 100)}%` }}
                 />
               </div>
+            )}
+            {/* Make it obvious the limit is on logins, not on how many people
+                you employ — hitting it never blocks adding staff. */}
+            {key === "staff" && usage.staff_records_count != null && (
+              <p className="mt-1 text-[11px] text-slate-400">
+                {usage.staff_records_count} staff on record · records are unlimited
+              </p>
             )}
           </div>
         );
