@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from "react";
 import { useNavigate } from "react-router-dom";
-import { MoreVertical, TrendingUp, TrendingDown, Award, AlertTriangle, Eye, Trash2, Edit, User, Shield } from "lucide-react";
-import { Spin, Tag, Tooltip, Progress, message } from "antd";
+import { MoreVertical, Award, AlertTriangle, Eye, Trash2, Edit, User, Shield, KeyRound, Ban } from "lucide-react";
+import { Spin, Tag, Tooltip, Progress, message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import StaffService from "../../services/staffServices/StaffService";
 import StaffReportService from "../../services/staffServices/StaffReportService";
@@ -12,6 +12,7 @@ import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
 import SuccessModal from "../modals/SuccessModal";
 import PermissionsModal from "../modals/PermissionsModal";
+import GrantLoginAccessModal from "../modals/GrantLoginAccessModal";
 
 const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   const [successModal, setSuccessModal] = useState(null);
   const [permissionsModalStaff, setPermissionsModalStaff] = useState(null);
   const [departmentMap, setDepartmentMap] = useState({});
+  const [grantAccessStaff, setGrantAccessStaff] = useState(null);
 
   const dropdownRef = useRef(null);
   const rowRefs = useRef({});
@@ -69,7 +71,7 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
       if (Array.isArray(data.results)) {
         setStaffList(data.results);
         // Fetch performance for all staff
-        fetchAllPerformance(data.results);
+        fetchAllPerformance();
       } else {
         throw new Error("Invalid data format");
       }
@@ -81,7 +83,7 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
     }
   }, []);
 
-  const fetchAllPerformance = async (staffMembers) => {
+  const fetchAllPerformance = async () => {
     setPerformanceLoading(true);
     try {
       const response = await StaffReportService.getAllStaffPerformance();
@@ -108,29 +110,30 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
     refresh: fetchStaffList
   }));
 
+  // Keyed by id, not email: staff without login access have no email at all, so
+  // email is no longer a unique handle for a row.
   const handleSelectAll = (e) => {
-    setSelectedStaff(e.target.checked ? filteredStaffList.map((s) => s.email) : []);
+    setSelectedStaff(e.target.checked ? filteredStaffList.map((s) => s.id) : []);
   };
 
-  const handleSelect = (email) => {
+  const handleSelect = (id) => {
     setSelectedStaff((prev) =>
-      prev.includes(email) ? prev.filter((e) => e !== email) : [...prev, email]
+      prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]
     );
   };
 
   const handleBulkDelete = async () => {
     if (selectedStaff.length === 0) return;
-    
+
     try {
       setBulkActionLoading(true);
-      // Get staff objects from selected emails
-      const staffToDelete = filteredStaffList.filter(s => selectedStaff.includes(s.email));
-      
+      const staffToDelete = filteredStaffList.filter(s => selectedStaff.includes(s.id));
+
       await Promise.all(
         staffToDelete.map(staff => StaffService.deleteStaff(staff.slug))
       );
-      
-      setStaffList(prev => prev.filter(s => !selectedStaff.includes(s.email)));
+
+      setStaffList(prev => prev.filter(s => !selectedStaff.includes(s.id)));
       const deletedCount = selectedStaff.length;
       setSelectedStaff([]);
       setSuccessModal({
@@ -146,9 +149,9 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
     }
   };
 
-  const handleDropdownToggle = (email, e) => {
+  const handleDropdownToggle = (id, e) => {
     e.stopPropagation();
-    setDropdownOpen(dropdownOpen === email ? null : email);
+    setDropdownOpen(dropdownOpen === id ? null : id);
   };
 
   const handleAction = (action, staff, e) => {
@@ -179,6 +182,24 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
       console.error("Failed to delete staff:", error);
       message.error("Failed to delete staff");
     }
+  };
+
+  const confirmRevokeAccess = (staff) => {
+    Modal.confirm({
+      title: "Remove system access?",
+      content: `${staff.first_name} ${staff.last_name} will no longer be able to sign in. They stay on your staff list, and the seat is freed up for someone else.`,
+      okText: "Remove access",
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          await StaffService.revokeLoginAccess(staff.id);
+          message.success("System access removed.");
+          fetchStaffList();
+        } catch (error) {
+          message.error(error?.response?.data?.message || "Could not remove access.");
+        }
+      },
+    });
   };
 
   const handleOutsideClick = useCallback((event) => {
@@ -284,17 +305,45 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
             <Edit size={16} />
             Edit Staff
           </button>
-          <button
-            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              setPermissionsModalStaff(staff);
-              setDropdownOpen(null);
-            }}
-          >
-            <Shield size={16} />
-            Permissions
-          </button>
+          {/* Permissions only mean something for someone who can sign in. */}
+          {staff.has_login_access ? (
+            <>
+              <button
+                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPermissionsModalStaff(staff);
+                  setDropdownOpen(null);
+                }}
+              >
+                <Shield size={16} />
+                Permissions
+              </button>
+              <button
+                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDropdownOpen(null);
+                  confirmRevokeAccess(staff);
+                }}
+              >
+                <Ban size={16} />
+                Remove system access
+              </button>
+            </>
+          ) : (
+            <button
+              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDropdownOpen(null);
+                setGrantAccessStaff(staff);
+              }}
+            >
+              <KeyRound size={16} />
+              Give system access
+            </button>
+          )}
           <button
             className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
             onClick={(e) => handleAction("delete", staff, e)}
@@ -392,7 +441,7 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
                 Performance
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+                System Access
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -417,8 +466,8 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
                       <input
                         type="checkbox"
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        checked={selectedStaff.includes(staff.email)}
-                        onChange={() => handleSelect(staff.email)}
+                        checked={selectedStaff.includes(staff.id)}
+                        onChange={() => handleSelect(staff.id)}
                       />
                     </td>
 
@@ -484,29 +533,40 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
                       )}
                     </td>
 
+                    {/* Staff record vs. user of the system — three states:
+                        no access, invited but not set up yet, and active user. */}
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm font-medium text-green-700">Active</span>
-                      </div>
+                      {!staff.has_login_access ? (
+                        <Tooltip title="On the books only — cannot sign in">
+                          <Tag color="default">Staff record</Tag>
+                        </Tooltip>
+                      ) : staff.is_active === false ? (
+                        <Tooltip title="Invitation sent — waiting for them to set a password">
+                          <Tag color="orange">Invite pending</Tag>
+                        </Tooltip>
+                      ) : (
+                        <Tooltip title={staff.email || "Can sign in"}>
+                          <Tag color="green">User</Tag>
+                        </Tooltip>
+                      )}
                     </td>
 
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                         <div className="relative">
                           <button
-                            onClick={(e) => handleDropdownToggle(staff.email, e)}
+                            onClick={(e) => handleDropdownToggle(staff.id, e)}
                             className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
                             ref={(el) => {
-                              if (el) rowRefs.current[staff.email] = el;
+                              if (el) rowRefs.current[staff.id] = el;
                             }}
                           >
                             <MoreVertical size={18} />
                           </button>
-                          {dropdownOpen === staff.email && (
+                          {dropdownOpen === staff.id && (
                             <DropdownMenu
                               staff={staff}
-                              anchorRef={{ current: rowRefs.current[staff.email] }}
+                              anchorRef={{ current: rowRefs.current[staff.id] }}
                             />
                           )}
                         </div>
@@ -592,7 +652,7 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
                     <p className="font-semibold text-gray-900">
                       {staffToDelete.first_name} {staffToDelete.last_name}
                     </p>
-                    <p className="text-sm text-gray-600">{staffToDelete.email}</p>
+                    <p className="text-sm text-gray-600">{staffToDelete.email || staffToDelete.phone_number}</p>
                     <p className="text-sm text-gray-500">{resolveDepartment(staffToDelete.department)} • {staffToDelete.staff_role}</p>
                   </div>
                 </div>
@@ -633,6 +693,14 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
           staff={permissionsModalStaff}
           isOpen={!!permissionsModalStaff}
           onClose={() => setPermissionsModalStaff(null)}
+        />
+      )}
+      {grantAccessStaff && (
+        <GrantLoginAccessModal
+          staff={grantAccessStaff}
+          isOpen={!!grantAccessStaff}
+          onClose={() => setGrantAccessStaff(null)}
+          onGranted={fetchStaffList}
         />
       )}
     </div>

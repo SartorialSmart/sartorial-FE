@@ -1,7 +1,7 @@
 // components/forms/staffForms/AddStaffForm.jsx
 
 import { useState, useRef, useEffect } from "react";
-import { X, Upload, Eye, EyeOff, Loader2, Landmark, MapPin, ChevronDown } from "lucide-react";
+import { X, Upload, Loader2, Landmark, MapPin, ChevronDown, Info } from "lucide-react";
 import StaffService from "../../../services/staffServices/StaffService";
 import RolesService from "../../../services/settings/RolesService";
 import SettingsService from "../../../services/settings";
@@ -38,6 +38,9 @@ const NIGERIAN_BANKS = [
   "Zenith Bank",
 ];
 
+// Adds an employee to the business — not a user of the app. Login access is a
+// separate decision made from the Team page (it costs a plan seat), which is why
+// there is no password field here and the email is optional.
 const AddStaffForm = ({ onClose, onStaffCreated }) => {
   const initialFormData = {
     firstName: "",
@@ -46,7 +49,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     phone: "",
     department: "",
     staff_role: "",
-    password: "",
     salary: "",
     employmentDate: "",
     birthdayDate: "",
@@ -59,7 +61,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   };
 
   const [formData, setFormData] = useState(initialFormData);
-  const [showPassword, setShowPassword] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roles, setRoles] = useState([]);
@@ -166,21 +167,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     setAvatarPreview(null);
   };
 
-  const generatePassword = () => {
-    const chars =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
-    let password = "";
-    for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setFormData({ ...formData, password });
-    setSuccessModal({
-      title: "Password Generated",
-      message: "A secure password has been generated for this staff member.",
-      buttonText: "Done",
-    });
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -198,9 +184,9 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
       return false;
     }
 
-    // Email validation
+    // Email is optional here — plenty of staff have none. Validate only if given.
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    if (formData.email.trim() && !emailRegex.test(formData.email.trim())) {
       toast.error("Please enter a valid email address");
       return false;
     }
@@ -226,12 +212,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     // Salary validation
     if (parseFloat(formData.salary) <= 0) {
       toast.error("Salary must be greater than 0");
-      return false;
-    }
-
-    // Password validation
-    if (formData.password.length < 8) {
-      toast.error("Password must be at least 8 characters long");
       return false;
     }
 
@@ -284,11 +264,12 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
       const staffData = {
         first_name: formData.firstName.trim(),
         last_name: formData.lastName.trim(),
-        email: formData.email.trim(),
+        // Omitted entirely when blank so the API stores no email at all rather
+        // than an empty one.
+        ...(formData.email.trim() ? { email: formData.email.trim() } : {}),
         phone_number: formData.phone.trim(),
         department: formData.department,
         staff_role: formData.staff_role,
-        password: formData.password,
         salary: formData.salary,
         employment_date: formData.employmentDate,
         birthday_date: formData.birthdayDate,
@@ -343,6 +324,15 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
 
   return (
     <>
+      <div className="mb-6 flex items-start gap-2 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
+        <Info size={16} className="text-blue-600 mt-0.5 shrink-0" />
+        <p className="text-sm text-blue-900">
+          This adds them to your business for payroll, orders and reports — it does not give them a login.
+          To let someone sign in, give them system access from the{" "}
+          <span className="font-semibold">Users &amp; Roles</span> page. Only people with access count towards
+          your plan.
+        </p>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar Upload Section */}
           <div className="flex items-center gap-6 pb-6 border-b">
@@ -431,22 +421,24 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
               />
             </div>
 
-            {/* Email */}
+            {/* Email — optional: only needed if they will ever sign in */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address <span className="text-red-500">*</span>
+                Email Address <span className="text-gray-400 font-normal">(optional)</span>
               </label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
                   transition-colors"
                 placeholder="john.doe@example.com"
-                required
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Only needed if you later give this person access to the system.
+              </p>
             </div>
 
             {/* Phone */}
@@ -522,41 +514,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 </select>
                 <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
-            </div>
-
-            {/* Password */}
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 pr-24 border border-gray-300 rounded-lg 
-                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                    transition-colors"
-                  placeholder="••••••••"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 
-                    hover:text-gray-700 transition-colors"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={generatePassword}
-                className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Generate Strong Password
-              </button>
             </div>
 
             {/* Salary */}
