@@ -8,6 +8,7 @@ import OrderService from "../../services/OrderService";
 import StaffService from "../../services/staffServices/StaffService";
 import ExpensesService from "../../services/expensesServices/ExpensesService";
 import InventoryService from "../../services/InventoryService";
+import ProductionService from "../../services/ProductionService";
 import {
   HelpCircle,
   Archive,
@@ -15,10 +16,9 @@ import {
   Clock,
   DollarSign,
   Box,
+  Factory,
   Calendar,
   Settings,
-  TrendingUp,
-  Activity,
   Sparkles,
   ArrowUpRight,
 } from "lucide-react";
@@ -36,6 +36,7 @@ const VIEW_KEY_MAP = {
   "/reports/reports/dashboard": "reports",
   "/expenses/overview": "expenses",
   "/inventory/list/overview": "inventory",
+  "/production/dashboard": "production",
   "/subscriptions/panel": "subscriptions",
   "/settings": "settings",
 };
@@ -116,6 +117,18 @@ const getDashboardItems = (stats) => [
     textColor: "text-pink-900"
   },
   {
+    title: "Production Management",
+    description: "Manage production runs and assignments",
+    icon: <Factory size={24} />,
+    img: PATTERN_5,
+    button_link: "/production/dashboard",
+    color: "from-cyan-500 to-teal-600",
+    bgColor: "bg-cyan-500/10",
+    borderColor: "border-cyan-200",
+    stats: stats.productionOrders !== null ? `${stats.productionOrders} Orders` : "—",
+    textColor: "text-cyan-900"
+  },
+  {
     title: "Subscription",
     description: "Manage subscriptions and billing",
     icon: <Calendar size={24} />,
@@ -156,6 +169,7 @@ const DashboardLayout = () => {
     activeStaff: null,
     expenses: null,
     inventoryItems: null,
+    productionOrders: null,
     subscriptionStatus: null,
   });
 
@@ -189,9 +203,10 @@ const DashboardLayout = () => {
         StaffService.listStaff(),
         ExpensesService.getExpenseSummary(),
         InventoryService.listInventory(),
+        ProductionService.listOrders(),
       ]);
 
-      const [clientsRes, ordersRes, staffRes, expensesRes, inventoryRes] = results;
+      const [clientsRes, ordersRes, staffRes, expensesRes, inventoryRes, productionRes] = results;
 
       const clientCount = clientsRes.status === "fulfilled"
         ? (clientsRes.value?.total_clients ?? clientsRes.value?.count ?? null)
@@ -215,12 +230,17 @@ const DashboardLayout = () => {
         ? (Array.isArray(inventoryRes.value) ? inventoryRes.value.length : inventoryRes.value?.count ?? null)
         : null;
 
+      const productionCount = productionRes.status === "fulfilled"
+        ? (Array.isArray(productionRes.value) ? productionRes.value.length : productionRes.value?.count ?? null)
+        : null;
+
       setStats({
         clients: clientCount,
         pendingOrders,
         activeStaff,
         expenses: totalExpenses,
         inventoryItems: inventoryCount,
+        productionOrders: productionCount,
         subscriptionStatus: null,
       });
     };
@@ -287,7 +307,7 @@ const DashboardLayout = () => {
             </h1>
             <p className="text-lg text-gray-700 max-w-2xl">
               Everything you need to manage your business efficiently in one place. 
-              {currentTime && <span className="font-semibold text-blue-600"> It's {currentTime}</span>}
+              {currentTime && <span className="font-semibold text-blue-600"> It&apos;s {currentTime}</span>}
             </p>
           </div>
 

@@ -70,6 +70,11 @@ import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import PlanNoticeGate from "./components/Subscriptions/PlanNoticeGate";
 
+import ProductionDashboardDisplay from "./pages/productionPages/ProductionDashboardDisplay";
+import ProductionOrderListDisplay from "./pages/productionPages/ProductionOrderListDisplay";
+import ProductionOrderDetailDisplay from "./pages/productionPages/ProductionOrderDetailDisplay";
+import ProductionReportDisplay from "./pages/productionPages/ProductionReportDisplay";
+
 const dashboards = [
   "client",
   "order",
@@ -79,6 +84,7 @@ const dashboards = [
   "subscriptions",
   "staff",
   "inventories",
+  "production",
 ];
 
 const protectedRoutes = [
@@ -154,6 +160,14 @@ const protectedRoutes = [
   { path: "/subscriptions/pricing/plan", element: <PricingPlansDisplay /> },
 
   { path: "/notifications", element: <NotificationsListDisplay /> },
+
+  { path: "/production/dashboard", element: <ProductionDashboardDisplay /> },
+  { path: "/production/orders-list", element: <ProductionOrderListDisplay /> },
+  {
+    path: "/production/detail/:productionId",
+    element: <ProductionOrderDetailDisplay />,
+  },
+  { path: "/production/report", element: <ProductionReportDisplay /> },
 
   { path: "/settings", element: <ProfileSettingsDisplay /> },
   { path: "/settings/roles", element: <RoleSettingsDisplay /> },

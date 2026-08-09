@@ -1,4 +1,4 @@
-import { Bell, Clock, AlertTriangle, Package, Cake, Gauge, RefreshCw, CreditCard, AlertOctagon, Timer } from "lucide-react";
+import { Clock, AlertTriangle, Package, Cake, Gauge, RefreshCw, CreditCard, AlertOctagon, Timer, Factory, CheckCircle } from "lucide-react";
 
 export const NOTIFICATION_ICONS = {
   due_order: Clock,
@@ -10,6 +10,9 @@ export const NOTIFICATION_ICONS = {
   payment: CreditCard,
   subscription_expiry: AlertOctagon,
   subscription_expiring: Timer,
+  production_assigned: Factory,
+  production_qa: Package,
+  production_completed: CheckCircle,
 };
 
 export const NOTIFICATION_COLORS = {
@@ -22,6 +25,9 @@ export const NOTIFICATION_COLORS = {
   payment: "text-emerald-600 bg-emerald-50",
   subscription_expiry: "text-red-700 bg-red-100",
   subscription_expiring: "text-amber-600 bg-amber-50",
+  production_assigned: "text-blue-600 bg-blue-50",
+  production_qa: "text-cyan-600 bg-cyan-50",
+  production_completed: "text-emerald-600 bg-emerald-50",
 };
 
 export const NOTIFICATION_LABELS = {
@@ -42,6 +48,9 @@ export const NOTIFICATION_TYPE = {
   PAYMENT: "payment",
   SUBSCRIPTION_EXPIRY: "subscription_expiry",
   SUBSCRIPTION_EXPIRING: "subscription_expiring",
+  PRODUCTION_ASSIGNED: "production_assigned",
+  PRODUCTION_QA: "production_qa",
+  PRODUCTION_COMPLETED: "production_completed",
 };
 
 export const NOTIFICATION_TYPE_LABELS = {
@@ -54,6 +63,9 @@ export const NOTIFICATION_TYPE_LABELS = {
   payment: "Payment Notification",
   subscription_expiry: "Subscription Expired",
   subscription_expiring: "Subscription Expiring",
+  production_assigned: "Production Assigned",
+  production_qa: "Production QA Due",
+  production_completed: "Production Completed",
 };
 
 export const NOTIFICATION_TABS = [

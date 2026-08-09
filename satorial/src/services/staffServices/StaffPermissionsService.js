@@ -15,6 +15,7 @@ const FALLBACK_PERMISSION_CATALOG = [
   { module: "settings", actions: ["view_settings", "manage_settings"] },
   { module: "notifications", actions: ["view_notifications"] },
   { module: "qa_checklist", actions: ["manage_qa_checklist"] },
+  { module: "production", actions: ["view_production", "manage_production"] },
 ];
 
 const StaffPermissionsService = {
