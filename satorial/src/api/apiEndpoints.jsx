@@ -263,6 +263,55 @@ export const API = {
     STREAM: "/notifications/stream/",
   },
 
+  PRODUCTION_MANAGEMENT: {
+    // Production categories are the existing inventory categories
+    // (inventories.InventoryCategory); no separate production category table.
+
+    ORDERS: {
+      CREATE: "/production/orders/",
+      LIST: "/production/orders/",
+      DETAIL: (id) => `/production/orders/${id}/`,
+      UPDATE: (id) => `/production/orders/${id}/`,
+      DELETE: (id) => `/production/orders/${id}/`,
+      DASHBOARD: "/production/dashboard/",
+    },
+
+    ASSIGNMENTS: {
+      // Batch-assign a production order to one or more staff with quantities.
+      ASSIGN: "/production/orders/assign/",
+      LIST: "/production/assignments/",
+      DETAIL: (id) => `/production/assignments/${id}/`,
+      UPDATE: (id) => `/production/assignments/${id}/`,
+      // Advance a single staff's production on an order.
+      COMPLETE: (id) => `/production/assignments/${id}/complete/`,
+      // The production orders assigned to the current (staff) user.
+      MY: "/production/my-assignments/",
+    },
+
+    QA: {
+      // Fetch/save the QA checklist for a production order.
+      GET: (id) => `/production/orders/${id}/qa/`,
+      SAVE: (id) => `/production/orders/${id}/qa/`,
+      // Mark a production order as QA-completed.
+      COMPLETE: (id) => `/production/orders/${id}/qa/complete/`,
+    },
+
+    // Finalize a completed production order and add finished goods to inventory.
+    COMPLETE: {
+      ADD_TO_INVENTORY: (id) => `/production/orders/${id}/complete/`,
+    },
+
+    TIMELINE: {
+      LIST: (id) => `/production/orders/${id}/timeline/`,
+      CREATE: (id) => `/production/orders/${id}/timeline/`,
+    },
+
+    REPORT: {
+      SUMMARY: "/production/report/",
+      SUMMARY_BY_STAFF: "/production/report/by-staff/",
+    },
+  },
+
   SETTINGS: {
     // Organization Profile
     PROFILE: {
