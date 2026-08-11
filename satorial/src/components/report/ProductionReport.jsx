@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import {
   Search,
   Download,
   ChevronDown,
+  ChevronRight,
   Filter,
   Loader2,
   Factory,
@@ -34,6 +35,7 @@ const ProductionReport = () => {
   const [summary, setSummary] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState("All");
+  const [expandedRows, setExpandedRows] = useState({});
 
   const fetchData = async (filter, startDate, endDate) => {
     setLoading(true);
@@ -75,6 +77,7 @@ const ProductionReport = () => {
           row.on_time_rate != null
             ? `${Math.round(Number(row.on_time_rate))}%`
             : "-",
+        orders: Array.isArray(row.orders) ? row.orders : [],
       }));
       setStaffRows(rows);
       setSummary({
@@ -122,14 +125,32 @@ const ProductionReport = () => {
       alert("No data to export");
       return;
     }
-    const rows = filteredRows.map((p) => ({
-      Name: p.name,
-      Role: p.role,
-      Assigned: p.assigned,
-      Completed: p.completed,
-      Ongoing: p.ongoing,
-      "On-Time Rate": p.onTime,
-    }));
+    const rows = [];
+    filteredRows.forEach((p) => {
+      if (p.orders.length === 0) {
+        rows.push({
+          Name: p.name,
+          Role: p.role,
+          Assigned: p.assigned,
+          Completed: p.completed,
+          Ongoing: p.ongoing,
+          "On-Time Rate": p.onTime,
+          "Order Titles": "",
+        });
+        return;
+      }
+      p.orders.forEach((o) => {
+        rows.push({
+          Name: p.name,
+          Role: p.role,
+          Assigned: p.assigned,
+          Completed: p.completed,
+          Ongoing: p.ongoing,
+          "On-Time Rate": p.onTime,
+          "Order Titles": `${o.order_title} (${o.status})`,
+        });
+      });
+    });
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Production Report");
@@ -356,6 +377,8 @@ const ProductionReport = () => {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr className="text-left">
+                  <th className="p-6 font-semibold text-gray-700 text-sm uppercase tracking-wider w-10">
+                  </th>
                   <th className="p-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">
                     Staff
                   </th>
@@ -379,7 +402,7 @@ const ProductionReport = () => {
               <tbody className="divide-y divide-gray-100">
                 {filteredRows.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-12 text-center">
+                    <td colSpan={7} className="p-12 text-center">
                       <div className="flex flex-col items-center gap-3 text-gray-400">
                         <UserCheck className="w-12 h-12" />
                         <p className="text-lg font-medium">No staff data found</p>
@@ -392,39 +415,125 @@ const ProductionReport = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredRows.map((person, index) => (
-                    <tr
-                      key={index}
-                      className="hover:bg-gray-50/50 transition-colors duration-150"
-                    >
-                      <td className="p-6">
-                        <div className="font-medium text-gray-900">{person.name}</div>
-                      </td>
-                      <td className="p-6">
-                        <div className="text-sm text-gray-600">{person.role || "-"}</div>
-                      </td>
-                      <td className="p-6">
-                        <div className="text-sm font-medium text-gray-900">
-                          {person.assigned}
-                        </div>
-                      </td>
-                      <td className="p-6">
-                        <div className="text-sm text-green-600 font-medium">
-                          {person.completed}
-                        </div>
-                      </td>
-                      <td className="p-6">
-                        <div className="text-sm text-yellow-600 font-medium">
-                          {person.ongoing}
-                        </div>
-                      </td>
-                      <td className="p-6">
-                        <div className="text-sm text-blue-600 font-medium">
-                          {person.onTime}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                  filteredRows.map((person, index) => {
+                    const isExpanded = !!expandedRows[index];
+                    return (
+                      <Fragment key={index}>
+                        <tr
+                          className="hover:bg-gray-50/50 transition-colors duration-150"
+                        >
+                          <td className="p-6">
+                            {person.orders.length > 0 ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setExpandedRows((prev) => ({
+                                    ...prev,
+                                    [index]: !prev[index],
+                                  }))
+                                }
+                                className="p-1 rounded-md hover:bg-gray-200 transition-colors"
+                                aria-label={isExpanded ? "Collapse orders" : "Expand orders"}
+                              >
+                                {isExpanded ? (
+                                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                                ) : (
+                                  <ChevronRight className="w-4 h-4 text-gray-500" />
+                                )}
+                              </button>
+                            ) : (
+                              <span className="w-4 h-4 inline-block" />
+                            )}
+                          </td>
+                          <td className="p-6">
+                            <div className="font-medium text-gray-900">{person.name}</div>
+                          </td>
+                          <td className="p-6">
+                            <div className="text-sm text-gray-600">{person.role || "-"}</div>
+                          </td>
+                          <td className="p-6">
+                            <div className="text-sm font-medium text-gray-900">
+                              {person.assigned}
+                            </div>
+                          </td>
+                          <td className="p-6">
+                            <div className="text-sm text-green-600 font-medium">
+                              {person.completed}
+                            </div>
+                          </td>
+                          <td className="p-6">
+                            <div className="text-sm text-yellow-600 font-medium">
+                              {person.ongoing}
+                            </div>
+                          </td>
+                          <td className="p-6">
+                            <div className="text-sm text-blue-600 font-medium">
+                              {person.onTime}
+                            </div>
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr className="bg-gray-50/70">
+                            <td colSpan={7} className="p-0">
+                              <div className="px-12 py-4">
+                                <p className="text-sm font-semibold text-gray-700 mb-3">
+                                  Assigned & Completed Orders
+                                </p>
+                                {person.orders.length === 0 ? (
+                                  <p className="text-sm text-gray-500">
+                                    No orders for this period.
+                                  </p>
+                                ) : (
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full min-w-96">
+                                      <thead>
+                                        <tr className="text-left text-xs uppercase tracking-wider text-gray-500">
+                                          <th className="py-2 pr-4 font-semibold">Order Title</th>
+                                          <th className="py-2 pr-4 font-semibold">Status</th>
+                                          <th className="py-2 pr-4 font-semibold">Assigned Qty</th>
+                                          <th className="py-2 font-semibold">Completed Qty</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-gray-100">
+                                        {person.orders.map((order) => (
+                                          <tr key={order.order_id}>
+                                            <td className="py-2 pr-4 text-sm font-medium text-gray-900">
+                                              {order.order_title}
+                                            </td>
+                                            <td className="py-2 pr-4">
+                                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                                order.status === "Completed"
+                                                  ? "bg-green-100 text-green-700"
+                                                  : order.status === "QA Check"
+                                                    ? "bg-purple-100 text-purple-700"
+                                                    : order.status === "In Progress"
+                                                      ? "bg-yellow-100 text-yellow-700"
+                                                      : order.status === "Pending"
+                                                        ? "bg-gray-100 text-gray-600"
+                                                        : "bg-red-100 text-red-600"
+                                              }`}>
+                                                {order.status || "-"}
+                                              </span>
+                                            </td>
+                                            <td className="py-2 pr-4 text-sm text-gray-600">
+                                              {order.assigned_quantity}
+                                            </td>
+                                            <td className="py-2 text-sm text-green-600 font-medium">
+                                              {order.completed_quantity}
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })
                 )}
               </tbody>
             </table>
