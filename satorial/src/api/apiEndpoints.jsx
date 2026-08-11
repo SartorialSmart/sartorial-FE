@@ -284,6 +284,8 @@ export const API = {
       UPDATE: (id) => `/production/assignments/${id}/`,
       // Advance a single staff's production on an order.
       COMPLETE: (id) => `/production/assignments/${id}/complete/`,
+      // Log a dated batch of units completed by a staff member on an order.
+      COMPLETIONS: (id) => `/production/assignments/${id}/completions/`,
       // The production orders assigned to the current (staff) user.
       MY: "/production/my-assignments/",
     },

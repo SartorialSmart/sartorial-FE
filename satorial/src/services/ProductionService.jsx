@@ -85,6 +85,14 @@ const ProductionService = {
   completeAssignment: (id, payload = {}) =>
     apiPost(API.PRODUCTION_MANAGEMENT.ASSIGNMENTS.COMPLETE(id), payload),
 
+  /**
+   * Log a dated batch of units a staff member completed on an assignment.
+   * @param {number} id - assignment id
+   * @param {Object} payload { quantity, completed_on: "YYYY-MM-DD" }
+   */
+  logAssignmentCompletion: (id, payload) =>
+    apiPost(API.PRODUCTION_MANAGEMENT.ASSIGNMENTS.COMPLETIONS(id), payload),
+
   // ---------------------------------------------------------------------------
   // QA Checklist
   // ---------------------------------------------------------------------------

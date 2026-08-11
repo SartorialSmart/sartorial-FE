@@ -7,6 +7,7 @@ const AddBillPaymentForm = ({ bill, onClose, onSuccess }) => {
   const [amountPaid, setAmountPaid] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [fieldError, setFieldError] = useState(null);
 
   const balance = (bill.amount || 0) - (bill.amount_paid || 0);
 
@@ -14,7 +15,7 @@ const AddBillPaymentForm = ({ bill, onClose, onSuccess }) => {
     e.preventDefault();
 
     if (!amountPaid || Number(amountPaid) <= 0) {
-      setError("Please enter a valid payment amount.");
+      setFieldError("Please enter a valid payment amount.");
       return;
     }
 
@@ -92,11 +93,15 @@ const AddBillPaymentForm = ({ bill, onClose, onSuccess }) => {
               value={amountPaid}
               onChange={(e) => {
                 setAmountPaid(e.target.value);
+                if (fieldError) setFieldError(null);
                 if (error) setError(null);
               }}
-              className="w-full p-3 pl-8 border border-gray-300 rounded-md"
+              className={`w-full p-3 pl-8 border rounded-md ${
+                fieldError ? "border-red-500" : "border-gray-300"
+              }`}
             />
           </div>
+          {fieldError && <p className="text-red-500 text-sm mt-1">{fieldError}</p>}
         </div>
 
         {/* Error */}

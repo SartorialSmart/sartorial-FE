@@ -22,6 +22,7 @@ const AssignProductionModal = ({
   const [loading, setLoading] = useState(false);
   const [isLoadingStaff, setIsLoadingStaff] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const totalQuantity = Number(order?.total_quantity) || 0;
   const assignedQuantity = assignments.reduce(
@@ -47,6 +48,7 @@ const AssignProductionModal = ({
     setSearchQuery("");
     setSelectedDepartment("");
     setError("");
+    setFieldErrors({});
     setIsLoadingStaff(true);
 
     if (order?.id && existingAssignments.length > 0) {
@@ -105,19 +107,19 @@ const AssignProductionModal = ({
 
   const addAssignment = () => {
     if (!selectedStaff) {
-      setError("Please select a staff member.");
+      setFieldErrors({ staff: "Please select a staff member." });
       return;
     }
     if (!quantity || Number(quantity) <= 0) {
-      setError("Please enter a valid quantity.");
+      setFieldErrors({ quantity: "Please enter a valid quantity." });
       return;
     }
     if (Number(quantity) > remaining) {
-      setError(`Only ${remaining} units remain to be assigned.`);
+      setFieldErrors({ quantity: `Only ${remaining} units remain to be assigned.` });
       return;
     }
     if (assignments.some((a) => a.staff_id === selectedStaff.id)) {
-      setError("This staff member is already in the assignment list.");
+      setFieldErrors({ staff: "This staff member is already in the assignment list." });
       return;
     }
     setAssignments((prev) => [
@@ -131,6 +133,7 @@ const AssignProductionModal = ({
     setSelectedStaff(null);
     setQuantity("");
     setError("");
+    setFieldErrors({});
   };
 
   const removeAssignment = (staffId) => {
@@ -278,7 +281,11 @@ const AssignProductionModal = ({
               />
             </div>
 
-            <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto divide-y divide-gray-50">
+            <div
+              className={`border rounded-lg max-h-48 overflow-y-auto divide-y divide-gray-50 ${
+                fieldErrors.staff ? "border-red-400" : "border-gray-200"
+              }`}
+            >
               {isLoadingStaff ? (
                 <div className="text-center py-4 text-gray-500">
                   Loading staff members...
@@ -306,6 +313,9 @@ const AssignProductionModal = ({
                         onChange={() => {
                           setSelectedStaff(staff);
                           setError("");
+                          setFieldErrors((prev) =>
+                            prev.staff ? { ...prev, staff: undefined } : prev
+                          );
                         }}
                         className="accent-blue-600 shrink-0"
                       />
@@ -330,6 +340,9 @@ const AssignProductionModal = ({
                   ))
               )}
             </div>
+            {fieldErrors.staff && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.staff}</p>
+            )}
 
             <div className="flex gap-3 items-end">
               <div className="flex-1">
@@ -341,10 +354,20 @@ const AssignProductionModal = ({
                   min="1"
                   max={remaining}
                   value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  onChange={(e) => {
+                    setQuantity(e.target.value);
+                    setFieldErrors((prev) =>
+                      prev.quantity ? { ...prev, quantity: undefined } : prev
+                    );
+                  }}
+                  className={`w-full border rounded-md px-3 py-2 text-sm ${
+                    fieldErrors.quantity ? "border-red-500" : "border-gray-300"
+                  }`}
                   placeholder="e.g. 20"
                 />
+                {fieldErrors.quantity && (
+                  <p className="text-red-500 text-sm mt-1">{fieldErrors.quantity}</p>
+                )}
               </div>
               <button
                 type="button"

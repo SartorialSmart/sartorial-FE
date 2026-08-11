@@ -22,6 +22,7 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const vatRate = vatSettings.vatEnabled && !formData.vatExempt ? vatSettings.vatRate / 100 : 0;
   const vatPayable = Number(formData.price) * vatRate;
@@ -71,20 +72,26 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
       }
     }
     setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    setFieldErrors((prev) =>
+      prev[name] ? { ...prev, [name]: undefined } : prev
+    );
     if (error) setError(null);
   };
 
   const handleSave = async () => {
+    const newFieldErrors = {};
     if (!formData.amountPaid || Number(formData.amountPaid) <= 0) {
-      setError("Please enter a valid payment amount.");
-      return;
+      newFieldErrors.amountPaid = "Please enter a valid payment amount.";
     }
     if (!formData.payment_type) {
-      setError("Please select a payment type.");
-      return;
+      newFieldErrors.payment_type = "Please select a payment type.";
     }
     if (!formData.payment_method) {
-      setError("Please select a payment method.");
+      newFieldErrors.payment_method = "Please select a payment method.";
+    }
+    setFieldErrors(newFieldErrors);
+    if (Object.keys(newFieldErrors).length > 0) {
+      setError("Please fix the highlighted required fields.");
       return;
     }
 
@@ -215,7 +222,9 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
             name="payment_type"
             value={formData.payment_type}
             onChange={handleChange}
-            className="w-full border p-3 rounded-md"
+            className={`w-full border p-3 rounded-md ${
+              fieldErrors.payment_type ? "border-red-500" : "border-gray-300"
+            }`}
           >
             <option value="">Select payment type</option>
             {!hasInitialDeposit && (
@@ -225,6 +234,9 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
             <option value="Final Payment">Final Payment</option>
             <option value="Full Payment">Full Payment</option>
           </select>
+          {fieldErrors.payment_type && (
+            <p className="text-red-500 text-sm mt-1">{fieldErrors.payment_type}</p>
+          )}
         </div>
         <div>
           <label className="text-gray-600 text-sm font-medium">
@@ -234,7 +246,9 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
             name="payment_method"
             value={formData.payment_method}
             onChange={handleChange}
-            className="w-full border p-3 rounded-md"
+            className={`w-full border p-3 rounded-md ${
+              fieldErrors.payment_method ? "border-red-500" : "border-gray-300"
+            }`}
           >
             <option value="">Select method</option>
             <option value="Cash">Cash</option>
@@ -243,6 +257,9 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
             <option value="Mobile Money">Mobile Money</option>
             <option value="POS">POS</option>
           </select>
+          {fieldErrors.payment_method && (
+            <p className="text-red-500 text-sm mt-1">{fieldErrors.payment_method}</p>
+          )}
         </div>
       </div>
 
@@ -271,10 +288,15 @@ const AddPaymentForm = ({ order, onClose, onSave }) => {
             onChange={handleChange}
             max={balanceDue}
             placeholder="0.00"
-            className="w-full border p-3 pl-8 rounded-md"
+            className={`w-full border p-3 pl-8 rounded-md ${
+              fieldErrors.amountPaid ? "border-red-500" : "border-gray-300"
+            }`}
           />
         </div>
-        {balanceDue > 0 && (
+        {fieldErrors.amountPaid && (
+          <p className="text-red-500 text-sm mt-1">{fieldErrors.amountPaid}</p>
+        )}
+        {balanceDue > 0 && !fieldErrors.amountPaid && (
           <p className="text-xs text-gray-500 mt-1">Max: {formatCurrency(balanceDue)}</p>
         )}
       </div>

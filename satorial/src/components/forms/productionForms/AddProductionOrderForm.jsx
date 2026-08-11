@@ -42,27 +42,29 @@ const AddProductionOrderForm = ({ onClose }) => {
     order_created_at: todayDate,
     target_completion_date: todayDate,
   });
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
   };
 
   const validateForm = () => {
+    const newErrors = {};
     const { title, category, total_quantity, location } = formData;
-    if (!title || !category || !total_quantity) {
-      setErrorTitle("Validation Error");
-      setErrorMessage("Please fill in all required fields.");
-      return false;
+    if (!title.trim()) newErrors.title = "Production title is required.";
+    if (!category) newErrors.category = "Please select a production category.";
+    if (!total_quantity || String(total_quantity).trim() === "") {
+      newErrors.total_quantity = "Total quantity is required.";
+    } else if (Number(total_quantity) <= 0) {
+      newErrors.total_quantity = "Total quantity must be greater than 0.";
     }
-    if (Number(total_quantity) <= 0) {
+    if (isAdmin && !location) newErrors.location = "Please select a location.";
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
       setErrorTitle("Validation Error");
-      setErrorMessage("Total quantity must be greater than 0.");
-      return false;
-    }
-    if (isAdmin && !location) {
-      setErrorTitle("Validation Error");
-      setErrorMessage("Please select a location.");
+      setErrorMessage("Please fix the highlighted required fields.");
       return false;
     }
     return true;
@@ -151,6 +153,7 @@ const AddProductionOrderForm = ({ onClose }) => {
     const order = existingOrders.find((o) => String(o.id) === String(orderId));
     if (!order) return;
 
+    setErrors({});
     setSelectedCategory(order.category || null);
     setFormData((prev) => ({
       ...prev,
@@ -212,7 +215,9 @@ const AddProductionOrderForm = ({ onClose }) => {
                   name="location"
                   value={formData.location}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full border rounded-md p-3 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.location ? "border-red-500" : "border-gray-300"
+                  }`}
                   disabled={loading}
                 >
                   <option value="">Select Location</option>
@@ -234,6 +239,7 @@ const AddProductionOrderForm = ({ onClose }) => {
                   className="w-full border border-gray-300 rounded-md p-3 bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
                 />
               )}
+              {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
             </div>
 
             <div>
@@ -266,9 +272,12 @@ const AddProductionOrderForm = ({ onClose }) => {
               placeholder="e.g. Ready-made Lace Gowns Batch A"
               value={formData.title}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full border rounded-md p-3 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.title ? "border-red-500" : "border-gray-300"
+              }`}
               disabled={loading}
             />
+            {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
           </div>
 
           <div className="mt-4">
@@ -284,10 +293,13 @@ const AddProductionOrderForm = ({ onClose }) => {
                     onClick={() => {
                       setSelectedCategory(category.id);
                       setFormData((prev) => ({ ...prev, category: category.id }));
+                      setErrors((prev) => (prev.category ? { ...prev, category: undefined } : prev));
                     }}
                     className={`px-4 py-2 border rounded-md text-sm font-medium ${
                       selectedCategory === category.id
                         ? "bg-blue-600 text-white"
+                        : errors.category
+                        ? "border-red-400 text-gray-600"
                         : "border-gray-300 text-gray-600"
                     }`}
                     disabled={loading}
@@ -299,6 +311,7 @@ const AddProductionOrderForm = ({ onClose }) => {
                 <p className="text-gray-500">No categories available.</p>
               )}
             </div>
+            {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
           </div>
 
           <div className="mt-4">
@@ -327,9 +340,14 @@ const AddProductionOrderForm = ({ onClose }) => {
                 min="1"
                 value={formData.total_quantity}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full border rounded-md p-3 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.total_quantity ? "border-red-500" : "border-gray-300"
+                }`}
                 disabled={loading}
               />
+              {errors.total_quantity && (
+                <p className="text-red-500 text-sm mt-1">{errors.total_quantity}</p>
+              )}
             </div>
 
             <div>

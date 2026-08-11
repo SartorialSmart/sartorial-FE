@@ -34,6 +34,7 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -107,6 +108,7 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
   };
 
   const handleAvatarChange = (e) => {
@@ -134,24 +136,28 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
     e.preventDefault();
     if (saving) return;
 
+    const newErrors = {};
     if (!formData.first_name.trim()) {
-      toast.error("First name is required");
-      return;
+      newErrors.first_name = "First name is required";
     }
     if (!formData.last_name.trim()) {
-      toast.error("Last name is required");
-      return;
+      newErrors.last_name = "Last name is required";
     }
     if (!formData.email.trim()) {
-      toast.error("Email is required");
-      return;
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
     }
     if (!formData.department) {
-      toast.error("Please select a department");
-      return;
+      newErrors.department = "Please select a department";
     }
     if (!formData.staff_role) {
-      toast.error("Please select a staff role");
+      newErrors.staff_role = "Please select a staff role";
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Please fix the highlighted required fields.");
       return;
     }
 
@@ -241,9 +247,14 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
               name="first_name"
               value={formData.first_name}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                errors.first_name ? "border-red-500" : "border-gray-300"
+              }`}
               required
             />
+            {errors.first_name && (
+              <p className="text-red-500 text-sm mt-1">{errors.first_name}</p>
+            )}
           </div>
 
           <div>
@@ -255,9 +266,14 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
               name="last_name"
               value={formData.last_name}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                errors.last_name ? "border-red-500" : "border-gray-300"
+              }`}
               required
             />
+            {errors.last_name && (
+              <p className="text-red-500 text-sm mt-1">{errors.last_name}</p>
+            )}
           </div>
 
           <div>
@@ -269,9 +285,14 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                errors.email ? "border-red-500" : "border-gray-300"
+              }`}
               required
             />
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            )}
           </div>
 
           <div>
@@ -297,7 +318,9 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
                 name="department"
                 value={formData.department}
                 onChange={handleChange}
-                className="w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
+                className={`w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer ${
+                  errors.department ? "border-red-500" : "border-gray-300"
+                }`}
                 required
               >
                 <option value="">Select Department</option>
@@ -312,6 +335,9 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
                 className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
               />
             </div>
+            {errors.department && (
+              <p className="text-red-500 text-sm mt-1">{errors.department}</p>
+            )}
           </div>
 
           <div>
@@ -323,7 +349,9 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
                 name="staff_role"
                 value={formData.staff_role}
                 onChange={handleChange}
-                className="w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
+                className={`w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer ${
+                  errors.staff_role ? "border-red-500" : "border-gray-300"
+                }`}
                 required
               >
                 <option value="">Select Role</option>
@@ -338,6 +366,9 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
                 className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
               />
             </div>
+            {errors.staff_role && (
+              <p className="text-red-500 text-sm mt-1">{errors.staff_role}</p>
+            )}
           </div>
 
           <div>

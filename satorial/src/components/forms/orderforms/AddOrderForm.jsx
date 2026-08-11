@@ -48,9 +48,11 @@ const AddOrderForm = ({ onClose }) => {
     balance: "",
     location: isAdmin ? "" : user?.location || "",
   });
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
 
     // Handle client selection specifically
     if (name === "client") {
@@ -108,45 +110,31 @@ const AddOrderForm = ({ onClose }) => {
       order_price,
       initial_deposit,
     } = formData;
+    const newErrors = {};
 
-    if (
-      !client ||
-      !client_email ||
-      !order_title ||
-      !start_date ||
-      !end_date ||
-      !order_price ||
-      !initial_deposit
-    ) {
+    if (!client) newErrors.client = "Client name is required.";
+    if (!client_email) newErrors.client_email = "Client email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(client_email))
+      newErrors.client_email = "Please enter a valid email address.";
+    if (!order_title.trim()) newErrors.order_title = "Order name is required.";
+    if (!start_date) newErrors.start_date = "Start date is required.";
+    if (!end_date) newErrors.end_date = "End date is required.";
+    if (!order_price) newErrors.order_price = "Price is required.";
+    else if (isNaN(parseFloat(order_price)))
+      newErrors.order_price = "Price must be a valid number.";
+    if (!initial_deposit) newErrors.initial_deposit = "Initial deposit is required.";
+    else if (isNaN(parseFloat(initial_deposit)))
+      newErrors.initial_deposit = "Initial deposit must be a valid number.";
+    if (start_date && end_date && new Date(end_date) < new Date(start_date))
+      newErrors.end_date = "End date must be after the start date.";
+    if (isAdmin && !formData.location) newErrors.location = "Please select a location.";
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
       setErrorTitle("Validation Error");
-      setErrorMessage("Please fill in all required fields.");
+      setErrorMessage("Please fix the highlighted required fields.");
       return false;
     }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(client_email)) {
-      setErrorTitle("Validation Error");
-      setErrorMessage("Please enter a valid email address.");
-      return false;
-    }
-
-    if (isNaN(parseFloat(order_price)) || isNaN(parseFloat(initial_deposit))) {
-      setErrorTitle("Validation Error");
-      setErrorMessage("Price and deposit must be valid numbers.");
-      return false;
-    }
-
-    if (new Date(end_date) < new Date(start_date)) {
-      setErrorTitle("Validation Error");
-      setErrorMessage("End date must be after the start date.");
-      return false;
-    }
-
-    if (isAdmin && !formData.location) {
-      setErrorTitle("Validation Error");
-      setErrorMessage("Please select a location.");
-      return false;
-    }
-
     return true;
   };
 
@@ -264,7 +252,9 @@ const AddOrderForm = ({ onClose }) => {
                 name="client"
                 value={formData.client}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full border rounded-md p-3 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.client ? "border-red-500" : "border-gray-300"
+                }`}
                 disabled={loading}
               >
                 <option value="">Select Customer</option>
@@ -274,6 +264,7 @@ const AddOrderForm = ({ onClose }) => {
                   </option>
                 ))}
               </select>
+              {errors.client && <p className="text-red-500 text-sm mt-1">{errors.client}</p>}
             </div>
 
             <div>
@@ -286,9 +277,14 @@ const AddOrderForm = ({ onClose }) => {
                 placeholder="Email here"
                 value={formData.client_email}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full border rounded-md p-3 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.client_email ? "border-red-500" : "border-gray-300"
+                }`}
                 disabled={loading}
               />
+              {errors.client_email && (
+                <p className="text-red-500 text-sm mt-1">{errors.client_email}</p>
+              )}
             </div>
           </div>
 
@@ -297,20 +293,25 @@ const AddOrderForm = ({ onClose }) => {
               Location *
             </label>
             {isAdmin ? (
-              <select
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
-                disabled={loading}
-              >
-                <option value="">Select Location</option>
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </option>
-                ))}
-              </select>
+              <>
+                <select
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  className={`w-full border rounded-md p-3 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.location ? "border-red-500" : "border-gray-300"
+                  }`}
+                  disabled={loading}
+                >
+                  <option value="">Select Location</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
+              </>
             ) : (
               <input
                 type="text"
@@ -330,9 +331,14 @@ const AddOrderForm = ({ onClose }) => {
               name="order_title"
               value={formData.order_title}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full border rounded-md p-3 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.order_title ? "border-red-500" : "border-gray-300"
+              }`}
               disabled={loading}
             />
+            {errors.order_title && (
+              <p className="text-red-500 text-sm mt-1">{errors.order_title}</p>
+            )}
           </div>
 
           <div className="mt-4">
@@ -386,9 +392,14 @@ const AddOrderForm = ({ onClose }) => {
                 name="start_date"
                 value={formData.start_date}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full border rounded-md p-3 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.start_date ? "border-red-500" : "border-gray-300"
+                }`}
                 disabled={loading}
               />
+              {errors.start_date && (
+                <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>
+              )}
             </div>
 
             <div>
@@ -400,9 +411,14 @@ const AddOrderForm = ({ onClose }) => {
                 name="end_date"
                 value={formData.end_date}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full border rounded-md p-3 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.end_date ? "border-red-500" : "border-gray-300"
+                }`}
                 disabled={loading}
               />
+              {errors.end_date && (
+                <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>
+              )}
             </div>
           </div>
 
@@ -417,9 +433,14 @@ const AddOrderForm = ({ onClose }) => {
                 placeholder="₦ Enter Amount"
                 value={formData.order_price}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full border rounded-md p-3 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.order_price ? "border-red-500" : "border-gray-300"
+                }`}
                 disabled={loading}
               />
+              {errors.order_price && (
+                <p className="text-red-500 text-sm mt-1">{errors.order_price}</p>
+              )}
             </div>
 
             <div>
@@ -448,9 +469,14 @@ const AddOrderForm = ({ onClose }) => {
                 placeholder="₦ Enter Amount"
                 value={formData.initial_deposit}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full border rounded-md p-3 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.initial_deposit ? "border-red-500" : "border-gray-300"
+                }`}
                 disabled={loading}
               />
+              {errors.initial_deposit && (
+                <p className="text-red-500 text-sm mt-1">{errors.initial_deposit}</p>
+              )}
             </div>
 
             <div>
