@@ -20,7 +20,7 @@ const StaffSideBarLayout = ({ children }) => {
 
   const sidebarItems = [
     { icon: <Users size={18} />, label: "Staffs", path: "/staff/staff-list" },
-    { icon: <ShieldCheck size={18} />, label: "Team & Roles", path: "/staff/team" },
+    { icon: <ShieldCheck size={18} />, label: "Users & Roles", path: "/staff/team" },
     { icon: <LogOut size={18} />, label: "Exit Staff", path: "/staff/exited-staffs-list" },
     { icon: <DollarSign size={18} />, label: "Payroll", path: "/staff/payroll-list" },
     { icon: <HelpCircle size={18} />, label: "Help Centre", path: "/client/help-centre" },

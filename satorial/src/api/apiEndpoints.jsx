@@ -136,6 +136,9 @@ export const API = {
       DELETE: (slug) => `/users/staff/${slug}/`,
       INVITE: "/users/invite-staff/",
       RESEND_INVITE: "/users/resend-invite/",
+      // Login access ("seats"): a staff record is not a user until granted.
+      GRANT_LOGIN: (staffId) => `/users/staff/${staffId}/grant-login/`,
+      REVOKE_LOGIN: (staffId) => `/users/staff/${staffId}/revoke-login/`,
     },
     PERMISSIONS_CATALOG: "/users/permissions-catalog/",
     PERMISSIONS: (staffId) => `/users/staff-permissions/${staffId}/`,

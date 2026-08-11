@@ -1,7 +1,7 @@
 // components/forms/staffForms/AddStaffForm.jsx
 
 import { useState, useRef, useEffect } from "react";
-import { X, Upload, Eye, EyeOff, Loader2, Landmark, MapPin, ChevronDown } from "lucide-react";
+import { X, Upload, Loader2, Landmark, MapPin, ChevronDown, Info } from "lucide-react";
 import StaffService from "../../../services/staffServices/StaffService";
 import RolesService from "../../../services/settings/RolesService";
 import SettingsService from "../../../services/settings";
@@ -38,6 +38,9 @@ const NIGERIAN_BANKS = [
   "Zenith Bank",
 ];
 
+// Adds an employee to the business — not a user of the app. Login access is a
+// separate decision made from the Team page (it costs a plan seat), which is why
+// there is no password field here and the email is optional.
 const AddStaffForm = ({ onClose, onStaffCreated }) => {
   const initialFormData = {
     firstName: "",
@@ -46,7 +49,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     phone: "",
     department: "",
     staff_role: "",
-    password: "",
     salary: "",
     employmentDate: "",
     birthdayDate: "",
@@ -59,8 +61,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   };
 
   const [formData, setFormData] = useState(initialFormData);
-  const [errors, setErrors] = useState({});
-  const [showPassword, setShowPassword] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roles, setRoles] = useState([]);
@@ -167,77 +167,63 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     setAvatarPreview(null);
   };
 
-  const generatePassword = () => {
-    const chars =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
-    let password = "";
-    for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setFormData({ ...formData, password });
-    setSuccessModal({
-      title: "Password Generated",
-      message: "A secure password has been generated for this staff member.",
-      buttonText: "Done",
-    });
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    setErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
   };
 
   const validateForm = () => {
-    const newErrors = {};
-
     // Required field checks
     if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
+      toast.error("First name is required");
+      return false;
     }
 
     if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
+      toast.error("Last name is required");
+      return false;
     }
 
-    // Email validation
+    // Email is optional here — plenty of staff have none. Validate only if given.
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
+    if (formData.email.trim() && !emailRegex.test(formData.email.trim())) {
+      toast.error("Please enter a valid email address");
+      return false;
     }
 
     // Phone validation (basic)
     if (formData.phone.length < 10) {
-      newErrors.phone = "Please enter a valid phone number";
+      toast.error("Please enter a valid phone number");
+      return false;
     }
 
     // Department validation
     if (!formData.department) {
-      newErrors.department = "Please select a department";
+      toast.error("Please select a department");
+      return false;
     }
 
     // Role validation
     if (!formData.staff_role) {
-      newErrors.staff_role = "Please select a staff role";
+      toast.error("Please select a staff role");
+      return false;
     }
 
     // Salary validation
-    if (!formData.salary || parseFloat(formData.salary) <= 0) {
-      newErrors.salary = "Salary must be greater than 0";
-    }
-
-    // Password validation
-    if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters long";
+    if (parseFloat(formData.salary) <= 0) {
+      toast.error("Salary must be greater than 0");
+      return false;
     }
 
     // Bank account validation
     if (formData.bank_name === "__other__" && !formData.custom_bank_name.trim()) {
-      newErrors.custom_bank_name = "Please enter a custom bank name";
+      toast.error("Please enter a custom bank name");
+      return false;
     }
 
     if (formData.account_number && !/^\d{10}$/.test(formData.account_number)) {
-      newErrors.account_number = "Account number must be exactly 10 digits";
+      toast.error("Account number must be exactly 10 digits");
+      return false;
     }
 
     // Date validation
@@ -245,36 +231,23 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     const birthdayDate = new Date(formData.birthdayDate);
     const today = new Date();
 
-    if (!formData.employmentDate) {
-      newErrors.employmentDate = "Employment date is required";
-    } else if (employmentDate > today) {
-      newErrors.employmentDate = "Employment date cannot be in the future";
+    if (employmentDate > today) {
+      toast.error("Employment date cannot be in the future");
+      return false;
     }
 
-    if (!formData.birthdayDate) {
-      newErrors.birthdayDate = "Birthday date is required";
-    } else if (birthdayDate > today) {
-      newErrors.birthdayDate = "Birthday date cannot be in the future";
+    if (birthdayDate > today) {
+      toast.error("Birthday date cannot be in the future");
+      return false;
     }
 
     // Age validation (must be at least 18 years old)
-    if (formData.birthdayDate && birthdayDate <= today) {
-      const age = today.getFullYear() - birthdayDate.getFullYear();
-      const monthDiff = today.getMonth() - birthdayDate.getMonth();
-      const adjustedAge =
-        monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdayDate.getDate())
-          ? age - 1
-          : age;
-      if (adjustedAge < 18) {
-        newErrors.birthdayDate = "Staff member must be at least 18 years old";
-      }
-    }
-
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) {
-      toast.error("Please fix the highlighted required fields.");
+    const age = today.getFullYear() - birthdayDate.getFullYear();
+    if (age < 18) {
+      toast.error("Staff member must be at least 18 years old");
       return false;
     }
+
     return true;
   };
 
@@ -291,11 +264,12 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
       const staffData = {
         first_name: formData.firstName.trim(),
         last_name: formData.lastName.trim(),
-        email: formData.email.trim(),
+        // Omitted entirely when blank so the API stores no email at all rather
+        // than an empty one.
+        ...(formData.email.trim() ? { email: formData.email.trim() } : {}),
         phone_number: formData.phone.trim(),
         department: formData.department,
         staff_role: formData.staff_role,
-        password: formData.password,
         salary: formData.salary,
         employment_date: formData.employmentDate,
         birthday_date: formData.birthdayDate,
@@ -350,6 +324,15 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
 
   return (
     <>
+      <div className="mb-6 flex items-start gap-2 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
+        <Info size={16} className="text-blue-600 mt-0.5 shrink-0" />
+        <p className="text-sm text-blue-900">
+          This adds them to your business for payroll, orders and reports — it does not give them a login.
+          To let someone sign in, give them system access from the{" "}
+          <span className="font-semibold">Users &amp; Roles</span> page. Only people with access count towards
+          your plan.
+        </p>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar Upload Section */}
           <div className="flex items-center gap-6 pb-6 border-b">
@@ -412,17 +395,12 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 border rounded-lg ${
-                  errors.firstName ? "border-red-500" : "border-gray-300"
-                }
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors`}
+                  transition-colors"
                 placeholder="John"
                 required
               />
-              {errors.firstName && (
-                <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
-              )}
             </div>
 
             {/* Last Name */}
@@ -435,40 +413,32 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 border rounded-lg ${
-                  errors.lastName ? "border-red-500" : "border-gray-300"
-                }
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors`}
+                  transition-colors"
                 placeholder="Doe"
                 required
               />
-              {errors.lastName && (
-                <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
-              )}
             </div>
 
-            {/* Email */}
+            {/* Email — optional: only needed if they will ever sign in */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address <span className="text-red-500">*</span>
+                Email Address <span className="text-gray-400 font-normal">(optional)</span>
               </label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 border rounded-lg ${
-                  errors.email ? "border-red-500" : "border-gray-300"
-                }
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors`}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                  transition-colors"
                 placeholder="john.doe@example.com"
-                required
               />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Only needed if you later give this person access to the system.
+              </p>
             </div>
 
             {/* Phone */}
@@ -481,17 +451,12 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 border rounded-lg ${
-                  errors.phone ? "border-red-500" : "border-gray-300"
-                }
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors`}
+                  transition-colors"
                 placeholder="08012345678"
                 required
               />
-              {errors.phone && (
-                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-              )}
             </div>
 
             {/* Department */}
@@ -505,9 +470,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                   value={formData.department}
                   onChange={handleChange}
                   disabled={loadingDepartments}
-                  className={`w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed cursor-pointer ${
-                    errors.department ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className="w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed cursor-pointer"
                   required
                 >
                   <option value="">
@@ -521,9 +484,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 </select>
                 <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
-              {errors.department && (
-                <p className="text-red-500 text-sm mt-1">{errors.department}</p>
-              )}
               {loadingDepartments && (
                 <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
                   <Loader2 size={14} className="animate-spin" />
@@ -542,9 +502,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                   name="staff_role"
                   value={formData.staff_role}
                   onChange={handleChange}
-                  className={`w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer ${
-                    errors.staff_role ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className="w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
                   required
                 >
                   <option value="">Select Role</option>
@@ -556,49 +514,6 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 </select>
                 <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
-              {errors.staff_role && (
-                <p className="text-red-500 text-sm mt-1">{errors.staff_role}</p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-2.5 pr-24 border rounded-lg ${
-                    errors.password ? "border-red-500" : "border-gray-300"
-                  }
-                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                    transition-colors`}
-                  placeholder="••••••••"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 
-                    hover:text-gray-700 transition-colors"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={generatePassword}
-                className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Generate Strong Password
-              </button>
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-              )}
             </div>
 
             {/* Salary */}
@@ -611,19 +526,14 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 name="salary"
                 value={formData.salary}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 border rounded-lg ${
-                  errors.salary ? "border-red-500" : "border-gray-300"
-                }
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors`}
+                  transition-colors"
                 placeholder="200000"
                 min="0"
                 step="1000"
                 required
               />
-              {errors.salary && (
-                <p className="text-red-500 text-sm mt-1">{errors.salary}</p>
-              )}
             </div>
 
             {/* Employment Date */}
@@ -637,16 +547,11 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 value={formData.employmentDate}
                 onChange={handleChange}
                 max={new Date().toISOString().split("T")[0]}
-                className={`w-full px-4 py-2.5 border rounded-lg ${
-                  errors.employmentDate ? "border-red-500" : "border-gray-300"
-                }
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors`}
+                  transition-colors"
                 required
               />
-              {errors.employmentDate && (
-                <p className="text-red-500 text-sm mt-1">{errors.employmentDate}</p>
-              )}
             </div>
 
             {/* Birthday Date */}
@@ -660,16 +565,11 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 value={formData.birthdayDate}
                 onChange={handleChange}
                 max={new Date().toISOString().split("T")[0]}
-                className={`w-full px-4 py-2.5 border rounded-lg ${
-                  errors.birthdayDate ? "border-red-500" : "border-gray-300"
-                }
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors`}
+                  transition-colors"
                 required
               />
-              {errors.birthdayDate && (
-                <p className="text-red-500 text-sm mt-1">{errors.birthdayDate}</p>
-              )}
             </div>
 
             {/* Gender */}
@@ -786,16 +686,11 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                     name="custom_bank_name"
                     value={formData.custom_bank_name}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2.5 border rounded-lg ${
-                      errors.custom_bank_name ? "border-red-500" : "border-gray-300"
-                    }
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                      transition-colors`}
+                      transition-colors"
                     placeholder="Enter bank name"
                   />
-                  {errors.custom_bank_name && (
-                    <p className="text-red-500 text-sm mt-1">{errors.custom_bank_name}</p>
-                  )}
                 </div>
               )}
 
@@ -811,15 +706,10 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                   onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, "").slice(0, 10);
                     setFormData({ ...formData, account_number: val });
-                    setErrors((prev) =>
-                      prev.account_number ? { ...prev, account_number: undefined } : prev
-                    );
                   }}
-                  className={`w-full px-4 py-2.5 border rounded-lg ${
-                    errors.account_number ? "border-red-500" : "border-gray-300"
-                  }
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                    transition-colors`}
+                    transition-colors"
                   placeholder="0123456789"
                   maxLength={10}
                   inputMode="numeric"
