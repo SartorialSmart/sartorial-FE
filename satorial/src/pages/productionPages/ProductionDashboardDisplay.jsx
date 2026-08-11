@@ -17,7 +17,11 @@ const ProductionDashboardDisplay = () => {
   return (
     <ProductionSideBarLayout>
       <div className="space-y-6">
-        <ToolbarWithDateFilter_1 onDateFilterChange={handleDateFilterChange} />
+        <ToolbarWithDateFilter_1
+          title="Production Management"
+          subtitle="Manage and track all production orders"
+          onDateFilterChange={handleDateFilterChange}
+        />
         <div className="flex justify-end">
           <LocationFilter value={location} onChange={setLocation} className="min-w-56" />
         </div>

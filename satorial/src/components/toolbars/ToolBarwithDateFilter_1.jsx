@@ -2,7 +2,12 @@ import { useState } from "react";
 import { Calendar, Filter } from "lucide-react";
 import PropTypes from "prop-types";
 
-const ToolbarWithDateFilter_1 = ({ onFilterChange, onDateFilterChange }) => {
+const ToolbarWithDateFilter_1 = ({
+  onFilterChange,
+  onDateFilterChange,
+  title = "Orders Management",
+  subtitle = "Manage and track all customer orders",
+}) => {
   const [selectedFilter, setSelectedFilter] = useState("All Time");
   const [showCustomDate, setShowCustomDate] = useState(false);
   const [customDateRange, setCustomDateRange] = useState({
@@ -48,7 +53,7 @@ const ToolbarWithDateFilter_1 = ({ onFilterChange, onDateFilterChange }) => {
       <nav className="flex items-center text-sm text-gray-600 mb-4">
         <span className="text-blue-600 hover:text-blue-700 cursor-pointer transition-colors">Dashboard</span>
         <span className="mx-2 text-gray-400">/</span>
-        <span className="text-gray-900 font-medium">Orders Management</span>
+        <span className="text-gray-900 font-medium">{title}</span>
       </nav>
 
       {/* Main Toolbar */}
@@ -57,8 +62,8 @@ const ToolbarWithDateFilter_1 = ({ onFilterChange, onDateFilterChange }) => {
         <div className="flex items-center gap-3">
           <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Orders Management</h1>
-            <p className="text-sm text-gray-500 mt-1">Manage and track all customer orders</p>
+            <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+            <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
           </div>
         </div>
 
@@ -168,6 +173,8 @@ const ToolbarWithDateFilter_1 = ({ onFilterChange, onDateFilterChange }) => {
 ToolbarWithDateFilter_1.propTypes = {
   onFilterChange: PropTypes.func,
   onDateFilterChange: PropTypes.func,
+  title: PropTypes.string,
+  subtitle: PropTypes.string,
 };
 
 export default ToolbarWithDateFilter_1;
