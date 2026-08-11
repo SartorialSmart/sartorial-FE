@@ -59,6 +59,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   };
 
   const [formData, setFormData] = useState(initialFormData);
+  const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -184,66 +185,59 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    setErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
   };
 
   const validateForm = () => {
+    const newErrors = {};
+
     // Required field checks
     if (!formData.firstName.trim()) {
-      toast.error("First name is required");
-      return false;
+      newErrors.firstName = "First name is required";
     }
 
     if (!formData.lastName.trim()) {
-      toast.error("Last name is required");
-      return false;
+      newErrors.lastName = "Last name is required";
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      toast.error("Please enter a valid email address");
-      return false;
+      newErrors.email = "Please enter a valid email address";
     }
 
     // Phone validation (basic)
     if (formData.phone.length < 10) {
-      toast.error("Please enter a valid phone number");
-      return false;
+      newErrors.phone = "Please enter a valid phone number";
     }
 
     // Department validation
     if (!formData.department) {
-      toast.error("Please select a department");
-      return false;
+      newErrors.department = "Please select a department";
     }
 
     // Role validation
     if (!formData.staff_role) {
-      toast.error("Please select a staff role");
-      return false;
+      newErrors.staff_role = "Please select a staff role";
     }
 
     // Salary validation
-    if (parseFloat(formData.salary) <= 0) {
-      toast.error("Salary must be greater than 0");
-      return false;
+    if (!formData.salary || parseFloat(formData.salary) <= 0) {
+      newErrors.salary = "Salary must be greater than 0";
     }
 
     // Password validation
     if (formData.password.length < 8) {
-      toast.error("Password must be at least 8 characters long");
-      return false;
+      newErrors.password = "Password must be at least 8 characters long";
     }
 
     // Bank account validation
     if (formData.bank_name === "__other__" && !formData.custom_bank_name.trim()) {
-      toast.error("Please enter a custom bank name");
-      return false;
+      newErrors.custom_bank_name = "Please enter a custom bank name";
     }
 
     if (formData.account_number && !/^\d{10}$/.test(formData.account_number)) {
-      toast.error("Account number must be exactly 10 digits");
-      return false;
+      newErrors.account_number = "Account number must be exactly 10 digits";
     }
 
     // Date validation
@@ -251,23 +245,36 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     const birthdayDate = new Date(formData.birthdayDate);
     const today = new Date();
 
-    if (employmentDate > today) {
-      toast.error("Employment date cannot be in the future");
-      return false;
+    if (!formData.employmentDate) {
+      newErrors.employmentDate = "Employment date is required";
+    } else if (employmentDate > today) {
+      newErrors.employmentDate = "Employment date cannot be in the future";
     }
 
-    if (birthdayDate > today) {
-      toast.error("Birthday date cannot be in the future");
-      return false;
+    if (!formData.birthdayDate) {
+      newErrors.birthdayDate = "Birthday date is required";
+    } else if (birthdayDate > today) {
+      newErrors.birthdayDate = "Birthday date cannot be in the future";
     }
 
     // Age validation (must be at least 18 years old)
-    const age = today.getFullYear() - birthdayDate.getFullYear();
-    if (age < 18) {
-      toast.error("Staff member must be at least 18 years old");
-      return false;
+    if (formData.birthdayDate && birthdayDate <= today) {
+      const age = today.getFullYear() - birthdayDate.getFullYear();
+      const monthDiff = today.getMonth() - birthdayDate.getMonth();
+      const adjustedAge =
+        monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdayDate.getDate())
+          ? age - 1
+          : age;
+      if (adjustedAge < 18) {
+        newErrors.birthdayDate = "Staff member must be at least 18 years old";
+      }
     }
 
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Please fix the highlighted required fields.");
+      return false;
+    }
     return true;
   };
 
@@ -405,12 +412,17 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+                className={`w-full px-4 py-2.5 border rounded-lg ${
+                  errors.firstName ? "border-red-500" : "border-gray-300"
+                }
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors"
+                  transition-colors`}
                 placeholder="John"
                 required
               />
+              {errors.firstName && (
+                <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
+              )}
             </div>
 
             {/* Last Name */}
@@ -423,12 +435,17 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+                className={`w-full px-4 py-2.5 border rounded-lg ${
+                  errors.lastName ? "border-red-500" : "border-gray-300"
+                }
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors"
+                  transition-colors`}
                 placeholder="Doe"
                 required
               />
+              {errors.lastName && (
+                <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
+              )}
             </div>
 
             {/* Email */}
@@ -441,12 +458,17 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+                className={`w-full px-4 py-2.5 border rounded-lg ${
+                  errors.email ? "border-red-500" : "border-gray-300"
+                }
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors"
+                  transition-colors`}
                 placeholder="john.doe@example.com"
                 required
               />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              )}
             </div>
 
             {/* Phone */}
@@ -459,12 +481,17 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+                className={`w-full px-4 py-2.5 border rounded-lg ${
+                  errors.phone ? "border-red-500" : "border-gray-300"
+                }
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors"
+                  transition-colors`}
                 placeholder="08012345678"
                 required
               />
+              {errors.phone && (
+                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+              )}
             </div>
 
             {/* Department */}
@@ -478,7 +505,9 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                   value={formData.department}
                   onChange={handleChange}
                   disabled={loadingDepartments}
-                  className="w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed cursor-pointer"
+                  className={`w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed cursor-pointer ${
+                    errors.department ? "border-red-500" : "border-gray-300"
+                  }`}
                   required
                 >
                   <option value="">
@@ -492,6 +521,9 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 </select>
                 <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
+              {errors.department && (
+                <p className="text-red-500 text-sm mt-1">{errors.department}</p>
+              )}
               {loadingDepartments && (
                 <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
                   <Loader2 size={14} className="animate-spin" />
@@ -510,7 +542,9 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                   name="staff_role"
                   value={formData.staff_role}
                   onChange={handleChange}
-                  className="w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
+                  className={`w-full appearance-none bg-white text-gray-900 px-4 py-2.5 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer ${
+                    errors.staff_role ? "border-red-500" : "border-gray-300"
+                  }`}
                   required
                 >
                   <option value="">Select Role</option>
@@ -522,6 +556,9 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 </select>
                 <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
+              {errors.staff_role && (
+                <p className="text-red-500 text-sm mt-1">{errors.staff_role}</p>
+              )}
             </div>
 
             {/* Password */}
@@ -535,9 +572,11 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 pr-24 border border-gray-300 rounded-lg 
+                  className={`w-full px-4 py-2.5 pr-24 border rounded-lg ${
+                    errors.password ? "border-red-500" : "border-gray-300"
+                  }
                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                    transition-colors"
+                    transition-colors`}
                   placeholder="••••••••"
                   required
                 />
@@ -557,6 +596,9 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
               >
                 Generate Strong Password
               </button>
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+              )}
             </div>
 
             {/* Salary */}
@@ -569,14 +611,19 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 name="salary"
                 value={formData.salary}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+                className={`w-full px-4 py-2.5 border rounded-lg ${
+                  errors.salary ? "border-red-500" : "border-gray-300"
+                }
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors"
+                  transition-colors`}
                 placeholder="200000"
                 min="0"
                 step="1000"
                 required
               />
+              {errors.salary && (
+                <p className="text-red-500 text-sm mt-1">{errors.salary}</p>
+              )}
             </div>
 
             {/* Employment Date */}
@@ -590,11 +637,16 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 value={formData.employmentDate}
                 onChange={handleChange}
                 max={new Date().toISOString().split("T")[0]}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+                className={`w-full px-4 py-2.5 border rounded-lg ${
+                  errors.employmentDate ? "border-red-500" : "border-gray-300"
+                }
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors"
+                  transition-colors`}
                 required
               />
+              {errors.employmentDate && (
+                <p className="text-red-500 text-sm mt-1">{errors.employmentDate}</p>
+              )}
             </div>
 
             {/* Birthday Date */}
@@ -608,11 +660,16 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                 value={formData.birthdayDate}
                 onChange={handleChange}
                 max={new Date().toISOString().split("T")[0]}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+                className={`w-full px-4 py-2.5 border rounded-lg ${
+                  errors.birthdayDate ? "border-red-500" : "border-gray-300"
+                }
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                  transition-colors"
+                  transition-colors`}
                 required
               />
+              {errors.birthdayDate && (
+                <p className="text-red-500 text-sm mt-1">{errors.birthdayDate}</p>
+              )}
             </div>
 
             {/* Gender */}
@@ -729,11 +786,16 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                     name="custom_bank_name"
                     value={formData.custom_bank_name}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+                    className={`w-full px-4 py-2.5 border rounded-lg ${
+                      errors.custom_bank_name ? "border-red-500" : "border-gray-300"
+                    }
                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                      transition-colors"
+                      transition-colors`}
                     placeholder="Enter bank name"
                   />
+                  {errors.custom_bank_name && (
+                    <p className="text-red-500 text-sm mt-1">{errors.custom_bank_name}</p>
+                  )}
                 </div>
               )}
 
@@ -749,10 +811,15 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
                   onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, "").slice(0, 10);
                     setFormData({ ...formData, account_number: val });
+                    setErrors((prev) =>
+                      prev.account_number ? { ...prev, account_number: undefined } : prev
+                    );
                   }}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+                  className={`w-full px-4 py-2.5 border rounded-lg ${
+                    errors.account_number ? "border-red-500" : "border-gray-300"
+                  }
                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                    transition-colors"
+                    transition-colors`}
                   placeholder="0123456789"
                   maxLength={10}
                   inputMode="numeric"

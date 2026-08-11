@@ -53,6 +53,7 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
     order_type: "Single",
     location: user?.location || "",
   });
+  const [errors, setErrors] = useState({});
 
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -128,6 +129,9 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
       client: value,
       client_email: selectedClient ? selectedClient.email : "",
     }));
+    setErrors((prev) =>
+      prev.client ? { ...prev, client: undefined } : prev
+    );
   };
 
   const toggleItem = (item) => {
@@ -140,6 +144,7 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
       }
       return next;
     });
+    setErrors((prev) => (prev.items ? { ...prev, items: undefined } : prev));
   };
 
   const adjustQty = (itemId, delta) => {
@@ -157,6 +162,7 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
       if (["order_price", "initial_deposit", "discount_type", "discount_value"].includes(name)) {
@@ -176,41 +182,33 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
 
   const validateForm = () => {
     const { client, client_email, order_title } = formData;
+    const newErrors = {};
 
-    if (!client || !client_email) {
+    if (!client) newErrors.client = "Please select a client.";
+    if (!client_email) newErrors.client_email = "Client email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(client_email))
+      newErrors.client_email = "Please enter a valid email address.";
+    if (!order_title.trim()) newErrors.order_title = "Order title is required.";
+    if (Object.keys(selectedItems).length === 0)
+      newErrors.items = "Please select at least one inventory item.";
+    if (isAdmin && !formData.location) newErrors.location = "Please select a location.";
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
       setErrorTitle("Validation Error");
-      setErrorMessage("Please select a client.");
-      setIsErrorModalOpen(true);
+      setErrorMessage("Please fix the highlighted required fields.");
       return false;
     }
-
-    if (!order_title) {
-      setErrorTitle("Validation Error");
-      setErrorMessage("Please enter an order title.");
-      setIsErrorModalOpen(true);
-      return false;
-    }
-
-    if (Object.keys(selectedItems).length === 0) {
-      setErrorTitle("Validation Error");
-      setErrorMessage("Please select at least one inventory item.");
-      setIsErrorModalOpen(true);
-      return false;
-    }
-
-    if (isAdmin && !formData.location) {
-      setErrorTitle("Validation Error");
-      setErrorMessage("Please select a location.");
-      setIsErrorModalOpen(true);
-      return false;
-    }
-
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+
+    if (!validateForm()) {
+      setIsErrorModalOpen(true);
+      return;
+    }
 
     setLoading(true);
 
@@ -300,7 +298,9 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                   name="client"
                   value={formData.client}
                   onChange={handleClientChange}
-                  className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full border ${
+                    errors.client ? "border-red-500" : "border-gray-300"
+                  } rounded-md p-3 focus:ring-blue-500 focus:border-blue-500`}
                   disabled={loading}
                 >
                   <option value="">Select Customer</option>
@@ -310,6 +310,9 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                     </option>
                   ))}
                 </select>
+                {errors.client && (
+                  <p className="text-red-500 text-sm mt-1">{errors.client}</p>
+                )}
               </div>
 
               <div>
@@ -322,9 +325,14 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                   placeholder="Email here"
                   value={formData.client_email}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full border ${
+                    errors.client_email ? "border-red-500" : "border-gray-300"
+                  } rounded-md p-3 focus:ring-blue-500 focus:border-blue-500`}
                   disabled={loading}
                 />
+                {errors.client_email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.client_email}</p>
+                )}
               </div>
             </div>
 
@@ -338,9 +346,14 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                 placeholder="e.g. Ready Made Shirt Order"
                 value={formData.order_title}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full border ${
+                  errors.order_title ? "border-red-500" : "border-gray-300"
+                } rounded-md p-3 focus:ring-blue-500 focus:border-blue-500`}
                 disabled={loading}
               />
+              {errors.order_title && (
+                <p className="text-red-500 text-sm mt-1">{errors.order_title}</p>
+              )}
             </div>
 
             <div className="mt-4">
@@ -352,7 +365,9 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                   name="location"
                   value={formData.location}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full border ${
+                    errors.location ? "border-red-500" : "border-gray-300"
+                  } rounded-md p-3 focus:ring-blue-500 focus:border-blue-500`}
                   disabled={loading}
                 >
                   <option value="">Select Location</option>
@@ -369,6 +384,9 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                   readOnly
                   className="w-full border border-gray-300 rounded-md p-3 bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
                 />
+              )}
+              {isAdmin && errors.location && (
+                <p className="text-red-500 text-sm mt-1">{errors.location}</p>
               )}
             </div>
 
@@ -405,7 +423,9 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-2 max-h-72 overflow-y-auto border border-gray-200 rounded-lg p-2">
+                  <div className={`space-y-2 max-h-72 overflow-y-auto border rounded-lg p-2 ${
+                    errors.items ? "border-red-500" : "border-gray-200"
+                  }`}>
                     {inventoryItems
                       .filter(
                         (item) =>
@@ -525,6 +545,9 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                     )}
                   </div>
                 </div>
+              )}
+              {errors.items && (
+                <p className="text-red-500 text-sm mt-1">{errors.items}</p>
               )}
             </div>
 

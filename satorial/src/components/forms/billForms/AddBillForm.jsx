@@ -26,6 +26,7 @@ const AddBillForm = ({ onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
   const [successModal, setSuccessModal] = useState(null);
 
   // Fetch vendor categories and vendors on component mount
@@ -56,6 +57,7 @@ const AddBillForm = ({ onClose, onSuccess }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
     setFormData((prev) => {
       const newFormData = { ...prev, [name]: value };
 
@@ -75,32 +77,36 @@ const AddBillForm = ({ onClose, onSuccess }) => {
   };
 
   const validateForm = () => {
+    const newErrors = {};
+
     if (!formData.vendor_name) {
-      setError("Please select a vendor");
-      return false;
+      newErrors.vendor_name = "Please select a vendor";
     }
     if (!formData.vendor_category) {
-      setError("Please select a vendor category");
-      return false;
+      newErrors.vendor_category = "Please select a vendor category";
     }
     if (!formData.item_name.trim()) {
-      setError("Please enter an item name");
-      return false;
+      newErrors.item_name = "Please enter an item name";
     }
     if (!formData.quantity || parseFloat(formData.quantity) <= 0) {
-      setError("Please enter a valid quantity");
-      return false;
+      newErrors.quantity = "Please enter a valid quantity";
     }
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      setError("Please enter a valid amount");
-      return false;
+      newErrors.amount = "Please enter a valid amount";
     }
-    if (parseFloat(formData.amount_paid) < 0) {
-      setError("Amount paid cannot be negative");
-      return false;
+    if (formData.amount_paid !== "" && parseFloat(formData.amount_paid) < 0) {
+      newErrors.amount_paid = "Amount paid cannot be negative";
     }
-    if (parseFloat(formData.amount_paid) > parseFloat(formData.amount)) {
-      setError("Amount paid cannot exceed total amount");
+    if (
+      formData.amount_paid !== "" &&
+      parseFloat(formData.amount_paid) > parseFloat(formData.amount)
+    ) {
+      newErrors.amount_paid = "Amount paid cannot exceed total amount";
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setError("Please fix the highlighted required fields.");
       return false;
     }
     return true;
@@ -213,7 +219,9 @@ const AddBillForm = ({ onClose, onSuccess }) => {
                         name="vendor_name"
                         value={formData.vendor_name}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                        className={`w-full pl-10 pr-4 py-3 border-2 ${
+                          errors.vendor_name ? "border-red-500" : "border-gray-200"
+                        } rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white`}
                         required
                       >
                         <option value="">Select vendor</option>
@@ -223,6 +231,9 @@ const AddBillForm = ({ onClose, onSuccess }) => {
                           </option>
                         ))}
                       </select>
+                      {errors.vendor_name && (
+                        <p className="text-red-500 text-sm mt-1">{errors.vendor_name}</p>
+                      )}
                     </div>
                   </div>
 
@@ -237,7 +248,9 @@ const AddBillForm = ({ onClose, onSuccess }) => {
                         name="vendor_category"
                         value={formData.vendor_category}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                        className={`w-full pl-10 pr-4 py-3 border-2 ${
+                          errors.vendor_category ? "border-red-500" : "border-gray-200"
+                        } rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white`}
                         required
                       >
                         <option value="">Select category</option>
@@ -247,6 +260,9 @@ const AddBillForm = ({ onClose, onSuccess }) => {
                           </option>
                         ))}
                       </select>
+                      {errors.vendor_category && (
+                        <p className="text-red-500 text-sm mt-1">{errors.vendor_category}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -272,9 +288,14 @@ const AddBillForm = ({ onClose, onSuccess }) => {
                         value={formData.item_name}
                         onChange={handleChange}
                         placeholder="Enter item name"
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                        className={`w-full pl-10 pr-4 py-3 border-2 ${
+                          errors.item_name ? "border-red-500" : "border-gray-200"
+                        } rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all`}
                         required
                       />
+                      {errors.item_name && (
+                        <p className="text-red-500 text-sm mt-1">{errors.item_name}</p>
+                      )}
                     </div>
                   </div>
 
@@ -293,9 +314,14 @@ const AddBillForm = ({ onClose, onSuccess }) => {
                         placeholder="0"
                         min="1"
                         step="1"
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                        className={`w-full pl-10 pr-4 py-3 border-2 ${
+                          errors.quantity ? "border-red-500" : "border-gray-200"
+                        } rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all`}
                         required
                       />
+                      {errors.quantity && (
+                        <p className="text-red-500 text-sm mt-1">{errors.quantity}</p>
+                      )}
                     </div>
                   </div>
 
@@ -314,9 +340,14 @@ const AddBillForm = ({ onClose, onSuccess }) => {
                         placeholder="0.00"
                         min="0"
                         step="0.01"
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                        className={`w-full pl-10 pr-4 py-3 border-2 ${
+                          errors.amount ? "border-red-500" : "border-gray-200"
+                        } rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all`}
                         required
                       />
+                      {errors.amount && (
+                        <p className="text-red-500 text-sm mt-1">{errors.amount}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -344,8 +375,13 @@ const AddBillForm = ({ onClose, onSuccess }) => {
                         placeholder="0.00"
                         min="0"
                         step="0.01"
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                        className={`w-full pl-10 pr-4 py-3 border-2 ${
+                          errors.amount_paid ? "border-red-500" : "border-gray-200"
+                        } rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all`}
                       />
+                      {errors.amount_paid && (
+                        <p className="text-red-500 text-sm mt-1">{errors.amount_paid}</p>
+                      )}
                     </div>
                   </div>
 

@@ -17,6 +17,7 @@ const EditBillForm = ({ billId, onClose }) => {
   const [vendorCategories, setVendorCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
 
   // Fetch vendor categories
   useEffect(() => {
@@ -60,6 +61,7 @@ const EditBillForm = ({ billId, onClose }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
     setFormData((prev) => {
       const newFormData = { ...prev, [name]: value };
 
@@ -74,10 +76,50 @@ const EditBillForm = ({ billId, onClose }) => {
     });
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.vendorName.trim()) {
+      newErrors.vendorName = "Vendor name is required.";
+    }
+    if (!formData.vendorCategory) {
+      newErrors.vendorCategory = "Please select a vendor category.";
+    }
+    if (!formData.itemName.trim()) {
+      newErrors.itemName = "Item name is required.";
+    }
+    if (!formData.quantity || parseFloat(formData.quantity) <= 0) {
+      newErrors.quantity = "Please enter a valid quantity.";
+    }
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      newErrors.amount = "Please enter a valid amount.";
+    }
+    if (
+      formData.amountPaid === "" ||
+      parseFloat(formData.amountPaid) < 0
+    ) {
+      newErrors.amountPaid = "Amount paid cannot be negative.";
+    }
+    if (
+      formData.amountPaid !== "" &&
+      parseFloat(formData.amountPaid) > parseFloat(formData.amount)
+    ) {
+      newErrors.amountPaid = "Amount paid cannot exceed total amount.";
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setError("Please fix the highlighted required fields.");
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    if (!validateForm()) return;
+    setLoading(true);
 
     try {
       const updatedBillData = {
@@ -121,9 +163,14 @@ const EditBillForm = ({ billId, onClose }) => {
                 value={formData.vendorName}
                 onChange={handleChange}
                 placeholder="Enter name"
-                className="w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
+                className={`w-full p-2 border rounded-md focus:ring focus:ring-blue-300 ${
+                  errors.vendorName ? "border-red-500" : "border-gray-300"
+                }`}
                 required
               />
+              {errors.vendorName && (
+                <p className="text-red-500 text-sm mt-1">{errors.vendorName}</p>
+              )}
             </div>
 
             <div>
@@ -132,7 +179,9 @@ const EditBillForm = ({ billId, onClose }) => {
                 name="vendorCategory"
                 value={formData.vendorCategory}
                 onChange={handleChange}
-                className="w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
+                className={`w-full p-2 border rounded-md focus:ring focus:ring-blue-300 ${
+                  errors.vendorCategory ? "border-red-500" : "border-gray-300"
+                }`}
                 required
               >
                 <option value="">Select category</option>
@@ -142,6 +191,9 @@ const EditBillForm = ({ billId, onClose }) => {
                   </option>
                 ))}
               </select>
+              {errors.vendorCategory && (
+                <p className="text-red-500 text-sm mt-1">{errors.vendorCategory}</p>
+              )}
             </div>
 
             <div>
@@ -152,9 +204,14 @@ const EditBillForm = ({ billId, onClose }) => {
                 value={formData.itemName}
                 onChange={handleChange}
                 placeholder="Enter item name"
-                className="w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
+                className={`w-full p-2 border rounded-md focus:ring focus:ring-blue-300 ${
+                  errors.itemName ? "border-red-500" : "border-gray-300"
+                }`}
                 required
               />
+              {errors.itemName && (
+                <p className="text-red-500 text-sm mt-1">{errors.itemName}</p>
+              )}
             </div>
 
             <div>
@@ -165,9 +222,14 @@ const EditBillForm = ({ billId, onClose }) => {
                 value={formData.quantity}
                 onChange={handleChange}
                 placeholder="Enter quantity"
-                className="w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
+                className={`w-full p-2 border rounded-md focus:ring focus:ring-blue-300 ${
+                  errors.quantity ? "border-red-500" : "border-gray-300"
+                }`}
                 required
               />
+              {errors.quantity && (
+                <p className="text-red-500 text-sm mt-1">{errors.quantity}</p>
+              )}
             </div>
 
             <div>
@@ -178,9 +240,14 @@ const EditBillForm = ({ billId, onClose }) => {
                 value={formData.amount}
                 onChange={handleChange}
                 placeholder="Enter amount"
-                className="w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
+                className={`w-full p-2 border rounded-md focus:ring focus:ring-blue-300 ${
+                  errors.amount ? "border-red-500" : "border-gray-300"
+                }`}
                 required
               />
+              {errors.amount && (
+                <p className="text-red-500 text-sm mt-1">{errors.amount}</p>
+              )}
             </div>
 
             <div>
@@ -191,9 +258,14 @@ const EditBillForm = ({ billId, onClose }) => {
                 value={formData.amountPaid}
                 onChange={handleChange}
                 placeholder="Enter amount paid"
-                className="w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
+                className={`w-full p-2 border rounded-md focus:ring focus:ring-blue-300 ${
+                  errors.amountPaid ? "border-red-500" : "border-gray-300"
+                }`}
                 required
               />
+              {errors.amountPaid && (
+                <p className="text-red-500 text-sm mt-1">{errors.amountPaid}</p>
+              )}
             </div>
 
             <div className="col-span-2">

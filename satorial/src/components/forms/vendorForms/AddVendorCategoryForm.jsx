@@ -8,11 +8,26 @@ const AddVendorCategoryForm = ({ onClose }) => {
   const [categoryName, setCategoryName] = useState("Materials");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const [modalData, setModalData] = useState(null); // State to handle success/error modal
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    const newErrors = {};
+    if (!categoryName.trim()) newErrors.categoryName = "Category name is required.";
+    if (!description.trim()) newErrors.description = "Description is required.";
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setModalData({
+        title: "Validation Error",
+        message: "Please fix the highlighted required fields.",
+        isError: true,
+      });
+      setLoading(false);
+      return;
+    }
 
     try {
       const newCategory = {
@@ -56,10 +71,20 @@ const AddVendorCategoryForm = ({ onClose }) => {
             <input
               type="text"
               value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => {
+                setCategoryName(e.target.value);
+                setErrors((prev) =>
+                  prev.categoryName ? { ...prev, categoryName: undefined } : prev
+                );
+              }}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.categoryName ? "border-red-500" : "border-gray-300"
+              }`}
               required
             />
+            {errors.categoryName && (
+              <p className="text-red-500 text-sm mt-1">{errors.categoryName}</p>
+            )}
           </div>
 
           {/* Description Input */}
@@ -69,11 +94,21 @@ const AddVendorCategoryForm = ({ onClose }) => {
             </label>
             <textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+              onChange={(e) => {
+                setDescription(e.target.value);
+                setErrors((prev) =>
+                  prev.description ? { ...prev, description: undefined } : prev
+                );
+              }}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px] ${
+                errors.description ? "border-red-500" : "border-gray-300"
+              }`}
               placeholder="Type here"
               required
             />
+            {errors.description && (
+              <p className="text-red-500 text-sm mt-1">{errors.description}</p>
+            )}
           </div>
 
           {/* Submit Button */}

@@ -10,6 +10,7 @@ const AddExpensesCategoryForm = ({ onClose }) => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const { user } = useAuth(); // 👈 get the logged-in user
 
   const [modal, setModal] = useState({
@@ -22,11 +23,24 @@ const AddExpensesCategoryForm = ({ onClose }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
+    setErrors((prev) => (prev.categoryName ? { ...prev, categoryName: undefined } : prev));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    if (!form.categoryName.trim()) {
+      setErrors({ categoryName: "Category name is required." });
+      setModal({
+        show: true,
+        title: "Validation Error",
+        message: "Please fix the highlighted required fields.",
+        isError: true,
+      });
+      setLoading(false);
+      return;
+    }
 
     try {
       const payload = {
@@ -87,9 +101,14 @@ const AddExpensesCategoryForm = ({ onClose }) => {
             value={form.categoryName}
             onChange={handleChange}
             required
-            className="w-full border border-gray-300 rounded-md px-3 py-2"
+            className={`w-full border rounded-md px-3 py-2 ${
+              errors.categoryName ? "border-red-500" : "border-gray-300"
+            }`}
             placeholder="Materials"
           />
+          {errors.categoryName && (
+            <p className="text-red-500 text-sm mt-1">{errors.categoryName}</p>
+          )}
         </div>
 
         <div className="text-right">

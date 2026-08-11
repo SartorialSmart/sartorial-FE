@@ -100,6 +100,7 @@ const AddClientForm = ({ onNext, onClose }) => {
       "birthdate",
       date ? date.toISOString().split("T")[0] : ""
     );
+    setErrors((prev) => (prev.birthdate ? { ...prev, birthdate: "" } : prev));
   };
 
   const handleFileChange = (e) => {
@@ -327,7 +328,11 @@ const AddClientForm = ({ onNext, onClose }) => {
                     <div className="relative w-full">
                       <input
                         type="text"
-                        className="border border-gray-300 rounded-lg px-3 py-2 w-full cursor-pointer text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors"
+                        className={`border rounded-lg px-3 py-2 w-full cursor-pointer text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors ${
+                          errors.birthdate
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
                         value={formData.birthdate || ""}
                         placeholder="Select Birthdate"
                         readOnly
@@ -339,10 +344,17 @@ const AddClientForm = ({ onNext, onClose }) => {
                     </div>
                   }
                 />
+                {errors.birthdate && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.birthdate}
+                  </p>
+                )}
               </div>
 
               <div className="flex items-end pb-1">
-                <div className="flex items-center gap-4">
+                <div className={`flex items-center gap-4 p-2 rounded-lg border ${
+                  errors.gender ? "border-red-500" : "border-transparent"
+                }`}>
                   <label className="text-sm text-gray-600 font-medium">Gender:</label>
                   {["Male", "Female", "Other"].map((gender) => (
                     <label key={gender} className="flex items-center text-sm text-gray-700 cursor-pointer">
@@ -359,6 +371,9 @@ const AddClientForm = ({ onNext, onClose }) => {
                   ))}
                 </div>
               </div>
+              {errors.gender && (
+                <p className="text-red-500 text-xs mt-1">{errors.gender}</p>
+              )}
 
               <div>
                 <label className="text-sm text-gray-600 font-medium block mb-1">
