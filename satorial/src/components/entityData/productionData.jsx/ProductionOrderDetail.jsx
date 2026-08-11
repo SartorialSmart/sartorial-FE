@@ -16,6 +16,7 @@ import {
   Users,
   AlertCircle,
   Clock,
+  TrendingUp,
   XCircle,
   X,
 } from "lucide-react";
@@ -45,6 +46,9 @@ const formatDate = (dateString) => {
   });
 };
 
+const toInputDate = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 const ProductionOrderDetail = () => {
   const { productionId } = useParams();
   const [order, setOrder] = useState(null);
@@ -54,7 +58,7 @@ const ProductionOrderDetail = () => {
   const [showQAModal, setShowQAModal] = useState(false);
   const [showInventoryModal, setShowInventoryModal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [progressDrafts, setProgressDrafts] = useState({});
+  const [completionDrafts, setCompletionDrafts] = useState({});
   const [updatingId, setUpdatingId] = useState(null);
 
   const { canPerform } = usePermissions();
@@ -148,26 +152,35 @@ const ProductionOrderDetail = () => {
     }
   };
 
-  const saveProgress = async (assignment) => {
+  const logCompletion = async (assignment) => {
     const assignedQty = Number(assignment.assigned_quantity) || 0;
-    const raw = progressDrafts[assignment.id];
-    const value = raw === undefined ? Number(assignment.completed_quantity) || 0 : Number(raw);
-    if (Number.isNaN(value) || value < 0) {
-      setError("Progress must be a valid number.");
+    const doneQty = Number(assignment.completed_quantity) || 0;
+    const draft = completionDrafts[assignment.id] || {};
+    const quantity = Number(draft.quantity);
+    if (Number.isNaN(quantity) || quantity <= 0) {
+      setError("Enter a valid number of units completed.");
       return;
     }
-    if (value > assignedQty) {
-      setError(`Completed units cannot exceed the assigned quantity (${assignedQty}).`);
+    const remaining = assignedQty - doneQty;
+    if (quantity > remaining) {
+      setError(`Completed units cannot exceed the remaining quota (${remaining} units).`);
       return;
     }
     setUpdatingId(assignment.id);
     setError(null);
     try {
-      await ProductionService.patchAssignment(assignment.id, { completed_quantity: value });
-      setProgressDrafts((prev) => ({ ...prev, [assignment.id]: undefined }));
+      await ProductionService.logAssignmentCompletion(assignment.id, {
+        quantity,
+        completed_on: draft.completed_on || toInputDate(),
+      });
+      setCompletionDrafts((prev) => ({
+        ...prev,
+        [assignment.id]: { quantity: "", completed_on: toInputDate() },
+      }));
       await fetchOrder();
-    } catch {
-      setError("Failed to save progress. Please try again.");
+    } catch (err) {
+      const msg = err?.response?.data?.error;
+      setError(msg || "Failed to log completion. Please try again.");
     } finally {
       setUpdatingId(null);
     }
@@ -178,7 +191,7 @@ const ProductionOrderDetail = () => {
     setError(null);
     try {
       await ProductionService.completeAssignment(assignment.id);
-      setProgressDrafts((prev) => ({ ...prev, [assignment.id]: undefined }));
+      setCompletionDrafts((prev) => ({ ...prev, [assignment.id]: undefined }));
       await fetchOrder();
     } catch {
       setError("Failed to complete the assignment. Please try again.");
@@ -505,6 +518,21 @@ const ProductionOrderDetail = () => {
               {assignments.map((assignment) => {
                 const assignedQty = Number(assignment.assigned_quantity) || 0;
                 const doneQty = Number(assignment.completed_quantity) || 0;
+                const completions = Array.isArray(assignment.completions) ? assignment.completions : [];
+                const remaining = assignedQty - doneQty;
+                const draft = completionDrafts[assignment.id] || {
+                  quantity: "",
+                  completed_on: toInputDate(),
+                };
+                const completionDays = new Set(completions.map((c) => c.completed_on)).size;
+                const loggedUnits = completions.reduce((sum, c) => sum + (Number(c.quantity) || 0), 0);
+                const avgPerDay = completionDays > 0 ? loggedUnits / completionDays : null;
+                const avgPerDayText =
+                  avgPerDay === null
+                    ? "—"
+                    : Number.isInteger(avgPerDay)
+                    ? avgPerDay
+                    : avgPerDay.toFixed(1);
                 const staffProgress =
                   assignedQty > 0
                     ? Math.min(Math.round((doneQty / assignedQty) * 100), 100)
@@ -537,6 +565,13 @@ const ProductionOrderDetail = () => {
                         <div className="text-xs text-gray-500 mt-1">
                           {doneQty} / {assignedQty} done
                         </div>
+                        <div
+                          className="text-xs text-gray-500 mt-0.5 flex items-center gap-1"
+                          title="Average units completed per day of logged activity, on this production order"
+                        >
+                          <TrendingUp size={12} className="text-blue-500" />
+                          Avg {avgPerDayText}/day
+                        </div>
                       </div>
                       <div className="w-24 shrink-0">
                         <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -552,49 +587,84 @@ const ProductionOrderDetail = () => {
                       !isCompleted &&
                       !isCancelled &&
                       assignment.status !== "Completed" && (
-                        <div className="flex items-center gap-2 mt-2.5 pt-2.5 border-t border-dashed border-gray-200">
-                          <span className="text-xs text-gray-500">Mark progress:</span>
-                          <input
-                            type="number"
-                            min="0"
-                            max={assignedQty}
-                            value={progressDrafts[assignment.id] ?? doneQty}
-                            onChange={(e) =>
-                              setProgressDrafts((prev) => ({
-                                ...prev,
-                                [assignment.id]: e.target.value,
-                              }))
-                            }
-                            disabled={updatingId === assignment.id}
-                            className="w-20 border border-gray-300 rounded-md px-2 py-1 text-sm text-right disabled:opacity-50"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => saveProgress(assignment)}
-                            disabled={updatingId === assignment.id}
-                            className="flex items-center gap-1 px-3 py-1 text-xs font-medium border border-blue-600 text-blue-700 rounded-md hover:bg-blue-50 disabled:opacity-50"
-                          >
-                            {updatingId === assignment.id ? (
-                              <Loader2 size={14} className="animate-spin" />
-                            ) : (
-                              "Save"
-                            )}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => markAssignmentComplete(assignment)}
-                            disabled={updatingId === assignment.id}
-                            className="flex items-center gap-1 px-3 py-1 text-xs font-medium bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50"
-                          >
-                            {updatingId === assignment.id ? (
-                              <Loader2 size={14} className="animate-spin" />
-                            ) : (
-                              "Mark Complete"
-                            )}
-                          </button>
-                          <span className="text-xs text-gray-400">of {assignedQty} units</span>
+                        <div className="mt-2.5 pt-2.5 border-t border-dashed border-gray-200">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs text-gray-500">Log completion:</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max={remaining}
+                              placeholder="Units"
+                              value={draft.quantity}
+                              onChange={(e) =>
+                                setCompletionDrafts((prev) => ({
+                                  ...prev,
+                                  [assignment.id]: { ...draft, quantity: e.target.value },
+                                }))
+                              }
+                              disabled={updatingId === assignment.id}
+                              className="w-20 border border-gray-300 rounded-md px-2 py-1 text-sm text-right disabled:opacity-50"
+                            />
+                            <input
+                              type="date"
+                              value={draft.completed_on}
+                              onChange={(e) =>
+                                setCompletionDrafts((prev) => ({
+                                  ...prev,
+                                  [assignment.id]: { ...draft, completed_on: e.target.value },
+                                }))
+                              }
+                              disabled={updatingId === assignment.id}
+                              className="border border-gray-300 rounded-md px-2 py-1 text-sm disabled:opacity-50"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => logCompletion(assignment)}
+                              disabled={updatingId === assignment.id || remaining <= 0}
+                              className="flex items-center gap-1 px-3 py-1 text-xs font-medium border border-blue-600 text-blue-700 rounded-md hover:bg-blue-50 disabled:opacity-50"
+                            >
+                              {updatingId === assignment.id ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                "Log Completion"
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => markAssignmentComplete(assignment)}
+                              disabled={updatingId === assignment.id || remaining <= 0}
+                              className="flex items-center gap-1 px-3 py-1 text-xs font-medium bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50"
+                            >
+                              {updatingId === assignment.id ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                "Mark Complete"
+                              )}
+                            </button>
+                            <span className="text-xs text-gray-400">
+                              {doneQty} of {assignedQty} done
+                            </span>
+                          </div>
                         </div>
                       )}
+
+                    {completions.length > 0 && (
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <span className="text-[11px] text-gray-400 uppercase tracking-wide">
+                          Completion log:
+                        </span>
+                        {completions.map((entry) => (
+                          <span
+                            key={entry.id}
+                            className="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 text-[11px] text-gray-600"
+                            title={`${entry.quantity} unit(s) completed on ${formatDate(entry.completed_on)}`}
+                          >
+                            <CheckCircle size={11} className="text-emerald-600" />
+                            +{entry.quantity} on {formatDate(entry.completed_on)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
