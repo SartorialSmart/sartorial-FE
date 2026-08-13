@@ -22,6 +22,16 @@ import OrderService from "../../services/OrderService";
 import OrderCategoryService from "../../services/OrderCategoryService";
 import LocationFilter from "../filters/LocationFilter";
 import { formatDateCaption } from "../../../utils/reportUtils";
+import { isReadyMadeOrder } from "../../../utils/orderUtils";
+
+const CATEGORY_FILTERS = ["Ready Made", "Custom Wear"];
+
+const getOrderCategoryLabel = (order) => {
+  if (isReadyMadeOrder(order)) return "Ready Made";
+  if (typeof order.order_category === "object" && order.order_category?.name)
+    return order.order_category.name;
+  return order.order_category || "Custom Wear";
+};
 
 const FILTERS = [
   "All Time",
@@ -375,6 +385,20 @@ const OrderReport = () => {
 
   const cards = buildCards();
 
+  const categoryOptions = useMemo(() => {
+    const seen = new Set(["All", ...CATEGORY_FILTERS]);
+    const options = [];
+    const addCategory = (cat) => {
+      const name = cat?.name;
+      if (!name || seen.has(name)) return;
+      if (/ready made/i.test(name)) return;
+      seen.add(name);
+      options.push({ id: cat.id, name });
+    };
+    (categories || []).forEach(addCategory);
+    return options;
+  }, [categories]);
+
   const filteredOrders = useMemo(() => {
     return tabData.filter((order) => {
       const matchesSearch =
@@ -391,10 +415,14 @@ const OrderReport = () => {
 
       const matchesCategory =
         selectedCategory === "All" ||
-        (order.order_category &&
-          ((typeof order.order_category === "object" &&
-            order.order_category.name === selectedCategory) ||
-            order.order_category === selectedCategory));
+        (selectedCategory === "Custom Wear"
+          ? !isReadyMadeOrder(order)
+          : /ready made/i.test(selectedCategory)
+          ? isReadyMadeOrder(order)
+          : order.order_category &&
+            ((typeof order.order_category === "object" &&
+              order.order_category.name === selectedCategory) ||
+              order.order_category === selectedCategory));
 
       return matchesSearch && matchesStatus && matchesCategory;
     });
@@ -477,7 +505,7 @@ const OrderReport = () => {
           `"₦${Number(order.order_price || order.amount || 0).toLocaleString()}"`,
           `"${order.ordered_at ? order.ordered_at.slice(0, 10) : order.order_date || order.date || ""}"`,
           `"${order.order_status || ""}"`,
-          `"${typeof order.order_category === "object" ? order.order_category.name : order.order_category || ""}"`,
+          `"${getOrderCategoryLabel(order)}"`,
         ].join(",");
       }),
     ].join("\n");
@@ -946,7 +974,12 @@ const OrderReport = () => {
                 className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50/50 appearance-none min-w-40"
               >
                 <option value="All">All Categories</option>
-                {categories.map((cat) => (
+                {CATEGORY_FILTERS.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+                {categoryOptions.map((cat) => (
                   <option key={cat.id} value={cat.name}>
                     {cat.name}
                   </option>

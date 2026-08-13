@@ -44,7 +44,6 @@ const AddOrderForm = ({ onClose }) => {
     order_price: "",
     order_category: "",
     order_type: "Single",
-    initial_deposit: "",
     balance: "",
     location: isAdmin ? "" : user?.location || "",
   });
@@ -87,13 +86,10 @@ const AddOrderForm = ({ onClose }) => {
     setFormData((prev) => {
       const updatedData = { ...prev, [name]: value };
 
-      // Recalculate balance only if order_price or initial_deposit changes
-      if (name === "order_price" || name === "initial_deposit") {
+      // Recalculate balance only if order_price changes
+      if (name === "order_price") {
         const orderPrice = parseFloat(updatedData.order_price) || 0;
-        const initialDeposit = parseFloat(updatedData.initial_deposit) || 0;
-        updatedData.balance = Math.max(orderPrice - initialDeposit, 0).toFixed(
-          2
-        ); // Ensure balance is non-negative and formatted
+        updatedData.balance = Math.max(orderPrice, 0).toFixed(2); // Ensure balance is non-negative and formatted
       }
 
       return updatedData;
@@ -108,7 +104,6 @@ const AddOrderForm = ({ onClose }) => {
       start_date,
       end_date,
       order_price,
-      initial_deposit,
     } = formData;
     const newErrors = {};
 
@@ -122,9 +117,6 @@ const AddOrderForm = ({ onClose }) => {
     if (!order_price) newErrors.order_price = "Price is required.";
     else if (isNaN(parseFloat(order_price)))
       newErrors.order_price = "Price must be a valid number.";
-    if (!initial_deposit) newErrors.initial_deposit = "Initial deposit is required.";
-    else if (isNaN(parseFloat(initial_deposit)))
-      newErrors.initial_deposit = "Initial deposit must be a valid number.";
     if (start_date && end_date && new Date(end_date) < new Date(start_date))
       newErrors.end_date = "End date must be after the start date.";
     if (isAdmin && !formData.location) newErrors.location = "Please select a location.";
@@ -152,6 +144,8 @@ const AddOrderForm = ({ onClose }) => {
       await OrderService.createOrder({
         ...formData,
         order_category: selectedCategory,
+        initial_deposit: 0,
+        ready_made: false,
       });
 
       // Reset form data and selected category
@@ -166,7 +160,6 @@ const AddOrderForm = ({ onClose }) => {
         order_category: "",
         order_price: "",
         order_type: "Single",
-        initial_deposit: "",
         balance: "",
         location: isAdmin ? "" : user?.location || "",
       });
@@ -457,26 +450,6 @@ const AddOrderForm = ({ onClose }) => {
                 <option value="Single">Single</option>
                 <option value="Bulk">Bulk</option>
               </select>
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Initial Deposit *
-              </label>
-              <input
-                type="text"
-                name="initial_deposit"
-                placeholder="₦ Enter Amount"
-                value={formData.initial_deposit}
-                onChange={handleChange}
-                className={`w-full border rounded-md p-3 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.initial_deposit ? "border-red-500" : "border-gray-300"
-                }`}
-                disabled={loading}
-              />
-              {errors.initial_deposit && (
-                <p className="text-red-500 text-sm mt-1">{errors.initial_deposit}</p>
-              )}
             </div>
 
             <div>
