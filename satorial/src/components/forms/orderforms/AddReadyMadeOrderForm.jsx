@@ -24,6 +24,16 @@ const getTodayDateString = () => {
   return new Date(today.getTime() - timezoneOffset).toISOString().split("T")[0];
 };
 
+const getCompactDateTime = () => {
+  const today = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${today.getFullYear()}${pad(today.getMonth() + 1)}${pad(
+    today.getDate()
+  )}${pad(today.getHours())}${pad(today.getMinutes())}${pad(
+    today.getSeconds()
+  )}`;
+};
+
 const AddReadyMadeOrderForm = ({ onClose }) => {
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -47,7 +57,6 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
     order_price: "",
     discount_type: "amount",
     discount_value: "",
-    initial_deposit: "",
     balance: "",
     order_status: "Completed",
     order_type: "Single",
@@ -57,6 +66,7 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
 
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [productSearch, setProductSearch] = useState("");
   const [locations, setLocations] = useState([]);
 
   useEffect(() => {
@@ -105,21 +115,29 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
     Object.values(selectedItems).forEach(({ item, quantity }) => {
       total += (parseFloat(item.selling_price) || 0) * quantity;
     });
-    setFormData((prev) => {
-      const deposit = parseFloat(prev.initial_deposit) || 0;
-      const discountVal = parseFloat(prev.discount_value) || 0;
-      const discount = prev.discount_type === "percentage"
-        ? (discountVal / 100) * total
-        : discountVal;
-      const priceAfterDiscount = Math.max(total - discount, 0);
-      const hasDeposit = prev.initial_deposit !== "" && prev.initial_deposit !== null && deposit > 0;
-      return {
-        ...prev,
-        order_price: total > 0 ? total.toString() : prev.order_price,
-        balance: total > 0 ? (hasDeposit ? Math.max(priceAfterDiscount - deposit, 0).toFixed(2) : "0.00") : prev.balance,
-      };
-    });
+    setFormData((prev) => ({
+      ...prev,
+      order_price: total > 0 ? total.toString() : prev.order_price,
+      balance: total > 0 ? "0.00" : prev.balance,
+    }));
   }, [selectedItems]);
+
+  useEffect(() => {
+    const selectedClient = clients.find((c) => c.id === formData.client);
+    const selectedList = Object.values(selectedItems);
+    if (!selectedClient || selectedList.length === 0) {
+      setFormData((prev) => ({ ...prev, order_title: "" }));
+      return;
+    }
+    const customerName = `${selectedClient.first_name} ${selectedClient.last_name}`.trim();
+    const productName = selectedList
+      .map(({ item }) => item.item_name)
+      .join(", ");
+    setFormData((prev) => ({
+      ...prev,
+      order_title: `RMO - ${customerName} - ${getCompactDateTime()} - ${productName}`,
+    }));
+  }, [formData.client, selectedItems, clients]);
 
   const handleClientChange = (e) => {
     const value = e.target.value;
@@ -165,16 +183,8 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
     setErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
-      if (["order_price", "initial_deposit", "discount_type", "discount_value"].includes(name)) {
-        const price = parseFloat(updated.order_price) || 0;
-        const deposit = parseFloat(updated.initial_deposit) || 0;
-        const discountVal = parseFloat(updated.discount_value) || 0;
-        const discount = updated.discount_type === "percentage"
-          ? (discountVal / 100) * price
-          : discountVal;
-        const discountedPrice = Math.max(price - discount, 0);
-        const hasDeposit = updated.initial_deposit !== "" && updated.initial_deposit !== null && deposit > 0;
-        updated.balance = hasDeposit ? Math.max(discountedPrice - deposit, 0).toFixed(2) : "0.00";
+      if (["order_price", "discount_type", "discount_value"].includes(name)) {
+        updated.balance = "0.00";
       }
       return updated;
     });
@@ -223,11 +233,12 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
 
       const orderResponse = await OrderService.createOrder({
         ...formData,
-        initial_deposit: formData.initial_deposit === "" || formData.initial_deposit === null ? 0 : parseFloat(formData.initial_deposit),
+        initial_deposit: 0,
         order_description: buildReadyMadeDescription(itemsSummary),
         start_date: todayDate,
         end_date: todayDate,
         order_category: null,
+        ready_made: true,
         ready_made_items: itemsSummary,
       });
 
@@ -336,25 +347,16 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
               </div>
             </div>
 
-            <div className="mt-4">
-              <label className="block text-gray-700 font-medium mb-2">
-                Order Title *
-              </label>
-              <input
-                type="text"
-                name="order_title"
-                placeholder="e.g. Ready Made Shirt Order"
-                value={formData.order_title}
-                onChange={handleChange}
-                className={`w-full border ${
-                  errors.order_title ? "border-red-500" : "border-gray-300"
-                } rounded-md p-3 focus:ring-blue-500 focus:border-blue-500`}
-                disabled={loading}
-              />
-              {errors.order_title && (
-                <p className="text-red-500 text-sm mt-1">{errors.order_title}</p>
-              )}
-            </div>
+            {formData.order_title && (
+              <div className="mt-4">
+                <label className="block text-gray-700 font-medium mb-2">
+                  Order Title
+                </label>
+                <div className="w-full border border-gray-200 bg-gray-50 rounded-md p-3 text-gray-700">
+                  {formData.order_title}
+                </div>
+              </div>
+            )}
 
             <div className="mt-4">
               <label className="block text-gray-700 font-medium mb-2">
@@ -423,14 +425,28 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                       ))}
                     </select>
                   </div>
+                  <div className="relative mb-3">
+                    <input
+                      type="text"
+                      placeholder="Search products by name..."
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md p-2.5 pl-9 text-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
                   <div className={`space-y-2 max-h-72 overflow-y-auto border rounded-lg p-2 ${
                     errors.items ? "border-red-500" : "border-gray-200"
                   }`}>
                     {inventoryItems
                       .filter(
                         (item) =>
-                          selectedCategory === "all" ||
-                          item.category?.toString() === selectedCategory
+                          (selectedCategory === "all" ||
+                            item.category?.toString() === selectedCategory) &&
+                          (productSearch === "" ||
+                            (item.item_name &&
+                              item.item_name
+                                .toLowerCase()
+                                .includes(productSearch.toLowerCase())))
                       )
                       .map((item) => {
                         const isSelected = !!selectedItems[item.id];
@@ -472,7 +488,7 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                                     {item.unit_of_measurement || "pcs"}
                                   </span>
                                 </span>
-                                {item.unit_cost > 0 && (
+                                {isAdmin && item.unit_cost > 0 && (
                                   <span>
                                     Cost: <span className="text-gray-700">₦{parseFloat(item.unit_cost).toLocaleString()}</span>
                                   </span>
@@ -482,18 +498,20 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                                     Price: <span className="text-gray-700">₦{parseFloat(item.selling_price).toLocaleString()}</span>
                                   </span>
                                 )}
-                                {item.unit_cost > 0 && item.selling_price > 0 && (
-                                  <span>
-                                    Margin:{" "}
-                                    <span className={
-                                      parseFloat(item.selling_price) >= parseFloat(item.unit_cost)
-                                        ? "text-green-600 font-semibold"
-                                        : "text-red-600 font-semibold"
-                                    }>
-                                      {((parseFloat(item.selling_price) - parseFloat(item.unit_cost)) / parseFloat(item.unit_cost) * 100).toFixed(0)}%
+                                {isAdmin &&
+                                  item.unit_cost > 0 &&
+                                  item.selling_price > 0 && (
+                                    <span>
+                                      Margin:{" "}
+                                      <span className={
+                                        parseFloat(item.selling_price) >= parseFloat(item.unit_cost)
+                                          ? "text-green-600 font-semibold"
+                                          : "text-red-600 font-semibold"
+                                      }>
+                                        {((parseFloat(item.selling_price) - parseFloat(item.unit_cost)) / parseFloat(item.unit_cost) * 100).toFixed(0)}%
+                                      </span>
                                     </span>
-                                  </span>
-                                )}
+                                  )}
                               </div>
                             </div>
 
@@ -536,11 +554,18 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                       })}
                     {inventoryItems.filter(
                       (item) =>
-                        selectedCategory === "all" ||
-                        item.category?.toString() === selectedCategory
+                        (selectedCategory === "all" ||
+                          item.category?.toString() === selectedCategory) &&
+                        (productSearch === "" ||
+                          (item.item_name &&
+                            item.item_name
+                              .toLowerCase()
+                              .includes(productSearch.toLowerCase())))
                     ).length === 0 && (
                       <div className="text-center py-6 text-sm text-gray-400">
-                        No items in this category.
+                        {productSearch
+                          ? "No items match your search."
+                          : "No items in this category."}
                       </div>
                     )}
                   </div>
@@ -551,7 +576,7 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
                   Total Price (Auto-calculated)
@@ -592,24 +617,9 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
                   />
                 </div>
               </div>
-
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Initial Deposit
-                </label>
-                <input
-                  type="text"
-                  name="initial_deposit"
-                  placeholder="₦ Optional — leave blank if fully paid"
-                  value={formData.initial_deposit}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
-                  disabled={loading}
-                />
-              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
                   Total After Discount
