@@ -347,25 +347,16 @@ const AddReadyMadeOrderForm = ({ onClose }) => {
               </div>
             </div>
 
-            <div className="mt-4">
-              <label className="block text-gray-700 font-medium mb-2">
-                Order Title *
-              </label>
-              <input
-                type="text"
-                name="order_title"
-                placeholder="e.g. Ready Made Shirt Order"
-                value={formData.order_title}
-                onChange={handleChange}
-                className={`w-full border ${
-                  errors.order_title ? "border-red-500" : "border-gray-300"
-                } rounded-md p-3 focus:ring-blue-500 focus:border-blue-500`}
-                disabled={loading}
-              />
-              {errors.order_title && (
-                <p className="text-red-500 text-sm mt-1">{errors.order_title}</p>
-              )}
-            </div>
+            {formData.order_title && (
+              <div className="mt-4">
+                <label className="block text-gray-700 font-medium mb-2">
+                  Order Title
+                </label>
+                <div className="w-full border border-gray-200 bg-gray-50 rounded-md p-3 text-gray-700">
+                  {formData.order_title}
+                </div>
+              </div>
+            )}
 
             <div className="mt-4">
               <label className="block text-gray-700 font-medium mb-2">
