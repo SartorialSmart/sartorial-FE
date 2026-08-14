@@ -14,6 +14,7 @@ import {
 import ReportService from "../../services/ReportService";
 import LocationFilter from "../filters/LocationFilter";
 import { getDateRangeISO } from "../../../utils/reportUtils";
+import { extractErrorMessage } from "../../../utils/errorUtils";
 
 const COLORS = ["#42A5F5", "#66BB6A"];
 
@@ -64,8 +65,8 @@ const ReportDashboard = () => {
         profit = await ReportService.getProfitReport(params);
       }
       setProfitReport(profit || null);
-    } catch {
-      setError("Failed to load report summary.");
+    } catch (error) {
+      setError(extractErrorMessage(error, "Failed to load report summary."));
     } finally {
       setLoading(false);
     }

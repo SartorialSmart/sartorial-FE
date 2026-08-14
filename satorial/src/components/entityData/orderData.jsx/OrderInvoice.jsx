@@ -206,9 +206,7 @@ const OrderInvoice = ({ onClose, order }) => {
     try {
       const pdf = await generatePDF();
       if (pdf) {
-        const invoiceNumber = orderData.id
-          ? `INV-${String(orderData.id).padStart(4, "0")}`
-          : "INV-0000";
+        const invoiceNumber = orderData?.invoice_number || "INV-0000";
         pdf.save(`Invoice_${invoiceNumber}_${new Date().toISOString().split('T')[0]}.pdf`);
         
         toast.success("PDF downloaded successfully!");
@@ -228,7 +226,7 @@ const OrderInvoice = ({ onClose, order }) => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Invoice ${orderData.id ? `INV-${String(orderData.id).padStart(4, "0")}` : ""}</title>
+          <title>Invoice ${orderData?.invoice_number || ""}</title>
           <style>
             @media print {
               body { margin: 0; padding: 20px; }
@@ -257,9 +255,7 @@ const OrderInvoice = ({ onClose, order }) => {
       const pdf = await generatePDF();
       if (!pdf) return;
 
-      const invoiceNumber = orderData.id
-        ? `INV-${String(orderData.id).padStart(4, "0")}`
-        : "INV-0000";
+      const invoiceNumber = orderData?.invoice_number || "INV-0000";
       
       const pdfBlob = pdf.output("blob");
       const file = new File([pdfBlob], `Invoice_${invoiceNumber}.pdf`, {
@@ -310,7 +306,7 @@ Thank you for your business! 🙏`;
   };
 
   // Invoice data calculations
-  const invoiceNumber = orderData?.id ? `#INV-${String(orderData.id).padStart(5, "0")}` : "#INV-00000";
+  const invoiceNumber = orderData?.invoice_number ? `#${orderData.invoice_number}` : "#INV-00000";
   const subtotal = Number(orderData?.order_price || 0);
   const vat = calculateVAT(subtotal);
   const total = subtotal + vat;

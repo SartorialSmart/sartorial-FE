@@ -7,6 +7,7 @@ const AddOrderCategoryForm = ({ isOpen, onClose, onCategoryAdded }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    category_type: "custom_wear",
   });
   const [loading, setLoading] = useState(false);
   const [modalData, setModalData] = useState({ show: false, title: "", message: "", isError: false });
@@ -27,7 +28,7 @@ const AddOrderCategoryForm = ({ isOpen, onClose, onCategoryAdded }) => {
     try {
       await OrderCategoryService.createCategory(formData);
       setModalData({ show: true, title: "Success", message: "Order category added successfully!", isError: false });
-      setFormData({ name: "", description: "" });
+      setFormData({ name: "", description: "", category_type: "custom_wear" });
       onCategoryAdded();
     } catch (error) {
       setModalData({ show: true, title: "Error", message: "Failed to add order category.", isError: true });
@@ -78,6 +79,18 @@ const AddOrderCategoryForm = ({ isOpen, onClose, onCategoryAdded }) => {
                 placeholder="Enter category description (optional)"
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Category Type</label>
+              <select
+                name="category_type"
+                value={formData.category_type}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="custom_wear">Custom Wear</option>
+                <option value="ready_made">Ready Made</option>
+              </select>
             </div>
 
             <div className="flex justify-end space-x-2 pt-4 border-t mt-4">
