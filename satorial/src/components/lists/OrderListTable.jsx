@@ -124,6 +124,7 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
   const [amountFilter, setAmountFilter] = useState("all");
   const [selectedTags, setSelectedTags] = useState([]);
   const [location, setLocation] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
   // UI states
@@ -225,6 +226,7 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
           order.order_description,
           order.order_status,
           order.id?.toString(),
+          order.invoice_number,
           order.client_email,
           order.client_phone
         ].filter(Boolean).join(" ").toLowerCase();
@@ -235,6 +237,17 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
     // Apply status filter
     if (statusFilter !== "all") {
       result = result.filter(order => order.order_status === statusFilter);
+    }
+
+    // Apply category filter
+    if (categoryFilter !== "all") {
+      if (categoryFilter === "custom_wear") {
+        result = result.filter(order => !order.ready_made);
+      } else if (categoryFilter === "ready_made") {
+        result = result.filter(order => !!order.ready_made);
+      } else {
+        result = result.filter(order => String(order.order_category) === String(categoryFilter));
+      }
     }
 
     // Apply date filter
@@ -332,7 +345,7 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
     }
 
     return result;
-  }, [orders, searchQuery, statusFilter, dateFilter, amountFilter, selectedTags, sortConfig]);
+  }, [orders, searchQuery, statusFilter, dateFilter, amountFilter, categoryFilter, selectedTags, sortConfig]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -650,21 +663,34 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
 
             {/* Filter Buttons */}
             <div className="flex gap-2">
-              <LocationFilter value={location} onChange={setLocation} className="min-w-44" />
+              <LocationFilter value={location} onChange={setLocation} className="min-w-44" hideLabel />
+
+              <div className="relative">
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="appearance-none bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:border-gray-300 transition-all pr-8 outline-none cursor-pointer min-w-44 text-sm font-medium"
+                >
+                  <option value="all">All Categories</option>
+                  <option value="custom_wear">Custom Wear</option>
+                  <option value="ready_made">Ready Made</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400" size={15} />
+              </div>
 
               <button
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                 className={`px-4 py-2 rounded-lg flex items-center gap-1.5 transition-all text-sm font-medium ${
-                  showAdvancedFilters || statusFilter !== "all" || dateFilter !== "all" || amountFilter !== "all" || selectedTags.length > 0
+                  showAdvancedFilters || statusFilter !== "all" || dateFilter !== "all" || amountFilter !== "all" || categoryFilter !== "all" || selectedTags.length > 0
                     ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-sm"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 <SlidersHorizontal size={16} />
                 <span className="hidden sm:inline">Filters</span>
-                {(statusFilter !== "all" || dateFilter !== "all" || amountFilter !== "all" || selectedTags.length > 0) && (
+                {(statusFilter !== "all" || dateFilter !== "all" || amountFilter !== "all" || categoryFilter !== "all" || selectedTags.length > 0) && (
                   <span className="bg-white text-blue-600 text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                    {[statusFilter !== "all", dateFilter !== "all", amountFilter !== "all", selectedTags.length > 0].filter(Boolean).length}
+                    {[statusFilter !== "all", dateFilter !== "all", amountFilter !== "all", categoryFilter !== "all", selectedTags.length > 0].filter(Boolean).length}
                   </span>
                 )}
               </button>

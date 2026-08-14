@@ -330,7 +330,7 @@ const OrderDetail = () => {
       const subtotal = Number(order.order_price || 0);
       const vat = subtotal * 0.075; // 7.5% VAT
       const total = subtotal + vat;
-      const invoiceNumber = order.id ? `INV-${String(order.id).padStart(4, "0")}` : "INV-0000";
+      const invoiceNumber = order.invoice_number || "INV-0000";
       
       const formatDate = (dateString) => {
         if (!dateString) return "N/A";
