@@ -93,8 +93,19 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     try {
       const data = await RolesService.getRoles();
       const fetched = Array.isArray(data) ? data : data.results || [];
-      setRoles(fetched.length ? fetched : DEFAULT_STAFF_ROLES);
-    } catch {
+      // Show the organization's own roles alongside the built-ins rather than
+      // choosing between them — previously a non-empty custom list replaced the
+      // defaults, and an empty one hid the customs behind them.
+      const byName = new Map(DEFAULT_STAFF_ROLES.map((role) => [role.name, role]));
+      fetched.forEach((role) => {
+        if (role?.name) byName.set(role.name, role);
+      });
+      setRoles([...byName.values()]);
+    } catch (error) {
+      // Silently falling back used to make a failed fetch look like "this
+      // organization only has the five default roles".
+      console.error("Error fetching roles:", error);
+      toast.error("Could not load your custom roles — showing default roles only.");
       setRoles(DEFAULT_STAFF_ROLES);
     }
   };
