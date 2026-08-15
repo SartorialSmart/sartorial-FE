@@ -62,8 +62,14 @@ export function extractErrorMessage(
     const data = error?.response?.data || (error.data !== undefined ? error.data : error);
 
     // If data is a plain string
-    if (typeof data === "string" && data.trim().length > 0) {
-      return data;
+    if (typeof data === "string") {
+      const trimmed = data.trim();
+      if (trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html") || trimmed.includes("</html>")) {
+        return fallback || "Server error. Please try again later.";
+      }
+      if (trimmed.length > 0) {
+        return trimmed;
+      }
     }
 
     // Direct message / detail / error string properties on data
