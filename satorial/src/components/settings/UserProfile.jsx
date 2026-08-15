@@ -3,6 +3,7 @@ import AuthService from "../../services/AuthService";
 import { useAuth } from "../../contexts/AuthContext";
 import { message } from "antd";
 import { InputField } from "../common/FormComponents";
+import { extractErrorMessage, extractFieldErrors } from "../../../utils/errorUtils";
 
 const UserProfile = () => {
   const { user, fetchAuthenticatedUser, setUser } = useAuth();
@@ -22,28 +23,16 @@ const UserProfile = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((s) => ({ ...s, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: undefined }));
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleSave = async () => {
-    console.log("Saving profile...", form);
     setSaving(true);
     try {
-      const updated = await AuthService.updateAuthenticatedUser({
-        first_name: form.first_name,
-        last_name: form.last_name,
-      });
-      console.log("Profile updated successfully:", updated);
-      
-      // Optimistically update local auth user so navbar reflects change immediately
-      try {
-        setUser((prev) => ({ ...(prev || {}), ...{ first_name: form.first_name, last_name: form.last_name }, ...(updated || {}) }));
-      } catch (e) {
-        console.log("Could not update setUser:", e);
-      }
+      const updatedUser = await AuthService.updateProfile(form);
+      setUser(updatedUser);
 
-      // attempt to refresh authoritative user data
       try {
         await fetchAuthenticatedUser();
       } catch (e) {
@@ -54,21 +43,11 @@ const UserProfile = () => {
       setErrors({});
     } catch (err) {
       console.error("Save error:", err);
-      console.error("Error response:", err.response?.data);
-      console.error("Error status:", err.response?.status);
-      const resp = err.response?.data;
-      if (resp && typeof resp === "object") {
-        const fieldErrors = {};
-        Object.entries(resp).forEach(([k, v]) => {
-          fieldErrors[k] = Array.isArray(v) ? v.join(" ") : String(v);
-        });
-        setErrors(fieldErrors);
-        message.error("Please fix the highlighted errors");
-      } else {
-        message.error(err.response?.status === 404 
-          ? "Profile update endpoint not found. Please check API configuration." 
-          : "Failed to update profile");
+      const fieldErrs = extractFieldErrors(err);
+      if (fieldErrs) {
+        setErrors(fieldErrs);
       }
+      message.error(extractErrorMessage(err, "Failed to update profile"));
     } finally {
       setSaving(false);
     }

@@ -7,6 +7,7 @@ import RolesService from "../../../services/settings/RolesService";
 import SettingsService from "../../../services/settings";
 import LocationService from "../../../services/LocationService";
 import { toast } from "react-toastify";
+import { extractErrorMessage } from "../../../../utils/errorUtils";
 import PropTypes from "prop-types";
 import SuccessModal from "../../modals/SuccessModal";
 
@@ -299,24 +300,7 @@ const AddStaffForm = ({ onClose, onStaffCreated }) => {
     } catch (error) {
       console.error("Staff creation error:", error.response?.data || error);
 
-      if (error.response?.data) {
-        const errors = error.response.data;
-        
-        // Handle specific field errors
-        if (errors.email) {
-          toast.error(`Email: ${errors.email.join(", ")}`);
-        } else if (errors.phone_number) {
-          toast.error(`Phone: ${errors.phone_number.join(", ")}`);
-        } else {
-          // Generic error handling
-          const validationErrors = Object.entries(errors)
-            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(", ") : msgs}`)
-            .join("\n");
-          toast.error(validationErrors);
-        }
-      } else {
-        toast.error("Failed to create staff. Please check your input.");
-      }
+      toast.error(extractErrorMessage(error, "Failed to create staff. Please check your input."));
     } finally {
       setIsSubmitting(false);
     }
