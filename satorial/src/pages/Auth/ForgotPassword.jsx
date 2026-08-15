@@ -4,6 +4,7 @@ import MessageModal from "../../components/modals/MessageModal";
 import loginBg from "../../assets/images/bg-2.jpg";
 import { useNavigate } from "react-router-dom";
 import SuccessModal from "../../components/modals/SuccessModal";
+import { extractErrorMessage } from "../../../utils/errorUtils";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -81,28 +82,7 @@ const ForgotPassword = () => {
         navigate("/login");
       }, 2000);
     } catch (error) {
-      let message = "Password reset failed. Please try again.";
-
-      if (error.response?.data) {
-        if (typeof error.response.data === "string") {
-          message = error.response.data;
-        } else if (error.response.data.detail) {
-          message = error.response.data.detail;
-        } else {
-          message = Object.entries(error.response.data)
-            .map(
-              ([field, errors]) =>
-                `${field}: ${
-                  Array.isArray(errors) ? errors.join(", ") : errors
-                }`
-            )
-            .join(". ");
-        }
-      } else if (error.message) {
-        message = error.message;
-      }
-
-      setErrorMessage(message);
+      setErrorMessage(extractErrorMessage(error, "Password reset failed. Please try again."));
       setShowModal(true);
     } finally {
       setIsLoading(false);
@@ -143,43 +123,45 @@ const ForgotPassword = () => {
         <div className="bg-black bg-opacity-40 w-full h-full flex flex-col justify-between p-16">
           <h1 className="text-white text-5xl font-bold mb-6">Sartorial</h1>
           <div>
-            <h2 className="text-5xl font-semibold text-white drop-shadow-lg">
-              The Smarter Way to <br /> Manage Your Projects
-            </h2>
-            <p className="text-white text-sm leading-relaxed">
-              All the resources you need to ensure collaboration and timely
-              delivery of your fashion projects.
+            <p className="text-gray-300 text-lg font-light">
+              Enter your email to receive a password reset link.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
-      <div className="flex w-full md:w-1/2 justify-center items-center p-8 bg-white">
+      {/* Right Side - Form */}
+      <div className="flex-1 flex flex-col justify-center items-center p-8">
         <div className="w-full max-w-md">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">
-            Reset your password
-          </h2>
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Forgot Password?
+            </h2>
+            <p className="text-gray-600">
+              No worries! Enter your registered email address and we will send
+              you a link to reset your password.
+            </p>
+          </div>
 
-          <p className="text-gray-600 mb-6 text-[16px]">
-            Enter your email address and we’ll send you password reset
-            instructions.
-          </p>
-          <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-gray-700 mb-1">Email</label>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Email Address
+              </label>
               <input
                 type="email"
+                id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="Enter your email"
-                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                  errors.email
-                    ? "border-red-500 focus:ring-red-200"
-                    : "focus:ring-blue-400 border-gray-300"
-                }`}
-                required
+                placeholder="enter email address"
+                className={`w-full px-4 py-3 rounded-lg border ${
+                  errors.email ? "border-red-500" : "border-gray-300"
+                } focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition duration-200`}
+                disabled={isLoading}
               />
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -189,38 +171,27 @@ const ForgotPassword = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition flex justify-center items-center ${
-                isLoading ? "opacity-75 cursor-not-allowed" : ""
-              }`}
+              className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isLoading ? (
-                <>
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Processing...
-                </>
+                <div className="flex items-center space-x-2">
+                  <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
+                  <span>Sending Link...</span>
+                </div>
               ) : (
-                "Send Password Reset Link"
+                "Send Reset Link"
               )}
             </button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                className="text-sm text-gray-600 hover:text-black font-medium transition duration-200"
+              >
+                ← Back to Login
+              </button>
+            </div>
           </form>
         </div>
       </div>

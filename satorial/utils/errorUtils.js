@@ -1,47 +1,99 @@
 /**
- * Extract a human-readable error message from any API error shape.
+ * Safely format any value into a human-readable string.
+ * Never outputs "[object Object]".
+ */
+function safeFormatValue(val) {
+  if (val === null || val === undefined || typeof val === "boolean") {
+    return "";
+  }
+  if (typeof val === "string") {
+    return val;
+  }
+  if (typeof val === "number") {
+    return String(val);
+  }
+  if (Array.isArray(val)) {
+    return val
+      .map(safeFormatValue)
+      .filter(Boolean)
+      .join(", ");
+  }
+  if (typeof val === "object") {
+    const parts = [];
+    for (const [key, value] of Object.entries(val)) {
+      if (key === "success" || key === "code" || key === "upgrade_required") {
+        continue;
+      }
+      const formatted = safeFormatValue(value);
+      if (formatted) {
+        if (
+          key === "non_field_errors" ||
+          key === "detail" ||
+          key === "message" ||
+          key === "error"
+        ) {
+          parts.push(formatted);
+        } else {
+          parts.push(`${key}: ${formatted}`);
+        }
+      }
+    }
+    return parts.join(". ");
+  }
+  return String(val);
+}
+
+/**
+ * Extract a human-readable error message string from any API error shape or JS error object.
  *
- * Handles:
- *   - New standardized: { success: false, message: "...", errors: {...} }
- *   - Legacy DRF:       { detail: "..." }
- *   - Legacy custom:    { error: "..." }
- *   - Field errors:     { field: ["msg1", "msg2"] }
- *   - Plain string response data
- *   - JS Error objects
+ * Guaranteed to return a valid, human-readable string and NEVER "[object Object]".
  */
 export function extractErrorMessage(
   error,
   fallback = "Something went wrong. Please try again."
 ) {
-  const data = error?.response?.data;
+  if (!error) return fallback;
 
-  // Standardized backend format
-  if (data?.message) return data.message;
-
-  // Legacy: { detail: "..." }
-  if (data?.detail) return String(data.detail);
-
-  // Legacy: { error: "..." }
-  if (data?.error) return String(data.error);
-
-  // DRF field-level validation errors: { field: ["err1", "err2"] }
-  if (data && typeof data === "object" && !Array.isArray(data)) {
-    const entries = Object.entries(data);
-    if (entries.length > 0 && entries.some(([, v]) => Array.isArray(v) || typeof v === "string")) {
-      return entries
-        .map(([field, msgs]) => {
-          const msg = Array.isArray(msgs) ? msgs.join(", ") : String(msgs);
-          return field === "non_field_errors" ? msg : `${field}: ${msg}`;
-        })
-        .join(". ");
-    }
+  if (typeof error === "string" && error.trim()) {
+    return error;
   }
 
-  // Plain string body
-  if (typeof data === "string" && data.length > 0) return data;
+  try {
+    const data = error?.response?.data || (error.data !== undefined ? error.data : error);
 
-  // JS Error object
-  if (error?.message) return error.message;
+    // If data is a plain string
+    if (typeof data === "string" && data.trim().length > 0) {
+      return data;
+    }
+
+    // Direct message / detail / error string properties on data
+    if (typeof data?.message === "string" && data.message.trim()) {
+      return data.message;
+    }
+    if (typeof data?.detail === "string" && data.detail.trim()) {
+      return data.detail;
+    }
+    if (typeof data?.error === "string" && data.error.trim()) {
+      return data.error;
+    }
+
+    // Standard error message on JS Error objects (when not an Axios response wrapper)
+    if (
+      typeof error?.message === "string" &&
+      error.message.trim() &&
+      !error?.response
+    ) {
+      return error.message;
+    }
+
+    // Format complex dictionary or nested objects safely
+    const formatted = safeFormatValue(data);
+    if (formatted && formatted.trim()) {
+      return formatted;
+    }
+  } catch (err) {
+    console.error("Error formatting error response:", err);
+  }
 
   return fallback;
 }
@@ -49,31 +101,43 @@ export function extractErrorMessage(
 /**
  * Extract field-level errors for form display.
  *
- * Returns an object like { email: ["This field is required."], ... }
+ * Returns a normalized object like { email: ["This field is required."], ... }
  * or null if no field errors are found.
  */
 export function extractFieldErrors(error) {
-  const data = error?.response?.data;
+  if (!error) return null;
+  const data = error?.response?.data || (error.data !== undefined ? error.data : error);
 
-  // New standardized format with nested errors
-  if (data?.errors && typeof data.errors === "object") {
-    return data.errors;
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    return null;
   }
 
-  // Direct DRF field errors (no wrapper)
-  if (
-    data &&
-    typeof data === "object" &&
-    !data.message &&
-    !data.detail &&
-    !data.error &&
-    !Array.isArray(data)
-  ) {
-    const entries = Object.entries(data);
-    if (entries.length > 0 && entries.some(([, v]) => Array.isArray(v))) {
-      return data;
+  // Nested errors dict: { errors: { field: ["..."] } }
+  if (data.errors && typeof data.errors === "object" && !Array.isArray(data.errors)) {
+    return normalizeFieldErrors(data.errors);
+  }
+
+  // Direct DRF field errors dictionary
+  const rawFields = normalizeFieldErrors(data);
+  return Object.keys(rawFields).length > 0 ? rawFields : null;
+}
+
+function normalizeFieldErrors(obj) {
+  const result = {};
+  const ignoredKeys = ["success", "message", "detail", "error", "code", "upgrade_required"];
+
+  for (const [key, val] of Object.entries(obj)) {
+    if (ignoredKeys.includes(key)) continue;
+
+    if (Array.isArray(val)) {
+      result[key] = val.map((v) => safeFormatValue(v)).filter(Boolean);
+    } else if (typeof val === "string") {
+      result[key] = [val];
+    } else if (typeof val === "object" && val !== null) {
+      const nested = normalizeFieldErrors(val);
+      Object.assign(result, nested);
     }
   }
 
-  return null;
+  return result;
 }

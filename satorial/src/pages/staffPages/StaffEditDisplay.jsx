@@ -5,7 +5,7 @@ import StaffService from "../../services/staffServices/StaffService";
 import StaffRoleService from "../../services/staffServices/StaffRoleService";
 import RolesService from "../../services/settings/RolesService";
 import SettingsService from "../../services/settings";
-import { toast } from "react-toastify";
+import { extractErrorMessage } from "../../../utils/errorUtils";
 import StaffSideBarLayout from "../../components/navs/StaffSideBarLayout";
 
 const StaffEditDisplay = () => {
@@ -129,14 +129,7 @@ const StaffEditDisplay = () => {
       navigate(`/staff/staff-detail/${slug}`);
     } catch (error) {
       console.error("Error updating staff:", error.response?.data || error);
-      const errData = error.response?.data;
-      if (errData) {
-        Object.entries(errData).forEach(([field, msgs]) => {
-          toast.error(`${field}: ${Array.isArray(msgs) ? msgs.join(", ") : msgs}`);
-        });
-      } else {
-        toast.error("Failed to update staff");
-      }
+      toast.error(extractErrorMessage(error, "Failed to update staff"));
     } finally {
       setSaving(false);
     }

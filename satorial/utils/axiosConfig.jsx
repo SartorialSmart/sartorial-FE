@@ -26,37 +26,72 @@ axiosInstance.interceptors.request.use(
 );
 
 
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers['Authorization'] = `Bearer ${token}`;
+            return axiosInstance(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
+
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) {
         console.error('No refresh token found, logging out');
         localStorage.removeItem('accessToken');
+        isRefreshing = false;
         return Promise.reject(error);
       }
 
-      try {
-        const response = await axios.post(`${import.meta.env.VITE_BASE_URL}users/token/refresh/`, {
-          refresh: refreshToken,
-        });
-
-        const newAccessToken = response.data.access;
-        localStorage.setItem('accessToken', newAccessToken);
-        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-
-
-        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
-        return axiosInstance(originalRequest);
-      } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError.response?.data || refreshError.message);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        return Promise.reject(refreshError);
-      }
+      return new Promise((resolve, reject) => {
+        axios
+          .post(`${import.meta.env.VITE_BASE_URL}users/token/refresh/`, {
+            refresh: refreshToken,
+          })
+          .then((response) => {
+            const newAccessToken = response.data.access;
+            localStorage.setItem('accessToken', newAccessToken);
+            axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+            originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+            processQueue(null, newAccessToken);
+            resolve(axiosInstance(originalRequest));
+          })
+          .catch((refreshError) => {
+            console.error('Token refresh failed:', refreshError.response?.data || refreshError.message);
+            processQueue(refreshError, null);
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            reject(refreshError);
+          })
+          .finally(() => {
+            isRefreshing = false;
+          });
+      });
     }
 
     // Plan-limit / feature-lock: the API returns 403 with upgrade_required.

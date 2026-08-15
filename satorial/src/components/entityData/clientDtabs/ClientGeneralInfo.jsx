@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import InputField from "../../miniComponents/InputField";
 import ClientService from "../../../services/ClientService";
 import DEFAULT_AVATAR from "../../../assets/images/default_avatar.svg";
+import { extractErrorMessage } from "../../../../utils/errorUtils";
 
 const ClientGeneralInfo = ({ clientId }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -123,10 +124,7 @@ const ClientGeneralInfo = ({ clientId }) => {
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error("Error updating client:", error);
-      const msg =
-        error?.response?.data
-          ? Object.values(error.response.data).flat().join(" ")
-          : "Failed to save changes. Please try again.";
+      const msg = extractErrorMessage(error, "Failed to save changes. Please try again.");
       setSaveError(msg);
     }
 
