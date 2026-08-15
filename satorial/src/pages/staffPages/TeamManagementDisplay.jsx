@@ -30,6 +30,8 @@ export default function TeamManagementDisplay() {
   const [mode, setMode] = useState(MODE_NEW);
   const [invite, setInvite] = useState({ email: "", staff_role: undefined, permissions: [], staffId: undefined });
   const [inviting, setInviting] = useState(false);
+  // Row whose invitation is being resent, so its button can show progress.
+  const [resendingId, setResendingId] = useState(null);
 
   // Permissions editor modal
   const [permOpen, setPermOpen] = useState(false);
@@ -162,23 +164,32 @@ export default function TeamManagementDisplay() {
   };
 
   const resend = async (row) => {
+    // Keyed notice: the "Sending…" message becomes the outcome in place.
+    const notice = `resend-invite-${row.id}`;
+    setResendingId(row.id);
+    message.loading({ content: "Sending invitation…", key: notice, duration: 0 });
     try {
       const res = await StaffService.resendInvite(row.id);
       if (res && res.success === false) {
         throw res;
       }
+      if (res?.email_sent === false) {
+        const warning = res.message || "The invitation email could not be sent.";
+        toast.warning(warning);
+        message.warning({ content: warning, key: notice });
+        loadStaff();
+        return;
+      }
       toast.success("Invitation resent.");
-      message.success("Invitation resent.");
+      message.success({ content: "Invitation resent.", key: notice });
       loadStaff();
     } catch (err) {
       console.error("Resend invite error:", err);
       const errMsg = extractErrorMessage(err, "Could not resend invite.");
       toast.error(errMsg);
-      try {
-        message.error(errMsg);
-      } catch {
-        // ignore
-      }
+      message.error({ content: errMsg, key: notice });
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -208,8 +219,14 @@ export default function TeamManagementDisplay() {
             </Button>
           </Tooltip>
           {row.is_active === false && (
-            <Tooltip title="Resend invite">
-              <Button size="small" icon={<Send size={14} />} onClick={() => resend(row)} />
+            <Tooltip title={resendingId === row.id ? "Sending invitation…" : "Resend invite"}>
+              <Button
+                size="small"
+                icon={<Send size={14} />}
+                loading={resendingId === row.id}
+                disabled={resendingId === row.id}
+                onClick={() => resend(row)}
+              />
             </Tooltip>
           )}
           <Tooltip title="Remove system access (keeps their staff record)">
