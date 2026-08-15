@@ -29,9 +29,11 @@ const GrantLoginAccessModal = ({ staff, isOpen, onClose, onGranted }) => {
     setPermissions([]);
     (async () => {
       try {
-        const cat = await StaffPermissionsService.getPermissionsCatalog();
-        setCatalog(cat?.catalog || []);
-      } catch {
+        // Resolves to the local catalog if the endpoint is unavailable, rather
+        // than leaving the picker empty with no explanation.
+        setCatalog(await StaffPermissionsService.getPermissionCatalog());
+      } catch (error) {
+        console.error("Error fetching permission catalog:", error);
         setCatalog([]);
       }
     })();

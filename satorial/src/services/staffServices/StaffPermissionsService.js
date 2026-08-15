@@ -1,21 +1,27 @@
 import { apiGet, apiPut } from "../../../utils/serviceHelper";
 import { API } from "../../api/apiEndpoints";
 
-// Fallback catalog used when /users/permissions-catalog/ is unavailable
-// (e.g. a local backend that predates the endpoint). Keys match the
-// `${module}.${action}` format the backend stores.
+// Fallback catalog used when /users/permissions-catalog/ is unavailable.
+//
+// This MUST mirror PERMISSION_CATALOG in the backend's common/rbac.py: the
+// server rejects anything outside it with "Unknown permissions". The previous
+// list used a different naming scheme entirely (`staff.manage_staff` where the
+// backend defines `staff.manage`) and invented modules that do not exist, so
+// 20 of its 21 keys were rejected — every permission chosen while the endpoint
+// was down failed to save.
 const FALLBACK_PERMISSION_CATALOG = [
-  { module: "clients", actions: ["view_clients", "manage_clients"] },
-  { module: "orders", actions: ["view_orders", "manage_orders"] },
-  { module: "staff", actions: ["view_staff", "manage_staff", "manage_permissions"] },
-  { module: "reports", actions: ["view_reports", "export_reports"] },
-  { module: "expenses", actions: ["view_expenses", "manage_expenses"] },
-  { module: "inventory", actions: ["view_inventory", "manage_inventory"] },
-  { module: "subscriptions", actions: ["view_subscriptions", "manage_subscriptions"] },
-  { module: "settings", actions: ["view_settings", "manage_settings"] },
-  { module: "notifications", actions: ["view_notifications"] },
-  { module: "qa_checklist", actions: ["manage_qa_checklist"] },
-  { module: "production", actions: ["view_production", "manage_production"] },
+  { module: "clients", actions: ["view", "create", "edit", "delete"] },
+  { module: "orders", actions: ["view", "create", "edit", "delete"] },
+  { module: "inventory", actions: ["view", "create", "edit", "delete"] },
+  { module: "expenses", actions: ["view", "create", "edit", "delete"] },
+  { module: "vendors", actions: ["view", "create", "edit", "delete"] },
+  { module: "reports", actions: ["view"] },
+  { module: "staff", actions: ["view", "manage"] },
+  { module: "payroll", actions: ["view", "manage"] },
+  { module: "qa_checklist", actions: ["view", "edit"] },
+  { module: "billing", actions: ["view", "manage"] },
+  { module: "settings", actions: ["view", "manage"] },
+  { module: "production", actions: ["view", "create", "edit", "delete", "manage_production"] },
 ];
 
 const StaffPermissionsService = {
