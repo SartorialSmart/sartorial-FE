@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   Search,
   Download,
@@ -14,6 +14,9 @@ import PropTypes from "prop-types";
 import OrderService from "../../services/OrderService";
 import OrderCategoryService from "../../services/OrderCategoryService";
 import LocationFilter from "../filters/LocationFilter";
+import { isReadyMadeOrder } from "../../../utils/orderUtils";
+
+const CATEGORY_FILTERS = ["Ready Made", "Custom Wear"];
 
 const toLocalDateStr = (date) => {
   const y = date.getFullYear();
@@ -220,17 +223,36 @@ const SalesReport = () => {
   });
 
   // Client-side filter logic (search, category, status)
+  const categoryOptions = useMemo(() => {
+    const seen = new Set(["All", ...CATEGORY_FILTERS]);
+    const options = [];
+    const addCategory = (cat) => {
+      const name = cat?.name;
+      if (!name || seen.has(name)) return;
+      if (/ready made/i.test(name)) return;
+      seen.add(name);
+      options.push({ id: cat.id, name });
+    };
+    (categories || []).forEach(addCategory);
+    return options;
+  }, [categories]);
+
   const filteredOrders = dateFilteredOrders.filter((order) => {
     const matchesSearch = searchQuery === "" ||
       (order.client_full_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (order.order_title?.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (order.order_description?.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const matchesCategory = selectedCategory === "All" ||
-      (order.order_category &&
-        ((typeof order.order_category === "object" &&
-          order.order_category.name === selectedCategory) ||
-          order.order_category === selectedCategory));
+    const matchesCategory =
+      selectedCategory === "All" ||
+      (selectedCategory === "Custom Wear"
+        ? !isReadyMadeOrder(order)
+        : /ready made/i.test(selectedCategory)
+        ? isReadyMadeOrder(order)
+        : order.order_category &&
+          ((typeof order.order_category === "object" &&
+            order.order_category.name === selectedCategory) ||
+            order.order_category === selectedCategory));
 
     const matchesStatus = statusFilter === "all" || 
       order.order_status === statusFilter;
@@ -420,7 +442,13 @@ const SalesReport = () => {
           {/* Filter Group */}
           <div className="flex flex-wrap gap-3 w-full lg:w-auto">
             {/* Location Filter */}
-            <LocationFilter value={location} onChange={setLocation} />
+            <LocationFilter
+              value={location}
+              onChange={setLocation}
+              hideLabel
+              leadingIcon
+              selectClassName="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50/50 appearance-none min-w-40"
+            />
 
             {/* Category Filter */}
             <div className="relative">
@@ -431,7 +459,12 @@ const SalesReport = () => {
                 className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50/50 appearance-none min-w-40"
               >
                 <option value="All">All Categories</option>
-                {categories.map((category) => (
+                {CATEGORY_FILTERS.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+                {categoryOptions.map((category) => (
                   <option key={category.id} value={category.name}>
                     {category.name}
                   </option>
