@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from "react";
 import { useNavigate } from "react-router-dom";
-import { MoreVertical, Award, AlertTriangle, Eye, Trash2, Edit, User, Shield, KeyRound, Ban } from "lucide-react";
+import { MoreVertical, Award, AlertTriangle, Eye, Trash2, Edit, User, Shield, KeyRound, Ban, Send } from "lucide-react";
 import { Spin, Tag, Tooltip, Progress, message, Modal } from "antd";
+import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import StaffService from "../../services/staffServices/StaffService";
 import StaffReportService from "../../services/staffServices/StaffReportService";
@@ -13,6 +14,7 @@ import { createPortal } from "react-dom";
 import SuccessModal from "../modals/SuccessModal";
 import PermissionsModal from "../modals/PermissionsModal";
 import GrantLoginAccessModal from "../modals/GrantLoginAccessModal";
+import { extractErrorMessage } from "../../../utils/errorUtils";
 
 const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   const navigate = useNavigate();
@@ -184,6 +186,27 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
     }
   };
 
+  const handleResendInvite = async (staff) => {
+    try {
+      const res = await StaffService.resendInvite(staff.id);
+      if (res && res.success === false) {
+        throw res;
+      }
+      toast.success("Invitation resent.");
+      message.success("Invitation resent.");
+      fetchStaffList();
+    } catch (error) {
+      console.error("Failed to resend invite:", error);
+      const errMsg = extractErrorMessage(error, "Could not resend invite.");
+      toast.error(errMsg);
+      try {
+        message.error(errMsg);
+      } catch {
+        // ignore
+      }
+    }
+  };
+
   const confirmRevokeAccess = (staff) => {
     Modal.confirm({
       title: "Remove system access?",
@@ -192,11 +215,22 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await StaffService.revokeLoginAccess(staff.id);
+          const res = await StaffService.revokeLoginAccess(staff.id);
+          if (res && res.success === false) {
+            throw res;
+          }
+          toast.success("System access removed.");
           message.success("System access removed.");
           fetchStaffList();
         } catch (error) {
-          message.error(error?.response?.data?.message || "Could not remove access.");
+          console.error("Failed to revoke access:", error);
+          const errMsg = extractErrorMessage(error, "Could not remove access.");
+          toast.error(errMsg);
+          try {
+            message.error(errMsg);
+          } catch {
+            // ignore
+          }
         }
       },
     });
@@ -319,6 +353,19 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
                 <Shield size={16} />
                 Permissions
               </button>
+              {staff.is_active === false && (
+                <button
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDropdownOpen(null);
+                    handleResendInvite(staff);
+                  }}
+                >
+                  <Send size={16} />
+                  Resend invite
+                </button>
+              )}
               <button
                 className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
                 onClick={(e) => {

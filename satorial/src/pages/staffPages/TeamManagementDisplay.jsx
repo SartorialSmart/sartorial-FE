@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Table, Modal, Button, Tag, Select, Input, Segmented, message, Tooltip } from "antd";
+import { toast } from "react-toastify";
 import { UserPlus, ShieldCheck, Send, Ban } from "lucide-react";
 import StaffSideBarLayout from "../../components/navs/StaffSideBarLayout";
 import PermissionPicker from "../../components/permissions/PermissionPicker";
 import StaffService from "../../services/staffServices/StaffService";
 import StaffPermissionsService from "../../services/staffServices/StaffPermissionsService";
+import { extractErrorMessage } from "../../../utils/errorUtils";
 
 const STAFF_ROLES = ["Tailor", "Designer", "Driver", "Accountant", "Procurement_Manager"];
 
@@ -106,11 +108,22 @@ export default function TeamManagementDisplay() {
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await StaffService.revokeLoginAccess(row.id);
+          const res = await StaffService.revokeLoginAccess(row.id);
+          if (res && res.success === false) {
+            throw res;
+          }
+          toast.success("System access removed.");
           message.success("System access removed.");
           loadStaff();
         } catch (err) {
-          message.error(err?.response?.data?.message || "Could not remove access.");
+          console.error("Revoke access error:", err);
+          const errMsg = extractErrorMessage(err, "Could not remove access.");
+          toast.error(errMsg);
+          try {
+            message.error(errMsg);
+          } catch {
+            // ignore
+          }
         }
       },
     });
@@ -143,10 +156,22 @@ export default function TeamManagementDisplay() {
 
   const resend = async (row) => {
     try {
-      await StaffService.resendInvite(row.id);
+      const res = await StaffService.resendInvite(row.id);
+      if (res && res.success === false) {
+        throw res;
+      }
+      toast.success("Invitation resent.");
       message.success("Invitation resent.");
+      loadStaff();
     } catch (err) {
-      message.error(err?.response?.data?.message || "Could not resend invite.");
+      console.error("Resend invite error:", err);
+      const errMsg = extractErrorMessage(err, "Could not resend invite.");
+      toast.error(errMsg);
+      try {
+        message.error(errMsg);
+      } catch {
+        // ignore
+      }
     }
   };
 
