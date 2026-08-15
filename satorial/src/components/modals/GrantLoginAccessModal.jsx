@@ -10,6 +10,7 @@ import PropTypes from "prop-types";
 import PermissionPicker from "../permissions/PermissionPicker";
 import StaffService from "../../services/staffServices/StaffService";
 import StaffPermissionsService from "../../services/staffServices/StaffPermissionsService";
+import { extractErrorMessage } from "../../../utils/errorUtils";
 
 function fullName(staff) {
   return `${staff?.first_name || ""} ${staff?.last_name || ""}`.trim() || "this staff member";
@@ -51,7 +52,7 @@ const GrantLoginAccessModal = ({ staff, isOpen, onClose, onGranted }) => {
       // A 403 with upgrade_required is surfaced globally by the plan-limit
       // handler, so don't double-report it here.
       if (!err?.response?.data?.upgrade_required) {
-        message.error(err?.response?.data?.message || "Could not grant system access.");
+        message.error(extractErrorMessage(err, "Could not grant system access."));
       }
     } finally {
       setSubmitting(false);

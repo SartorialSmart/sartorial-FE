@@ -42,7 +42,15 @@ const processQueue = (error, token = null) => {
 };
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response?.data && typeof response.data === "object" && response.data.success === false) {
+      const errorMsg = response.data.message || response.data.detail || "Operation failed";
+      const error = new Error(errorMsg);
+      error.response = response;
+      return Promise.reject(error);
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
     if (error.response?.status === 401 && !originalRequest._retry) {
