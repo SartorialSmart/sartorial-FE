@@ -192,6 +192,16 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
       if (res && res.success === false) {
         throw res;
       }
+      // The request succeeded, but the email itself may not have gone out —
+      // reporting that as "Invitation resent." is how a failed send stayed
+      // invisible.
+      if (res?.email_sent === false) {
+        const warning = res.message || "The invitation email could not be sent.";
+        toast.warning(warning);
+        message.warning(warning);
+        fetchStaffList();
+        return;
+      }
       toast.success("Invitation resent.");
       message.success("Invitation resent.");
       fetchStaffList();

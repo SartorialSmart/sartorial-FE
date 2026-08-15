@@ -51,6 +51,17 @@ const GrantLoginAccessModal = ({ staff, isOpen, onClose, onGranted }) => {
       if (res && res.success === false) {
         throw res;
       }
+      // Access is granted even when the email fails, so say so rather than
+      // claiming an invitation that never left.
+      if (res?.email_sent === false) {
+        const warning =
+          res.message || `Access granted, but the invitation email to ${trimmed} could not be sent.`;
+        toast.warning(warning);
+        message.warning(warning);
+        onGranted?.();
+        onClose();
+        return;
+      }
       toast.success(`Invitation sent to ${trimmed}.`);
       message.success(`Invitation sent to ${trimmed}.`);
       onGranted?.();
