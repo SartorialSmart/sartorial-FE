@@ -74,20 +74,27 @@ export default function TeamManagementDisplay() {
 
     setInviting(true);
     try {
+      let res;
       if (promoting) {
         // Existing employee record → grant a seat and invite them to finish setup.
-        await StaffService.grantLoginAccess(invite.staffId, {
+        res = await StaffService.grantLoginAccess(invite.staffId, {
           email: invite.email,
           permissions: invite.permissions,
         });
       } else {
-        await StaffService.inviteStaff({
+        res = await StaffService.inviteStaff({
           email: invite.email,
           staff_role: invite.staff_role,
           permissions: invite.permissions,
         });
       }
-      message.success("Invitation sent.");
+      // The seat is granted even when the email fails; don't report a delivery
+      // that did not happen.
+      if (res?.email_sent === false) {
+        message.warning(res.message || "The invitation email could not be sent.");
+      } else {
+        message.success("Invitation sent.");
+      }
       setInviteOpen(false);
       resetInvite();
       loadStaff();
