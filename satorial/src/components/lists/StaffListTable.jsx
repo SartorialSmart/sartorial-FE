@@ -31,6 +31,8 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [successModal, setSuccessModal] = useState(null);
   const [permissionsModalStaff, setPermissionsModalStaff] = useState(null);
+  // Staff whose invitation is being resent right now, so the row can show it.
+  const [resendingId, setResendingId] = useState(null);
   const [departmentMap, setDepartmentMap] = useState({});
   const [grantAccessStaff, setGrantAccessStaff] = useState(null);
 
@@ -187,6 +189,12 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   };
 
   const handleResendInvite = async (staff) => {
+    // The dropdown closes on click, so progress has to show on the row itself.
+    // A keyed antd message lets the "Sending…" notice become the outcome
+    // rather than stacking a second toast on top of it.
+    const notice = `resend-invite-${staff.id}`;
+    setResendingId(staff.id);
+    message.loading({ content: "Sending invitation…", key: notice, duration: 0 });
     try {
       const res = await StaffService.resendInvite(staff.id);
       if (res && res.success === false) {
@@ -198,22 +206,20 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
       if (res?.email_sent === false) {
         const warning = res.message || "The invitation email could not be sent.";
         toast.warning(warning);
-        message.warning(warning);
+        message.warning({ content: warning, key: notice });
         fetchStaffList();
         return;
       }
       toast.success("Invitation resent.");
-      message.success("Invitation resent.");
+      message.success({ content: "Invitation resent.", key: notice });
       fetchStaffList();
     } catch (error) {
       console.error("Failed to resend invite:", error);
       const errMsg = extractErrorMessage(error, "Could not resend invite.");
       toast.error(errMsg);
-      try {
-        message.error(errMsg);
-      } catch {
-        // ignore
-      }
+      message.error({ content: errMsg, key: notice });
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -365,15 +371,25 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
               </button>
               {staff.is_active === false && (
                 <button
-                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={resendingId === staff.id}
                   onClick={(e) => {
                     e.stopPropagation();
                     setDropdownOpen(null);
                     handleResendInvite(staff);
                   }}
                 >
-                  <Send size={16} />
-                  Resend invite
+                  {resendingId === staff.id ? (
+                    <>
+                      <Spin size="small" />
+                      Sending…
+                    </>
+                  ) : (
+                    <>
+                      <Send size={16} />
+                      Resend invite
+                    </>
+                  )}
                 </button>
               )}
               <button
@@ -593,7 +609,11 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
                     {/* Staff record vs. user of the system — three states:
                         no access, invited but not set up yet, and active user. */}
                     <td className="px-6 py-4">
-                      {!staff.has_login_access ? (
+                      {resendingId === staff.id ? (
+                        <Tag color="processing" icon={<Spin size="small" className="mr-1" />}>
+                          Sending…
+                        </Tag>
+                      ) : !staff.has_login_access ? (
                         <Tooltip title="On the books only — cannot sign in">
                           <Tag color="default">Staff record</Tag>
                         </Tooltip>
