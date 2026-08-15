@@ -7,7 +7,7 @@ const axiosInstance = axios.create({
   },
 });
 
-const PUBLIC_ENDPOINTS = ['/users/login/', '/users/register-organization/', '/users/forgot-password/', '/users/reset-password/'];
+const PUBLIC_ENDPOINTS = ['/users/login/', '/users/register-organization/', '/users/forgot-password/', '/users/reset-password/', '/users/invitations/', '/users/accept-invitation/'];
 
 axiosInstance.interceptors.request.use(
   async (config) => {

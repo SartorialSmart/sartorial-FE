@@ -2,19 +2,34 @@
 
 import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from "react";
 import { useNavigate } from "react-router-dom";
-import { MoreVertical, TrendingUp, TrendingDown, Award, AlertTriangle, Eye, Trash2, Edit, User, Shield } from "lucide-react";
+import { MoreVertical, TrendingUp, TrendingDown, Award, AlertTriangle, Eye, Trash2, Edit, User, Shield, Mail, MailX, ShieldOff, Clock } from "lucide-react";
 import { Spin, Tag, Tooltip, Progress, message } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import StaffService from "../../services/staffServices/StaffService";
 import StaffReportService from "../../services/staffServices/StaffReportService";
+import PlatformAccessService from "../../services/staffServices/PlatformAccessService";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
 import SuccessModal from "../modals/SuccessModal";
 import PermissionsModal from "../modals/PermissionsModal";
+import { extractErrorMessage } from "../../../utils/errorUtils";
+import { useAuth } from "../../contexts/AuthContext";
+
+// Platform access is the combination of two things: whether the staff member can
+// log in today, and whether an unaccepted invitation is outstanding for them.
+const ACCESS_STATES = {
+  active: { label: "Active", className: "text-green-700", dot: "bg-green-500" },
+  invite_pending: { label: "Invite pending", className: "text-amber-700", dot: "bg-amber-500" },
+  invite_expired: { label: "Invite expired", className: "text-orange-700", dot: "bg-orange-500" },
+  no_access: { label: "No access", className: "text-gray-600", dot: "bg-gray-400" },
+};
 
 const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   const navigate = useNavigate();
-  
+  const { user } = useAuth();
+  // Only the organization owner may grant or withdraw platform access.
+  const canManageAccess = user?.role === "Organization";
+
   const [selectedStaff, setSelectedStaff] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [performanceData, setPerformanceData] = useState({});
@@ -27,9 +42,30 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [successModal, setSuccessModal] = useState(null);
   const [permissionsModalStaff, setPermissionsModalStaff] = useState(null);
+  // Pending invitations keyed by staff id, plus the row currently mid-action
+  const [pendingInvites, setPendingInvites] = useState({});
+  const [accessBusyId, setAccessBusyId] = useState(null);
+  const [accessConfirm, setAccessConfirm] = useState(null);
 
   const dropdownRef = useRef(null);
   const rowRefs = useRef({});
+
+  const fetchInvitations = useCallback(async () => {
+    if (!canManageAccess) return;
+    try {
+      const data = await PlatformAccessService.listInvitations({ status: "pending" });
+      const invites = Array.isArray(data?.results) ? data.results : [];
+      setPendingInvites(
+        invites.reduce((acc, invite) => {
+          acc[invite.staff_id] = invite;
+          return acc;
+        }, {})
+      );
+    } catch (error) {
+      // A failure here only costs the access column its detail — the list still renders.
+      console.error("Failed to fetch platform access invitations:", error);
+    }
+  }, [canManageAccess]);
 
   const fetchStaffList = useCallback(async () => {
     setLoading(true);
@@ -39,6 +75,7 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
         setStaffList(data.results);
         // Fetch performance for all staff
         fetchAllPerformance(data.results);
+        fetchInvitations();
       } else {
         throw new Error("Invalid data format");
       }
@@ -48,7 +85,7 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchInvitations]);
 
   const fetchAllPerformance = async (staffMembers) => {
     setPerformanceLoading(true);
@@ -150,6 +187,76 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
     }
   };
 
+  // ── Platform access ────────────────────────────────────────────────
+  const getAccessState = (staff) => {
+    const invite = pendingInvites[staff.id];
+    if (invite) return invite.is_expired ? "invite_expired" : "invite_pending";
+    // `platform_access` is only false once access is revoked or not yet accepted.
+    return staff.platform_access === false ? "no_access" : "active";
+  };
+
+  const refreshAccess = useCallback(async () => {
+    try {
+      const [data] = await Promise.all([StaffService.listStaff(), fetchInvitations()]);
+      if (Array.isArray(data?.results)) setStaffList(data.results);
+    } catch (error) {
+      console.error("Failed to refresh platform access state:", error);
+    }
+  }, [fetchInvitations]);
+
+  const runAccessAction = async (action, staff) => {
+    const invite = pendingInvites[staff.id];
+    if ((action === "resend" || action === "cancel") && !invite) {
+      message.error("This invitation is no longer pending.");
+      refreshAccess();
+      return;
+    }
+
+    setAccessBusyId(staff.id);
+    try {
+      let response;
+      if (action === "invite") {
+        response = await PlatformAccessService.sendInvite(staff.slug);
+      } else if (action === "resend") {
+        response = await PlatformAccessService.resendInvite(invite.id);
+      } else if (action === "cancel") {
+        response = await PlatformAccessService.cancelInvite(invite.id);
+      } else {
+        response = await PlatformAccessService.revokeAccess(staff.slug);
+      }
+
+      await refreshAccess();
+
+      const titles = {
+        invite: "Invitation Sent",
+        resend: "Invitation Resent",
+        cancel: "Invitation Cancelled",
+        revoke: "Access Revoked",
+      };
+      setSuccessModal({
+        title: titles[action],
+        message: response?.detail || `${titles[action]} for ${staff.first_name} ${staff.last_name}.`,
+        buttonText: "Done",
+      });
+    } catch (error) {
+      console.error(`Platform access action "${action}" failed:`, error);
+      message.error(extractErrorMessage(error, "Could not update platform access. Please try again."));
+    } finally {
+      setAccessBusyId(null);
+    }
+  };
+
+  const handleAccessAction = (action, staff, e) => {
+    e.stopPropagation();
+    setDropdownOpen(null);
+    // Cancelling and revoking take access away — confirm before acting.
+    if (action === "cancel" || action === "revoke") {
+      setAccessConfirm({ action, staff });
+      return;
+    }
+    runAccessAction(action, staff);
+  };
+
   const handleOutsideClick = useCallback((event) => {
     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
       setDropdownOpen(null);
@@ -207,7 +314,9 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
 
   const DropdownMenu = ({ staff, anchorRef }) => {
     const [coords, setCoords] = useState({ top: 0, left: null, right: null, width: 0 });
-    
+    const accessState = getAccessState(staff);
+    const hasPendingInvite = accessState === "invite_pending" || accessState === "invite_expired";
+
     useEffect(() => {
       if (anchorRef && anchorRef.current) {
         const rect = anchorRef.current.getBoundingClientRect();
@@ -264,6 +373,45 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
             <Shield size={16} />
             Permissions
           </button>
+
+          {/* Platform access */}
+          {canManageAccess && <div className="border-t border-gray-100" />}
+          {!canManageAccess ? null : hasPendingInvite ? (
+            <>
+              <button
+                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                onClick={(e) => handleAccessAction("resend", staff, e)}
+              >
+                <Mail size={16} />
+                Resend Invite
+              </button>
+              <button
+                className="w-full text-left px-4 py-2.5 text-sm text-amber-700 hover:bg-amber-50 flex items-center gap-2 transition-colors"
+                onClick={(e) => handleAccessAction("cancel", staff, e)}
+              >
+                <MailX size={16} />
+                Cancel Invite
+              </button>
+            </>
+          ) : accessState === "active" ? (
+            <button
+              className="w-full text-left px-4 py-2.5 text-sm text-amber-700 hover:bg-amber-50 flex items-center gap-2 transition-colors"
+              onClick={(e) => handleAccessAction("revoke", staff, e)}
+            >
+              <ShieldOff size={16} />
+              Revoke Access
+            </button>
+          ) : (
+            <button
+              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+              onClick={(e) => handleAccessAction("invite", staff, e)}
+            >
+              <Mail size={16} />
+              Send Platform Invite
+            </button>
+          )}
+
+          <div className="border-t border-gray-100" />
           <button
             className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
             onClick={(e) => handleAction("delete", staff, e)}
@@ -361,7 +509,7 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
                 Performance
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+                Platform Access
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -454,10 +602,32 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
                     </td>
 
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm font-medium text-green-700">Active</span>
-                      </div>
+                      {(() => {
+                        const accessState = getAccessState(staff);
+                        const { label, className, dot } = ACCESS_STATES[accessState];
+                        const invite = pendingInvites[staff.id];
+                        return (
+                          <div className="flex items-center gap-2">
+                            {accessBusyId === staff.id ? (
+                              <Spin size="small" />
+                            ) : (
+                              <div className={`w-2 h-2 rounded-full ${dot}`}></div>
+                            )}
+                            <span className={`text-sm font-medium ${className}`}>{label}</span>
+                            {invite && (
+                              <Tooltip
+                                title={
+                                  invite.is_expired
+                                    ? `Invite sent ${invite.sent_count} time(s); expired ${new Date(invite.expires_at).toLocaleDateString()}`
+                                    : `Invite sent ${invite.sent_count} time(s); expires ${new Date(invite.expires_at).toLocaleDateString()}`
+                                }
+                              >
+                                <Clock className="w-3.5 h-3.5 text-gray-400" />
+                              </Tooltip>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
 
                     <td className="px-6 py-4">
@@ -591,6 +761,77 @@ const StaffListTable = forwardRef(({ searchTerm = "" }, ref) => {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Cancel invite / revoke access confirmation */}
+      <AnimatePresence>
+        {accessConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setAccessConfirm(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-amber-100 rounded-full">
+                  {accessConfirm.action === "cancel" ? (
+                    <MailX className="w-6 h-6 text-amber-600" />
+                  ) : (
+                    <ShieldOff className="w-6 h-6 text-amber-600" />
+                  )}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {accessConfirm.action === "cancel" ? "Cancel Invitation" : "Revoke Platform Access"}
+                </h3>
+              </div>
+
+              <p className="text-gray-600 mb-6">
+                {accessConfirm.action === "cancel" ? (
+                  <>
+                    The invitation link sent to{" "}
+                    <span className="font-medium text-gray-900">{accessConfirm.staff.email}</span> will stop
+                    working immediately. You can send a new invite at any time.
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium text-gray-900">
+                      {accessConfirm.staff.first_name} {accessConfirm.staff.last_name}
+                    </span>{" "}
+                    will be signed out and will no longer be able to log in. Their staff record stays intact.
+                  </>
+                )}
+              </p>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={() => setAccessConfirm(null)}
+                >
+                  Keep Access
+                </button>
+                <button
+                  className="px-6 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
+                  disabled={accessBusyId === accessConfirm.staff.id}
+                  onClick={() => {
+                    const { action, staff } = accessConfirm;
+                    setAccessConfirm(null);
+                    runAccessAction(action, staff);
+                  }}
+                >
+                  {accessConfirm.action === "cancel" ? "Cancel Invite" : "Revoke Access"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {successModal && (
         <SuccessModal
           {...successModal}

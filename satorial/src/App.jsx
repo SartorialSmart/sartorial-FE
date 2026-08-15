@@ -65,6 +65,7 @@ import RoleSettingsDisplay from "./pages/settingsPages/RoleSettingsDisplay";
 import StockMovementHistoryDisplay from "./pages/inventories/StockMovementHistoryDisplay";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
+import AcceptInvitation from "./pages/Auth/AcceptInvitation";
 
 const dashboards = [
   "client",
@@ -166,6 +167,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/accept-invitation" element={<AcceptInvitation />} />
 
         {dashboards.map((dashboard, index) => (
           <Route

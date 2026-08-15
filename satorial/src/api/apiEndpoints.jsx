@@ -135,6 +135,16 @@ export const API = {
       DELETE: (slug) => `/users/staff/${slug}/`,
     },
 
+    PLATFORM_ACCESS: {
+      INVITATIONS: "/users/staff-invitations/",
+      INVITE: (slug) => `/users/staff/${slug}/invite/`,
+      RESEND: (invitationId) => `/users/staff-invitations/${invitationId}/resend/`,
+      CANCEL: (invitationId) => `/users/staff-invitations/${invitationId}/cancel/`,
+      REVOKE: (slug) => `/users/staff/${slug}/revoke-access/`,
+      INVITATION_BY_TOKEN: (token) => `/users/invitations/${token}/`,
+      ACCEPT: "/users/accept-invitation/",
+    },
+
     PERFORMANCE: {
       LIST: "/orders/staff/performance/",
 
