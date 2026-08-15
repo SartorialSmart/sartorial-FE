@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { Modal, Input, message } from "antd";
+import { toast } from "react-toastify";
 import PropTypes from "prop-types";
 import PermissionPicker from "../permissions/PermissionPicker";
 import StaffService from "../../services/staffServices/StaffService";
@@ -39,20 +40,29 @@ const GrantLoginAccessModal = ({ staff, isOpen, onClose, onGranted }) => {
   const submit = async () => {
     const trimmed = email.trim();
     if (!trimmed) {
-      message.error("An email address is required — it's how they sign in.");
+      const reqMsg = "An email address is required — it's how they sign in.";
+      toast.error(reqMsg);
+      message.error(reqMsg);
       return;
     }
     setSubmitting(true);
     try {
-      await StaffService.grantLoginAccess(staff.id, { email: trimmed, permissions });
+      const res = await StaffService.grantLoginAccess(staff.id, { email: trimmed, permissions });
+      if (res && res.success === false) {
+        throw res;
+      }
+      toast.success(`Invitation sent to ${trimmed}.`);
       message.success(`Invitation sent to ${trimmed}.`);
       onGranted?.();
       onClose();
     } catch (err) {
-      // A 403 with upgrade_required is surfaced globally by the plan-limit
-      // handler, so don't double-report it here.
-      if (!err?.response?.data?.upgrade_required) {
-        message.error(extractErrorMessage(err, "Could not grant system access."));
+      console.error("Grant login access error:", err);
+      const errMsg = extractErrorMessage(err, "Could not grant system access.");
+      toast.error(errMsg);
+      try {
+        message.error(errMsg);
+      } catch {
+        // ignore
       }
     } finally {
       setSubmitting(false);

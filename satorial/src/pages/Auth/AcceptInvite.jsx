@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { message } from "antd";
+import { toast } from "react-toastify";
 import StaffService from "../../services/staffServices/StaffService";
+import { extractErrorMessage } from "../../../utils/errorUtils";
 
 const initialForm = {
   first_name: "",
@@ -47,7 +49,9 @@ export default function AcceptInvite() {
       message.success("Account set up successfully. Please log in.");
       navigate("/login");
     } catch (err) {
-      message.error(err?.response?.data?.detail || "This invitation is invalid or has expired.");
+      const errMsg = extractErrorMessage(err, "This invitation is invalid or has expired.");
+      toast.error(errMsg);
+      message.error(errMsg);
     } finally {
       setSubmitting(false);
     }
