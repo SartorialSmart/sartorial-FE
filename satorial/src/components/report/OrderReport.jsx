@@ -161,13 +161,14 @@ const OrderReport = () => {
     });
   }, [dateFilteredOrders]);
 
-  // --- Date Overdue: orders past their end_date, not completed/cancelled ---
+  // --- Date Overdue: orders past their end_date, not completed/cancelled/on delivery ---
   const dateOverdueOrders = useMemo(() => {
     const now = new Date();
     return dateFilteredOrders.filter((order) => {
       if (
         order.order_status === "Completed" ||
-        order.order_status === "Cancelled"
+        order.order_status === "Cancelled" ||
+        order.order_status === "On Delivery"
       )
         return false;
       if (!order.end_date) return false;
