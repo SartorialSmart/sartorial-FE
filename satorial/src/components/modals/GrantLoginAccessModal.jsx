@@ -29,9 +29,11 @@ const GrantLoginAccessModal = ({ staff, isOpen, onClose, onGranted }) => {
     setPermissions([]);
     (async () => {
       try {
-        const cat = await StaffPermissionsService.getPermissionsCatalog();
-        setCatalog(cat?.catalog || []);
-      } catch {
+        // Resolves to the local catalog if the endpoint is unavailable, rather
+        // than leaving the picker empty with no explanation.
+        setCatalog(await StaffPermissionsService.getPermissionCatalog());
+      } catch (error) {
+        console.error("Error fetching permission catalog:", error);
         setCatalog([]);
       }
     })();
@@ -50,6 +52,17 @@ const GrantLoginAccessModal = ({ staff, isOpen, onClose, onGranted }) => {
       const res = await StaffService.grantLoginAccess(staff.id, { email: trimmed, permissions });
       if (res && res.success === false) {
         throw res;
+      }
+      // Access is granted even when the email fails, so say so rather than
+      // claiming an invitation that never left.
+      if (res?.email_sent === false) {
+        const warning =
+          res.message || `Access granted, but the invitation email to ${trimmed} could not be sent.`;
+        toast.warning(warning);
+        message.warning(warning);
+        onGranted?.();
+        onClose();
+        return;
       }
       toast.success(`Invitation sent to ${trimmed}.`);
       message.success(`Invitation sent to ${trimmed}.`);

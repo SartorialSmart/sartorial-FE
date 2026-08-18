@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Table, Modal, Button, Tag, Select, Input, Segmented, message, Tooltip } from "antd";
+import { toast } from "react-toastify";
 import { UserPlus, ShieldCheck, Send, Ban } from "lucide-react";
 import StaffSideBarLayout from "../../components/navs/StaffSideBarLayout";
 import PermissionPicker from "../../components/permissions/PermissionPicker";
 import StaffService from "../../services/staffServices/StaffService";
 import StaffPermissionsService from "../../services/staffServices/StaffPermissionsService";
+import { extractErrorMessage } from "../../../utils/errorUtils";
 
 const STAFF_ROLES = ["Tailor", "Designer", "Driver", "Accountant", "Procurement_Manager"];
 
@@ -28,6 +30,8 @@ export default function TeamManagementDisplay() {
   const [mode, setMode] = useState(MODE_NEW);
   const [invite, setInvite] = useState({ email: "", staff_role: undefined, permissions: [], staffId: undefined });
   const [inviting, setInviting] = useState(false);
+  // Row whose invitation is being resent, so its button can show progress.
+  const [resendingId, setResendingId] = useState(null);
 
   // Permissions editor modal
   const [permOpen, setPermOpen] = useState(false);
@@ -72,20 +76,27 @@ export default function TeamManagementDisplay() {
 
     setInviting(true);
     try {
+      let res;
       if (promoting) {
         // Existing employee record → grant a seat and invite them to finish setup.
-        await StaffService.grantLoginAccess(invite.staffId, {
+        res = await StaffService.grantLoginAccess(invite.staffId, {
           email: invite.email,
           permissions: invite.permissions,
         });
       } else {
-        await StaffService.inviteStaff({
+        res = await StaffService.inviteStaff({
           email: invite.email,
           staff_role: invite.staff_role,
           permissions: invite.permissions,
         });
       }
-      message.success("Invitation sent.");
+      // The seat is granted even when the email fails; don't report a delivery
+      // that did not happen.
+      if (res?.email_sent === false) {
+        message.warning(res.message || "The invitation email could not be sent.");
+      } else {
+        message.success("Invitation sent.");
+      }
       setInviteOpen(false);
       resetInvite();
       loadStaff();
@@ -106,11 +117,22 @@ export default function TeamManagementDisplay() {
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await StaffService.revokeLoginAccess(row.id);
+          const res = await StaffService.revokeLoginAccess(row.id);
+          if (res && res.success === false) {
+            throw res;
+          }
+          toast.success("System access removed.");
           message.success("System access removed.");
           loadStaff();
         } catch (err) {
-          message.error(err?.response?.data?.message || "Could not remove access.");
+          console.error("Revoke access error:", err);
+          const errMsg = extractErrorMessage(err, "Could not remove access.");
+          toast.error(errMsg);
+          try {
+            message.error(errMsg);
+          } catch {
+            // ignore
+          }
         }
       },
     });
@@ -142,11 +164,32 @@ export default function TeamManagementDisplay() {
   };
 
   const resend = async (row) => {
+    // Keyed notice: the "Sending…" message becomes the outcome in place.
+    const notice = `resend-invite-${row.id}`;
+    setResendingId(row.id);
+    message.loading({ content: "Sending invitation…", key: notice, duration: 0 });
     try {
-      await StaffService.resendInvite(row.id);
-      message.success("Invitation resent.");
+      const res = await StaffService.resendInvite(row.id);
+      if (res && res.success === false) {
+        throw res;
+      }
+      if (res?.email_sent === false) {
+        const warning = res.message || "The invitation email could not be sent.";
+        toast.warning(warning);
+        message.warning({ content: warning, key: notice });
+        loadStaff();
+        return;
+      }
+      toast.success("Invitation resent.");
+      message.success({ content: "Invitation resent.", key: notice });
+      loadStaff();
     } catch (err) {
-      message.error(err?.response?.data?.message || "Could not resend invite.");
+      console.error("Resend invite error:", err);
+      const errMsg = extractErrorMessage(err, "Could not resend invite.");
+      toast.error(errMsg);
+      message.error({ content: errMsg, key: notice });
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -176,8 +219,14 @@ export default function TeamManagementDisplay() {
             </Button>
           </Tooltip>
           {row.is_active === false && (
-            <Tooltip title="Resend invite">
-              <Button size="small" icon={<Send size={14} />} onClick={() => resend(row)} />
+            <Tooltip title={resendingId === row.id ? "Sending invitation…" : "Resend invite"}>
+              <Button
+                size="small"
+                icon={<Send size={14} />}
+                loading={resendingId === row.id}
+                disabled={resendingId === row.id}
+                onClick={() => resend(row)}
+              />
             </Tooltip>
           )}
           <Tooltip title="Remove system access (keeps their staff record)">
