@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import VendorService from "../../../services/VendorService";
 import VendorCategoryService from "../../../services/VendorCategoryService";
@@ -10,8 +10,37 @@ import {
   Mail,
   Phone,
   MapPin,
+  Landmark,
   Loader2,
 } from "lucide-react";
+
+const NIGERIAN_BANKS = [
+  "Access Bank",
+  "Citibank Nigeria",
+  "Ecobank Nigeria",
+  "Fidelity Bank Nigeria",
+  "First Bank of Nigeria",
+  "First City Monument Bank",
+  "Globus Bank",
+  "Guaranty Trust Bank",
+  "Heritage Bank",
+  "Keystone Bank",
+  "Kuda Bank",
+  "Opay",
+  "Palmpay",
+  "Polaris Bank",
+  "Providus Bank",
+  "Stanbic IBTC Bank",
+  "Standard Chartered Bank",
+  "Sterling Bank",
+  "SunTrust Bank",
+  "Titan Trust Bank",
+  "Union Bank of Nigeria",
+  "United Bank for Africa",
+  "VFD Microfinance Bank",
+  "Wema Bank",
+  "Zenith Bank",
+];
 
 const EditVendorForm = ({ vendor, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -26,6 +55,9 @@ const EditVendorForm = ({ vendor, onClose, onSuccess }) => {
     vendor_postal_code: "",
     vendor_category: "",
     vendor_image: null,
+    bank_name: "",
+    custom_bank_name: "",
+    account_number: "",
     is_active: true,
   });
 
@@ -70,6 +102,9 @@ const EditVendorForm = ({ vendor, onClose, onSuccess }) => {
         vendor_postal_code: vendor.vendor_postal_code || "",
         vendor_category: vendor.vendor_category || "",
         vendor_image: null,
+        bank_name: vendor.bank_name || "",
+        custom_bank_name: "",
+        account_number: vendor.account_number || "",
         is_active: vendor.is_active !== undefined ? vendor.is_active : true,
       });
     }
@@ -94,6 +129,18 @@ const EditVendorForm = ({ vendor, onClose, onSuccess }) => {
       newErrors.vendor_state = "State is required";
     if (!formData.vendor_country.trim())
       newErrors.vendor_country = "Country is required";
+    if (
+      formData.bank_name === "__other__" &&
+      !formData.custom_bank_name.trim()
+    ) {
+      newErrors.custom_bank_name = "Please enter a custom bank name";
+    }
+    if (
+      formData.account_number &&
+      !/^\d{10}$/.test(formData.account_number)
+    ) {
+      newErrors.account_number = "Account number must be exactly 10 digits";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -141,6 +188,13 @@ const EditVendorForm = ({ vendor, onClose, onSuccess }) => {
           formDataToSend.append(key, formData[key]);
         }
       }
+      formDataToSend.set(
+        "bank_name",
+        formData.bank_name === "__other__"
+          ? formData.custom_bank_name.trim()
+          : formData.bank_name
+      );
+      formDataToSend.set("account_number", formData.account_number || "");
 
       await VendorService.updateVendor(vendor.id, formDataToSend);
       setSuccessMessage("Vendor updated successfully!");
@@ -543,6 +597,118 @@ const EditVendorForm = ({ vendor, onClose, onSuccess }) => {
             </div>
           </div>
 
+          {/* Bank Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Landmark size={18} className="text-gray-600" />
+              <h3 className="text-lg font-medium text-gray-900">
+                Bank Information
+              </h3>
+            </div>
+            <p className="text-sm text-gray-500">
+              Optional — for vendor payments
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Bank Name */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="bank_name"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Bank Name
+                </label>
+                <select
+                  id="bank_name"
+                  name="bank_name"
+                  value={formData.bank_name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select Bank</option>
+                  {NIGERIAN_BANKS.map((bank) => (
+                    <option key={bank} value={bank}>
+                      {bank}
+                    </option>
+                  ))}
+                  <option value="__other__">Other (type manually)</option>
+                </select>
+              </div>
+
+              {/* Custom Bank Name (shown when "Other" is selected) */}
+              {formData.bank_name === "__other__" && (
+                <div className="space-y-2">
+                  <label
+                    htmlFor="custom_bank_name"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Custom Bank Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="custom_bank_name"
+                    name="custom_bank_name"
+                    value={formData.custom_bank_name}
+                    onChange={handleChange}
+                    placeholder="Enter bank name"
+                    className={`w-full px-4 py-2 border ${
+                      errors.custom_bank_name
+                        ? "border-red-300"
+                        : "border-gray-300"
+                    } rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                  />
+                  {errors.custom_bank_name && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.custom_bank_name}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Account Number */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="account_number"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Account Number
+                </label>
+                <input
+                  type="text"
+                  id="account_number"
+                  name="account_number"
+                  value={formData.account_number}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                    setFormData((prev) => ({ ...prev, account_number: val }));
+                    if (errors.account_number) {
+                      setErrors((prev) => ({ ...prev, account_number: "" }));
+                    }
+                  }}
+                  placeholder="0123456789"
+                  maxLength={10}
+                  inputMode="numeric"
+                  className={`w-full px-4 py-2 border ${
+                    errors.account_number
+                      ? "border-red-300"
+                      : "border-gray-300"
+                  } rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                />
+                {formData.account_number &&
+                  formData.account_number.length !== 10 && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      Must be exactly 10 digits (
+                      {formData.account_number.length}/10)
+                    </p>
+                  )}
+                {errors.account_number && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.account_number}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Active Status */}
           <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center h-5">
@@ -619,6 +785,8 @@ EditVendorForm.propTypes = {
     vendor_country: PropTypes.string,
     vendor_postal_code: PropTypes.string,
     vendor_category: PropTypes.number,
+    bank_name: PropTypes.string,
+    account_number: PropTypes.string,
     is_active: PropTypes.bool,
   }).isRequired,
   onClose: PropTypes.func.isRequired,

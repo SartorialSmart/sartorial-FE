@@ -357,7 +357,13 @@ const FinancialReport = () => {
             </p>
           </div>
           <div className="no-print flex gap-2 flex-wrap items-center">
-            <LocationFilter value={location} onChange={setLocation} />
+            <LocationFilter
+              value={location}
+              onChange={setLocation}
+              hideLabel
+              leadingIcon
+              selectClassName="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50/50 appearance-none min-w-40"
+            />
             {FILTERS.map((filter) => (
               <button
                 key={filter}
