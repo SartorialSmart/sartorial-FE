@@ -3,6 +3,7 @@ import { Download, Upload, Search } from "lucide-react";
 import PropTypes from "prop-types";
 import AddButton from "../buttons/AddButton";
 import ClientFormModal from "../modals/formModals/ClientFormModal";
+import { usePermissions } from "../../utils/permissions";
 
 const Toolbar_1 = ({
   title = "Clients",
@@ -16,6 +17,8 @@ const Toolbar_1 = ({
   hideExport,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { canPerform } = usePermissions();
+  const canCreateClients = canPerform("clients", "create");
 
   const defaultFilterOptions = [
     { value: "all", label: "All" },
@@ -43,15 +46,17 @@ const Toolbar_1 = ({
           </div>
         </div>
 
-        {/* Actions */}
+        {/* Actions — gated by clients.create (prevents backdoor for staff without Clients permission) */}
         <div className="flex items-center gap-3">
-          <button
-            className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-            onClick={onImport}
-          >
-            <Upload size={16} />
-            Upload Clients
-          </button>
+          {canCreateClients && (
+            <button
+              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+              onClick={onImport}
+            >
+              <Upload size={16} />
+              Upload Clients
+            </button>
+          )}
           {!hideExport && (
             <button
               className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
@@ -61,7 +66,7 @@ const Toolbar_1 = ({
               Export
             </button>
           )}
-          <AddButton text="Add Client" onClick={() => setIsModalOpen(true)} />
+          {canCreateClients && <AddButton text="Add Client" onClick={() => setIsModalOpen(true)} />}
         </div>
       </div>
 

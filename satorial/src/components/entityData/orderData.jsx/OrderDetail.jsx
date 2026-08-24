@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { 
-  EditIcon, ChevronRight, CheckCircle, Calendar, Clock, Truck, Package, 
-  UserCheck, XCircle, Loader2, User, Mail, FileText, ShoppingBag, 
+import {
+  EditIcon, ChevronRight, CheckCircle, Calendar, Clock, Truck, Package,
+  UserCheck, XCircle, Loader2, User, Mail, FileText, ShoppingBag,
   CreditCard, BarChart3, Tag, UserPlus, Repeat, ClipboardCheck, Upload, X,
-  ArrowUpDown
+  ArrowUpDown, Gauge, PackagePlus
 } from "lucide-react";
 import OrderService from "../../../services/OrderService";
 import SettingsService from "../../../services/settings";
@@ -19,6 +19,7 @@ import SuccessModal from "../../modals/SuccessModal";
 import { extractErrorMessage } from "../../../../utils/errorUtils";
 import { useAuth } from "../../../contexts/AuthContext";
 import { canViewModule } from "../../../utils/permissions";
+import { progressTone } from "../../../constants/workProgressConstants";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
@@ -45,6 +46,10 @@ const OrderDetail = () => {
   const [errorModal, setErrorModal] = useState({ show: false, title: "", message: "" });
   const [timelineSortAsc, setTimelineSortAsc] = useState(false);
   const [cachedAllocation, setCachedAllocation] = useState(null);
+  // Mirror of each assignee's self-reported work progress (staff "My Orders" data).
+  const [progressReport, setProgressReport] = useState(null);
+  // Bill of materials + estimated material cost for this order.
+  const [orderMaterials, setOrderMaterials] = useState(null);
   const { user } = useAuth();
   const ALLOWED_ROLES = ["super_admin", "admin", "organization"];
   const isAdmin = ALLOWED_ROLES.includes(user?.role?.toLowerCase());
@@ -150,6 +155,67 @@ const OrderDetail = () => {
     fetchOrderDetails();
     fetchOrgProfile();
   }, [orderId]);
+
+  // Fetch the staff-reported work progress for the mirror widget (admins only;
+  // the endpoint is organization-scoped so this never leaks other orgs' data).
+  useEffect(() => {
+    if (!isAdmin || !orderId) return;
+    let cancelled = false;
+    OrderService.getOrderProgressReport(orderId)
+      .then((data) => {
+        if (!cancelled) setProgressReport(data);
+      })
+      .catch((err) => {
+        console.warn("Work progress report unavailable:", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, orderId]);
+
+  // Materials list for this order (admins only; organization-scoped endpoint).
+  useEffect(() => {
+    if (!isAdmin || !orderId) return;
+    let cancelled = false;
+    OrderService.getOrderMaterials(orderId)
+      .then((data) => {
+        if (!cancelled) setOrderMaterials(data);
+      })
+      .catch((err) => {
+        console.warn("Order materials unavailable:", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, orderId]);
+
+  // Q/A dialog: a parameter the assigned staff reported as complete (100)
+  // shows up pre-checked — the admin can still uncheck it manually.
+  useEffect(() => {
+    if (!progressReport?.assignments?.length) return;
+    const completed = {};
+    progressReport.assignments.forEach((assignment) => {
+      (assignment.parameters || []).forEach((param) => {
+        if (param.progress === 100) completed[param.key] = true;
+      });
+    });
+    if (!Object.keys(completed).length) return;
+    setQaChecklist((prev) => {
+      const merged = { ...prev };
+      let changed = false;
+      Object.keys(completed).forEach((key) => {
+        if (!merged[key]) {
+          merged[key] = true;
+          changed = true;
+        }
+      });
+      if (changed) {
+        localStorage.setItem(`qa_checklist_${orderId}`, JSON.stringify(merged));
+        return merged;
+      }
+      return prev;
+    });
+  }, [progressReport, orderId]);
 
   useEffect(() => {
     const fetchInvoiceLayout = async () => {
@@ -1270,6 +1336,140 @@ const OrderDetail = () => {
           </div>
         </div>
 
+        {/* Materials & Cost Estimate — bill of materials dispensed/planned for this order */}
+        {isAdmin && orderMaterials && orderMaterials.items.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <PackagePlus className="text-indigo-600" size={20} />
+                Materials &amp; Cost Estimate
+              </h3>
+              <div className="flex items-center gap-3">
+                <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+                  Dispensed {formatCurrency(orderMaterials.dispensed_cost)}
+                </span>
+                <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-medium">
+                  Planned {formatCurrency(orderMaterials.planned_cost)}
+                </span>
+                <Link
+                  to={`/inventory/dispense-materials?order=${orderId}`}
+                  className="text-sm font-medium text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1"
+                >
+                  Manage materials <ChevronRight size={16} />
+                </Link>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-100">
+                    <th className="py-2 pr-4 font-medium">Material</th>
+                    <th className="py-2 pr-4 font-medium">Qty</th>
+                    <th className="py-2 pr-4 font-medium">Unit cost</th>
+                    <th className="py-2 pr-4 font-medium">Line total</th>
+                    <th className="py-2 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {orderMaterials.items.map((m) => (
+                    <tr key={m.id}>
+                      <td className="py-2.5 pr-4 font-medium text-gray-900">{m.material_name}</td>
+                      <td className="py-2.5 pr-4 text-gray-600">
+                        {m.quantity} {m.unit_of_measurement}
+                      </td>
+                      <td className="py-2.5 pr-4 text-gray-600">{formatCurrency(m.unit_cost)}</td>
+                      <td className="py-2.5 pr-4 font-semibold text-gray-900">{formatCurrency(m.line_cost)}</td>
+                      <td className="py-2.5">
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${
+                            m.status === "dispensed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                          }`}
+                        >
+                          {m.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-gray-100">
+                    <td colSpan="3" className="py-3 text-right text-xs uppercase tracking-wide text-gray-400 font-medium">
+                      Total estimated cost
+                    </td>
+                    <td className="py-3 pr-4 font-bold text-indigo-600">{formatCurrency(orderMaterials.total_estimated_cost)}</td>
+                    <td />
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Team Work Progress — mirror of the staff's self-reported parameters */}
+        {isAdmin && progressReport && progressReport.assignments.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <Gauge className="text-indigo-600" size={20} />
+                Team Work Progress
+              </h3>
+              <span className="text-xs text-gray-400">Self-reported by assigned staff</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {progressReport.assignments.map((assignment) => {
+                const tone = progressTone(assignment.overall_percent || 0);
+                return (
+                  <div
+                    key={assignment.allocation_id}
+                    className={`rounded-xl border p-4 ${
+                      assignment.is_current ? "border-indigo-200 bg-indigo-50/40" : "border-gray-200 bg-gray-50/60 opacity-75"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <Avatar src={assignment.avatar_url} alt={assignment.staff_name || "Staff"} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-gray-900 truncate">
+                          {assignment.staff_name || "Unassigned"}
+                          {!assignment.is_current && (
+                            <span className="ml-2 text-[10px] font-semibold uppercase text-gray-400 bg-gray-200 rounded px-1.5 py-0.5">
+                              previous
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {[assignment.role, assignment.department].filter(Boolean).join(" · ") || "—"}
+                        </p>
+                      </div>
+                      <span className={`text-lg font-extrabold tabular-nums ${tone.text}`}>
+                        {assignment.overall_percent === null ? "—" : `${assignment.overall_percent}%`}
+                      </span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {(assignment.parameters || []).map((param) => {
+                        const paramTone = progressTone(param.progress || 0);
+                        return (
+                          <div key={param.key} className="flex items-center gap-2">
+                            <span className="w-28 text-[11px] font-medium text-gray-600 shrink-0">{param.label}</span>
+                            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${paramTone.bar}`}
+                                style={{ width: `${param.progress || 0}%` }}
+                              />
+                            </div>
+                            <span className="w-9 text-right text-[11px] font-semibold tabular-nums text-gray-500">
+                              {param.progress === null ? "—" : `${param.progress}%`}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Order Type & Payment Receipt */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Order Type */}
@@ -1418,6 +1618,34 @@ const OrderDetail = () => {
                   });
                 });
               }
+
+              // Material dispense events (derived from the order's bill of materials).
+              (orderMaterials?.items || []).forEach((m) => {
+                if (m.status !== "dispensed" || !m.dispensed_at) return;
+                events.push({
+                  date: m.dispensed_at,
+                  element: (
+                    <div className="flex items-center justify-between py-4 border-b border-gray-100 hover:bg-gray-50 rounded-lg px-4 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center shadow-md">
+                          <PackagePlus className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Material Dispensed</p>
+                          <p className="text-gray-500 text-sm">
+                            {m.quantity} {m.unit_of_measurement} of {m.material_name}
+                            {m.dispensed_to_name ? ` → ${m.dispensed_to_name}` : ""}
+                            {` · ${formatCurrency(m.line_cost)}`}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-gray-600 text-sm font-medium">
+                        {formatDate(m.dispensed_at)}
+                      </span>
+                    </div>
+                  )
+                });
+              });
 
               events.push({
                 date: order.updated_at,

@@ -89,6 +89,27 @@ export const PRODUCTION_PRIORITIES = [
   { value: "urgent", label: "Urgent" },
 ];
 
+export const SIZE_CATEGORIES = [
+  { value: "XXXS", label: "XXXS" },
+  { value: "XXS", label: "XXS" },
+  { value: "XS", label: "XS" },
+  { value: "S", label: "S" },
+  { value: "M", label: "M" },
+  { value: "L", label: "L" },
+  { value: "XL", label: "XL" },
+  { value: "XXL", label: "XXL" },
+  { value: "XXXL", label: "XXXL (3XL)" },
+  { value: "XXXXL", label: "XXXXL (4XL)" },
+  { value: "One Size", label: "One Size" },
+  { value: "Custom", label: "Custom" },
+];
+
+export const GENDER_TARGETS = [
+  { value: "Male", label: "Male" },
+  { value: "Female", label: "Female" },
+  { value: "Unisex", label: "Unisex" },
+];
+
 export const PRODUCTION_PRIORITY_STYLES = {
   low: "bg-gray-50 text-gray-700 border-gray-200",
   medium: "bg-blue-50 text-blue-700 border-blue-200",

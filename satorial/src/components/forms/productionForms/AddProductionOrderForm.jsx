@@ -16,7 +16,7 @@ const getTodayDateString = () => {
   return new Date(today.getTime() - timezoneOffset).toISOString().split("T")[0];
 };
 
-const AddProductionOrderForm = ({ onClose }) => {
+const AddProductionOrderForm = ({ onClose, onCreated, onCreatedFallback }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -79,7 +79,7 @@ const AddProductionOrderForm = ({ onClose }) => {
 
     setLoading(true);
     try {
-      await ProductionService.createOrder({
+      const created = await ProductionService.createOrder({
         ...formData,
         category: selectedCategory,
         total_quantity: Number(formData.total_quantity),
@@ -97,7 +97,10 @@ const AddProductionOrderForm = ({ onClose }) => {
       });
       setSelectedCategory(null);
       setCopiedOrderId("");
-      if (onClose) onClose();
+      // Wizard: prefer onCreated with payload; fallback fetch
+      if (onCreated && created) onCreated(created);
+      else if (onCreatedFallback) await onCreatedFallback();
+      else if (onClose) onClose();
     } catch (error) {
       setErrorTitle("Error");
       setErrorMessage(
@@ -405,6 +408,8 @@ const AddProductionOrderForm = ({ onClose }) => {
 
 AddProductionOrderForm.propTypes = {
   onClose: PropTypes.func,
+  onCreated: PropTypes.func,
+  onCreatedFallback: PropTypes.func,
 };
 
 export default AddProductionOrderForm;

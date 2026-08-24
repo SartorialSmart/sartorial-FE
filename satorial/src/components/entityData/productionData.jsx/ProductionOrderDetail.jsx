@@ -9,6 +9,7 @@ import {
   Factory,
   Loader2,
   MapPin,
+  Package,
   PackagePlus,
   Tag,
   Target,
@@ -19,6 +20,9 @@ import {
   TrendingUp,
   XCircle,
   X,
+  Ruler,
+  ShoppingBag,
+  Award,
 } from "lucide-react";
 import ProductionService from "../../../services/ProductionService";
 import AssignProductionModal from "../../allocationModals/AssignProductionModal";
@@ -26,6 +30,8 @@ import ProductionQAModal from "../../allocationModals/ProductionQAModal";
 import AddProductionToInventoryModal from "../../allocationModals/AddProductionToInventoryModal";
 import Avatar from "../../avatar/Avatar";
 import { usePermissions } from "../../../utils/permissions";
+import { progressTone } from "../../../constants/workProgressConstants";
+import { getMeasurementsForGender, MeasurementPlaceholder } from "../../../utils/measurementConfig";
 import {
   PRODUCTION_ORDER_STATUS_FLOW,
   PRODUCTION_CANCELLED_STATUS,
@@ -252,7 +258,7 @@ const ProductionOrderDetail = () => {
           Back to Production Orders
         </Link>
         <div className="flex items-center gap-3">
-          {!isCompleted && !isCancelled && status === "Pending" && (
+          {!isCompleted && !isCancelled && status === "Pending" && canManage && (
             <button
               onClick={() => setShowAssignModal(true)}
               className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium"
@@ -261,7 +267,7 @@ const ProductionOrderDetail = () => {
               Assign Staff
             </button>
           )}
-          {!isCompleted && !isCancelled && status === "QA Check" && (
+          {!isCompleted && !isCancelled && status === "QA Check" && canManage && (
             <button
               onClick={() => setShowQAModal(true)}
               className="flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 text-sm font-medium"
@@ -270,7 +276,7 @@ const ProductionOrderDetail = () => {
               Run QA Check
             </button>
           )}
-          {!isCompleted && !isCancelled && status === "In Progress" && (
+          {!isCompleted && !isCancelled && status === "In Progress" && canManage && (
             <button
               onClick={openQACheck}
               disabled={updatingStatus || !allAssignedComplete}
@@ -350,6 +356,179 @@ const ProductionOrderDetail = () => {
             {order.description}
           </p>
         )}
+      </div>
+
+      {/* 4-Step Journey: Order → Measurements → Assign → Materials */}
+      <div className="bg-white rounded-2xl shadow border border-gray-100 p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <Factory className="text-blue-600" size={20} />
+          Production Journey — 4 Steps
+          <span className="text-xs font-normal text-gray-500 ml-2">(measurements lifted from client flow • assign preserved • materials from Inventory)</span>
+        </h2>
+        {(() => {
+          const hasMeasurements = order?.measurements && Object.keys(order.measurements || {}).length > 0;
+          const hasAssignments = Array.isArray(assignments) && assignments.length > 0;
+          const mats = Array.isArray(order?.materials) ? order.materials : [];
+          const hasMaterials = mats.length > 0;
+          const hasDispensed = mats.some((m) => m.status === "dispensed");
+          const steps = [
+            { key: "order", label: "Order Created", icon: Factory, done: true, desc: order?.title || "Production order created" },
+            { key: "measure", label: "Measurements", icon: Ruler, done: !!hasMeasurements, desc: hasMeasurements ? `${order.gender_target || "Unisex"} • ${order.size_category || "No size"} • ${Object.keys(order.measurements).length} measures` : "Measurements not yet taken" },
+            { key: "assign", label: "Staff Assigned", icon: Users, done: !!hasAssignments, desc: hasAssignments ? `${assignments.length} staff • ${assignments.reduce((s,a)=>s+Number(a.assigned_quantity||0),0)} units` : "No staff assigned yet" },
+            { key: "material", label: "Materials Dispensed", icon: Package, done: !!hasDispensed, desc: hasMaterials ? `${mats.length} items • ${hasDispensed ? "dispensed" : "planned"} • per-unit ₦${Number(order.material_cost_per_unit||0).toLocaleString()}` : "No materials in BOM yet" },
+          ];
+          return (
+            <div className="flex items-center justify-between relative">
+              <div className="absolute top-6 left-6 right-6 h-0.5 bg-gray-200 -z-10 hidden sm:block" />
+              <div className="absolute top-6 left-6 h-0.5 bg-emerald-500 -z-10 hidden sm:block transition-all duration-700" style={{ width: `calc(${(steps.filter((s)=>s.done).length / steps.length)*100}% - 48px)` }} />
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
+                {steps.map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <div key={s.key} className={`flex flex-col items-center text-center p-3 rounded-xl border ${s.done ? "bg-emerald-50 border-emerald-200" : "bg-gray-50 border-gray-200"}`}>
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${s.done ? "bg-emerald-500 text-white" : "bg-white text-gray-400 border border-gray-200"}`}>
+                        {s.done ? <CheckCircle size={20} /> : <Icon size={20} />}
+                      </div>
+                      <p className={`text-sm font-semibold ${s.done ? "text-emerald-800" : "text-gray-500"}`}>{s.label}</p>
+                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{s.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* Measurements & Gender / Size Category (Step 2, e-commerce size) */}
+      <div className="bg-white rounded-2xl shadow border border-gray-100 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <Ruler className="text-indigo-600" size={20} />
+            Measurements & Size
+          </h2>
+          <div className="flex items-center gap-2">
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${order?.gender_target === "Male" ? "bg-blue-50 text-blue-700 border-blue-200" : order?.gender_target === "Female" ? "bg-pink-50 text-pink-700 border-pink-200" : "bg-gray-50 text-gray-700 border-gray-200"}`}>
+              {order?.gender_target || "Unisex"}
+            </span>
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+              <Award size={12} /> {order?.size_category || "No size"}
+            </span>
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+              {order?.measurement_unit || "cm"}
+            </span>
+          </div>
+        </div>
+
+        {(() => {
+          const meas = order?.measurements || {};
+          const keys = Object.keys(meas);
+          if (keys.length === 0) {
+            return (
+              <div className="text-center py-10 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+                <Ruler className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm font-medium text-gray-500">No measurements taken yet</p>
+                <p className="text-xs text-gray-400 mt-1">Step 2 of the wizard — size guides e-commerce, measurements guide tailors.</p>
+              </div>
+            );
+          }
+          const genderForIcons = order?.gender_target === "Male" ? "Male" : order?.gender_target === "Female" ? "Female" : "Female";
+          const cfg = getMeasurementsForGender(genderForIcons);
+          const map = new Map(cfg.map((c) => [c.key, c]));
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {keys.map((k) => {
+                const def = map.get(k);
+                return (
+                  <div key={k} className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl p-3">
+                    <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-white border border-gray-200">
+                      {def ? <MeasurementPlaceholder label={def.label} icon={def.icon} /> : <div className="w-full h-full flex items-center justify-center text-indigo-400"><Ruler size={20} /></div>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{def ? def.label : k.replace(/_/g, " ")}</p>
+                      <p className="text-lg font-bold text-gray-900">{meas[k]} <span className="text-xs font-normal text-gray-500">{order?.measurement_unit || "cm"}</span></p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+        <p className="text-xs text-gray-400 mt-4">Measurements help tailors; size category (<b>XXS → XXXXL, One Size, Custom</b>) powers e-commerce listings.</p>
+      </div>
+
+      {/* Materials & Cost per unit vs total */}
+      <div className="bg-white rounded-2xl shadow border border-gray-100 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <ShoppingBag className="text-emerald-600" size={20} />
+            Materials & Cost
+          </h2>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-xs text-gray-500">Per unit</p>
+              <p className="text-sm font-bold text-indigo-700">₦{Number(order?.material_cost_per_unit || 0).toLocaleString()}</p>
+            </div>
+            <div className="text-gray-300">×</div>
+            <div className="text-right">
+              <p className="text-xs text-gray-500">{order?.total_quantity || 0} units</p>
+              <p className="text-sm font-bold text-emerald-700">₦{Number(order?.total_material_cost || 0).toLocaleString()} total</p>
+            </div>
+          </div>
+        </div>
+
+        {(() => {
+          const mats = Array.isArray(order?.materials) ? order.materials : [];
+          if (mats.length === 0) {
+            return (
+              <div className="text-center py-10 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+                <Package className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm font-medium text-gray-500">No materials in BOM yet</p>
+                <p className="text-xs text-gray-400 mt-1">Step 4 — dispensing deducts stock per-unit × quantity (inventory flow).</p>
+              </div>
+            );
+          }
+          return (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-100">
+                  <tr>
+                    <th className="py-2 pr-3 font-medium">Material</th>
+                    <th className="py-2 pr-3 font-medium">Qty / unit</th>
+                    <th className="py-2 pr-3 font-medium">Unit cost</th>
+                    <th className="py-2 pr-3 font-medium">Per unit</th>
+                    <th className="py-2 pr-3 font-medium">Total ({order?.total_quantity || 0}×)</th>
+                    <th className="py-2 pr-3 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {mats.map((m) => {
+                    const perUnit = Number(m.line_cost || 0);
+                    const total = perUnit * (Number(order?.total_quantity) || 0);
+                    return (
+                      <tr key={m.id}>
+                        <td className="py-2.5 pr-3 font-medium text-gray-900">{m.material_name}<span className="block text-xs text-gray-400">{m.category_name}</span></td>
+                        <td className="py-2.5 pr-3">{m.quantity} {m.unit_of_measurement}</td>
+                        <td className="py-2.5 pr-3">₦{Number(m.unit_cost).toLocaleString()}</td>
+                        <td className="py-2.5 pr-3 font-semibold text-indigo-700">₦{perUnit.toLocaleString()}</td>
+                        <td className="py-2.5 pr-3 font-semibold text-emerald-700">₦{total.toLocaleString()}</td>
+                        <td className="py-2.5 pr-3"><span className={`text-xs px-2 py-0.5 rounded-full ${m.status === "dispensed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{m.status}</span></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot className="border-t border-gray-200 bg-gray-50/50">
+                  <tr>
+                    <td colSpan="3" className="py-3 pr-3 text-right text-xs font-semibold text-gray-500 uppercase">Totals</td>
+                    <td className="py-3 pr-3 font-bold text-indigo-700">₦{Number(order?.material_cost_per_unit || 0).toLocaleString()} /unit</td>
+                    <td className="py-3 pr-3 font-bold text-emerald-700">₦{Number(order?.total_material_cost || 0).toLocaleString()}</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Status Timeline */}
@@ -496,7 +675,7 @@ const ProductionOrderDetail = () => {
               <Users className="text-blue-600" size={20} />
               Assigned Staff
             </h2>
-            {!isCompleted && !isCancelled && (
+            {!isCompleted && !isCancelled && canManage && (
               <button
                 onClick={() => setShowAssignModal(true)}
                 className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 text-sm font-medium"
@@ -582,6 +761,34 @@ const ProductionOrderDetail = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Work-progress parameters self-reported by this staff member */}
+                    {Array.isArray(assignment.work_progress) &&
+                      assignment.work_progress.some((p) => p.progress !== null) && (
+                        <div className="mt-2.5 pt-2.5 border-t border-dashed border-gray-200 space-y-1">
+                          {assignment.work_progress
+                            .filter((p) => p.progress !== null)
+                            .map((param) => {
+                              const paramTone = progressTone(param.progress || 0);
+                              return (
+                                <div key={param.key} className="flex items-center gap-2">
+                                  <span className="w-24 text-[11px] font-medium text-gray-600 shrink-0">
+                                    {param.label}
+                                  </span>
+                                  <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${paramTone.bar}`}
+                                      style={{ width: `${param.progress || 0}%` }}
+                                    />
+                                  </div>
+                                  <span className="w-8 text-right text-[10px] font-semibold tabular-nums text-gray-500">
+                                    {param.progress}%
+                                  </span>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      )}
 
                     {canManage &&
                       !isCompleted &&
@@ -713,7 +920,7 @@ const ProductionOrderDetail = () => {
       </div>
 
       {/* Completion action */}
-      {status === "QA Check" && (
+      {status === "QA Check" && canManage && (
         <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-bold text-emerald-900 flex items-center gap-2">

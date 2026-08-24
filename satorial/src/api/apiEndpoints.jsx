@@ -55,6 +55,21 @@ export const API = {
       ORDER_LIST: "/orders/orders/list/",
       ASSIGN: "/orders/orders/assign/",
       ALLOCATION: "/orders/my-allocations/",
+      // Orders assigned to the current (staff) user, with their work progress.
+      MY_ORDERS: "/orders/my-orders/",
+      // Per-parameter work progress on one allocation (staff-reported).
+      ALLOCATION_PROGRESS: (allocationId) => `/orders/allocations/${allocationId}/progress/`,
+      // Admin mirror: every assignee's progress on an order.
+      PROGRESS_REPORT: (orderId) => `/orders/orders/${orderId}/progress/`,
+    },
+
+    // Dispense materials against an assigned order (bill of materials + cost estimate).
+    MATERIALS: {
+      DISPENSABLE_ORDERS: "/orders/dispensable-orders/",
+      LIST: (orderId) => `/orders/orders/${orderId}/materials/`,
+      DETAIL: (materialId) => `/orders/order-materials/${materialId}/`,
+      DISPENSE: (materialId) => `/orders/order-materials/${materialId}/dispense/`,
+      DISPENSE_ALL: (orderId) => `/orders/orders/${orderId}/materials/dispense-all/`,
     },
 
     CLIENT_ORDERS: {
@@ -286,6 +301,8 @@ export const API = {
       COMPLETE: (id) => `/production/assignments/${id}/complete/`,
       // Log a dated batch of units completed by a staff member on an order.
       COMPLETIONS: (id) => `/production/assignments/${id}/completions/`,
+      // Per-parameter work progress on one assignment (staff-reported).
+      PROGRESS: (id) => `/production/assignments/${id}/progress/`,
       // The production orders assigned to the current (staff) user.
       MY: "/production/my-assignments/",
     },
@@ -296,6 +313,22 @@ export const API = {
       SAVE: (id) => `/production/orders/${id}/qa/`,
       // Mark a production order as QA-completed.
       COMPLETE: (id) => `/production/orders/${id}/qa/complete/`,
+    },
+
+    // Measurements + size (step 2 of refined flow, gender-aware)
+    MEASUREMENTS: {
+      UPDATE: (id) => `/production/orders/${id}/measurements/`,
+    },
+
+    // Materials BOM per-unit (step 4, per-unit cost × qty = total)
+    MATERIALS: {
+      LIST: (orderId) => `/production/orders/${orderId}/materials/`,
+      CREATE: (orderId) => `/production/orders/${orderId}/materials/`,
+      DETAIL: (materialId) => `/production/materials/${materialId}/`,
+      UPDATE: (materialId) => `/production/materials/${materialId}/`,
+      DELETE: (materialId) => `/production/materials/${materialId}/`,
+      DISPENSE: (materialId) => `/production/materials/${materialId}/dispense/`,
+      DISPENSE_ALL: (orderId) => `/production/orders/${orderId}/materials/dispense-all/`,
     },
 
     // Finalize a completed production order and add finished goods to inventory.

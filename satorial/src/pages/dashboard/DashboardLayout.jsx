@@ -21,8 +21,10 @@ import {
   Settings,
   Sparkles,
   ArrowUpRight,
+  ClipboardList,
 } from "lucide-react";
 import IconButton from "../../components/buttons/IconButton";
+import { isAdminRole, canViewModule } from "../../utils/permissions";
 import PATTERN_1 from "../../assets/images/pattern-1.svg";
 import PATTERN_2 from "../../assets/images/pattern-2.svg";
 import PATTERN_3 from "../../assets/images/pattern-3.svg";
@@ -154,12 +156,10 @@ const getDashboardItems = (stats) => [
   },
 ];
 
-const ALLOWED_ROLES = ["super_admin", "admin", "organization"];
-
 const DashboardLayout = () => {
   const { user, fetchAuthenticatedUser } = useAuth();
   const { subscription } = useSubscription();
-  const isAdmin = ALLOWED_ROLES.includes(user?.role?.toLowerCase());
+  const isAdmin = isAdminRole(user?.role);
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState("");
   const refreshed = useRef(false);
@@ -179,6 +179,18 @@ const DashboardLayout = () => {
       fetchAuthenticatedUser();
     }
   }, [user, isAdmin, fetchAuthenticatedUser]);
+
+  // Staff-only: count of orders assigned to the signed-in staff member for
+  // the "My Orders" card. Admins never see that card and never call this.
+  useEffect(() => {
+    if (isAdmin) return;
+    OrderService.getMyOrders()
+      .then((data) => {
+        const rows = Array.isArray(data) ? data : data?.results || [];
+        setStats((prev) => ({ ...prev, myOrders: rows.length }));
+      })
+      .catch(() => setStats((prev) => ({ ...prev, myOrders: null })));
+  }, [isAdmin]);
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -269,22 +281,33 @@ const DashboardLayout = () => {
     navigate(link);
   };
 
-  const userPermissions = user?.staff_permissions;
-  // Accept both the legacy view keys ("staff") and the RBAC catalog keys
-  // ("staff.view_staff") that the permissions UI now saves.
-  const hasModule = (moduleKey) => {
-    if (!userPermissions || !moduleKey) return true;
-    return (
-      userPermissions.includes(moduleKey) ||
-      userPermissions.some(
-        (p) => p === moduleKey || p.startsWith(`${moduleKey}.`)
-      )
-    );
-  };
   const dashboardItems = getDashboardItems(stats);
-  const visibleItems = isAdmin || !userPermissions
-    ? dashboardItems
-    : dashboardItems.filter((item) => hasModule(VIEW_KEY_MAP[item.button_link]));
+  // Staff get their own workspace card first; admins never see it.
+  const staffItems = [
+    {
+      title: "My Orders",
+      description: "Orders assigned to you and your work progress",
+      icon: <ClipboardList size={24} />,
+      img: PATTERN_2,
+      button_link: "/order/my-orders",
+      color: "from-indigo-500 to-indigo-600",
+      bgColor: "bg-indigo-500/10",
+      borderColor: "border-indigo-200",
+      stats: stats.myOrders !== null && stats.myOrders !== undefined ? `${stats.myOrders} Assigned` : "—",
+      textColor: "text-indigo-900"
+    },
+  ];
+  const allItems = isAdmin ? dashboardItems : [...staffItems, ...dashboardItems];
+  // Single source of truth for view permission: reuse canViewModule. Empty /
+  // missing staff_permissions denies (except the always-available My Orders
+  // workspace). Admins bypass filtering entirely.
+  const visibleItems = isAdmin
+    ? allItems
+    : allItems.filter(
+        (item) =>
+          item.button_link === "/order/my-orders" || // staff workspace is always visible to staff
+          canViewModule(user, VIEW_KEY_MAP[item.button_link])
+      );
 
   return (
     <div className="min-h-screen bg-gray-50">

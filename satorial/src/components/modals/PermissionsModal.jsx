@@ -22,12 +22,48 @@ const PermissionsModal = ({ staff, isOpen, onClose }) => {
     setLoading(true);
     try {
       const [perms, cat] = await Promise.all([
-        StaffPermissionsService.getStaffPermissions(staff.id),
+        StaffPermissionsService.getStaffPermissions(staff.id ?? staff.slug),
         StaffPermissionsService.getPermissionCatalog(),
       ]);
-      setCatalog(cat);
-      setSelectedPermissions(perms.permissions || []);
-    } catch {
+      const catalog = Array.isArray(cat) ? cat : [];
+      setCatalog(catalog);
+      // Backend may return { permissions: [...] } or a plain array; handle both.
+      const raw =
+        perms?.permissions ?? perms?.data ?? (Array.isArray(perms) ? perms : []);
+      const initial = Array.isArray(raw) ? raw : [];
+      // Normalize legacy bare module grants (e.g. "clients") and wildcards ("clients.*", "*")
+      // into explicit "module.action" entries so the picker reflects them and save sends valid perms.
+      if (catalog.length) {
+        const catalogMap = new Map(catalog.map((m) => [m.module, m.actions]));
+        const expanded = new Set();
+        for (const p of initial) {
+          if (!p) continue;
+          if (p === "*") {
+            expanded.add(p);
+            continue;
+          }
+          if (p.endsWith(".*")) {
+            const mod = p.slice(0, -2);
+            const actions = catalogMap.get(mod);
+            if (actions) actions.forEach((a) => expanded.add(`${mod}.${a}`));
+            else expanded.add(p);
+            continue;
+          }
+          if (!p.includes(".")) {
+            // bare module -> all actions for that module
+            const actions = catalogMap.get(p);
+            if (actions) actions.forEach((a) => expanded.add(`${p}.${a}`));
+            else expanded.add(p);
+            continue;
+          }
+          expanded.add(p);
+        }
+        setSelectedPermissions([...expanded]);
+      } else {
+        setSelectedPermissions(initial);
+      }
+    } catch (err) {
+      console.error("Failed to load permissions:", err);
       setSelectedPermissions([]);
     } finally {
       setLoading(false);
@@ -35,19 +71,26 @@ const PermissionsModal = ({ staff, isOpen, onClose }) => {
   };
 
   const handleSave = async () => {
+    const staffId = staff?.id ?? staff?.slug;
+    if (!staffId) {
+      message.error("Missing staff identifier — cannot save permissions.");
+      return;
+    }
+    // Deduplicate and ensure we only send valid explicit perms (no bare module duplicates)
+    const payload = [...new Set(selectedPermissions.filter(Boolean))];
     setSaving(true);
     try {
-      await StaffPermissionsService.updateStaffPermissions(
-        staff.id,
-        selectedPermissions
-      );
+      await StaffPermissionsService.updateStaffPermissions(staffId, payload);
       message.success("Permissions updated successfully");
       onClose();
     } catch (error) {
+      console.error("Failed to update permissions:", error);
       const msg =
         error?.response?.data?.permissions?.[0] ||
         error?.response?.data?.detail ||
         error?.response?.data?.message ||
+        (typeof error?.response?.data === "string" ? error.response.data : null) ||
+        error?.message ||
         "Failed to update permissions";
       message.error(msg);
     } finally {
@@ -63,7 +106,7 @@ const PermissionsModal = ({ staff, isOpen, onClose }) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-          onClick={onClose}
+          onClick={saving ? undefined : onClose}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -115,12 +158,15 @@ const PermissionsModal = ({ staff, isOpen, onClose }) => {
 
             <div className="flex justify-end gap-3 p-6 border-t bg-gray-50 rounded-b-xl">
               <button
+                type="button"
                 onClick={onClose}
-                className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                disabled={saving}
+                className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleSave}
                 disabled={saving || loading}
                 className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"

@@ -24,8 +24,12 @@ import LocationFilter from "../filters/LocationFilter";
 import { usePermissions } from "../../utils/permissions";
 
 const ExpensesList = () => {
-  const { canPerform } = usePermissions();
-  const canManageExpenses = canPerform("expenses", "manage_expenses");
+  const { canPerform, canPerformAny } = usePermissions();
+  // Catalog for expenses is view/create/edit/delete (no "manage_expenses").
+  const canCreateExpenses = canPerform("expenses", "create");
+  const canEditExpenses = canPerform("expenses", "edit");
+  const canDeleteExpenses = canPerform("expenses", "delete");
+  const canManageExpenses = canPerformAny("expenses", ["create", "edit", "delete"]);
   const [expenses, setExpenses] = useState([]);
   const [filteredExpenses, setFilteredExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -358,7 +362,8 @@ const ExpensesList = () => {
             </div>
             <button
               onClick={handleBulkDelete}
-              disabled={bulkActionLoading}
+              disabled={bulkActionLoading || !canDeleteExpenses}
+              title={!canDeleteExpenses ? "You do not have permission to delete expenses" : undefined}
               className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {bulkActionLoading ? (
@@ -412,8 +417,8 @@ const ExpensesList = () => {
                 setExpenseToEdit(null);
                 setIsFormOpen(true);
               }}
-              disabled={!canManageExpenses}
-              title={!canManageExpenses ? "You do not have permission to add expenses" : undefined}
+              disabled={!canCreateExpenses}
+              title={!canCreateExpenses ? "You do not have permission to add expenses" : undefined}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={18} />
@@ -698,8 +703,8 @@ const ExpensesList = () => {
                         
                         <button
                           onClick={() => handleEdit(expense)}
-                          disabled={!canManageExpenses}
-                          title={!canManageExpenses ? "You do not have permission to edit expenses" : "Edit"}
+                          disabled={!canEditExpenses}
+                          title={!canEditExpenses ? "You do not have permission to edit expenses" : "Edit"}
                           className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors group/tooltip relative disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <Edit size={18} />
@@ -713,8 +718,8 @@ const ExpensesList = () => {
                             setExpenseToDelete(expense);
                             setShowDeleteConfirm(true);
                           }}
-                          disabled={!canManageExpenses}
-                          title={!canManageExpenses ? "You do not have permission to delete expenses" : "Delete"}
+                          disabled={!canDeleteExpenses}
+                          title={!canDeleteExpenses ? "You do not have permission to delete expenses" : "Delete"}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors group/tooltip relative disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <Trash2 size={18} />
