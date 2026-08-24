@@ -1,5 +1,5 @@
 import { X, Factory } from "lucide-react";
-import AddProductionOrderForm from "../../forms/productionForms/AddProductionOrderForm";
+import AddProductionOrderWizard from "../../forms/productionForms/AddProductionOrderWizard";
 import { motion, AnimatePresence } from "framer-motion";
 import PropTypes from "prop-types";
 
@@ -25,7 +25,7 @@ const AddProductionOrderFormModal = ({ isOpen, onClose }) => {
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                 <Factory size={20} className="text-blue-600" />
-                Create Production Order
+                Create Production Order — 4-Step Flow
               </h2>
               <button
                 onClick={onClose}
@@ -35,8 +35,8 @@ const AddProductionOrderFormModal = ({ isOpen, onClose }) => {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
-              <AddProductionOrderForm onClose={onClose} />
+            <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+              <AddProductionOrderWizard onClose={onClose} />
             </div>
           </motion.div>
         </motion.div>

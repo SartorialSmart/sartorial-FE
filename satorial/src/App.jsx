@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import ProtectedRoute from "../utils/ProtectedRoutes";
 import AdminRoute from "../utils/AdminRoute";
+import PermissionRoute from "../utils/PermissionRoute";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import OrganizationRegister from "./pages/Auth/OrganizationRegister";
 import Login from "./pages/Auth/Login";
@@ -23,6 +24,7 @@ import ClientDataDisplay from "./pages/clientPages/ClientDataDisplay";
 
 import OrderDashboardDisplay from "./pages/orderPages/OrderDashboard";
 import OrderListDisplay from "./pages/orderPages/OrderListDisplay";
+import MyOrdersDisplay from "./pages/orderPages/MyOrdersDisplay";
 import BillsListDisplay from "./pages/orderPages/BillsListDisplay";
 import BillDetailDisplay from "./pages/orderPages/BillDetailDisplay";
 import PaymentsListDisplay from "./pages/orderPages/PaymentsListDisplay";
@@ -56,6 +58,7 @@ import InventoryListDisplay from "./pages/inventories/InventoryListDisplay";
 import InventoryDetailDisplay from "./pages/inventories/InventoryDetailDisplay";
 import InventoryCategoryListDisplay from "./pages/inventories/InventoryCategoryListDisplay";
 import DispenseInventoryListDisplay from "./pages/inventories/DispenseInventoryListDisplay";
+import DispenseMaterialsDisplay from "./pages/inventories/DispenseMaterialsDisplay";
 import InventoryHistoryListDisplay from "./pages/inventories/InventoryHistoryListDisplay";
 import VendorListDisplay from "./pages/orderPages/VendorListDisplay";
 import SubscriptionPanelDisplay from "./pages/subscriptionPages/SubscriptionPanelDisplay";
@@ -90,70 +93,82 @@ const dashboards = [
 const protectedRoutes = [
   { path: "/dashboard", element: <DashboardLayout /> },
 
-  { path: "/client/client-dashboard", element: <ClientDashboard /> },
-  { path: "/client/clients-list", element: <ClientsListDisplay /> },
-  { path: "/client/orders-list", element: <ClientOrderListDisplay /> },
-  { path: "/client/allocations-list", element: <AllocationsListDisplay /> },
+  { path: "/client/client-dashboard", element: <ClientDashboard />, perm: { module: "clients", requireView: true } },
+  { path: "/client/clients-list", element: <ClientsListDisplay />, perm: { module: "clients", requireView: true } },
+  { path: "/client/orders-list", element: <ClientOrderListDisplay />, perm: { module: "clients", requireView: true } },
+  { path: "/client/allocations-list", element: <AllocationsListDisplay />, perm: { module: "orders", requireView: true } },
   { path: "/chat", element: <ChatDisplay /> },
-  { path: "/client-data/:clientId", element: <ClientDataDisplay /> },
-  { path: "/edit-client/:clientId", element: <ClientDataDisplay /> },
+  { path: "/client-data/:clientId", element: <ClientDataDisplay />, perm: { module: "clients", requireView: true } },
+  { path: "/edit-client/:clientId", element: <ClientDataDisplay />, perm: { module: "clients", action: "edit" } },
 
-  { path: "/order/order-dashboard", element: <OrderDashboardDisplay /> },
-  { path: "/order/orders-list", element: <OrderListDisplay /> },
-  { path: "/order/bills-list", element: <BillsListDisplay /> },
-  { path: "/order/bill-detail/:billId", element: <BillDetailDisplay /> },
-  { path: "/order/payments-list", element: <PaymentsListDisplay /> },
+  { path: "/order/order-dashboard", element: <OrderDashboardDisplay />, perm: { module: "orders", requireView: true } },
+  { path: "/order/orders-list", element: <OrderListDisplay />, perm: { module: "orders", requireView: true } },
+  { path: "/order/bills-list", element: <BillsListDisplay />, perm: { module: "billing", requireView: true } },
+  { path: "/order/bill-detail/:billId", element: <BillDetailDisplay />, perm: { module: "billing", requireView: true } },
+  { path: "/order/payments-list", element: <PaymentsListDisplay />, perm: { module: "billing", requireView: true } },
   {
     path: "/order/vendor-category-list",
     element: <VendorCategoryListDisplay />,
+    perm: { module: "vendors", requireView: true },
   },
-  { path: "/order/vendor-list", element: <VendorListDisplay /> },
-  { path: "/order/vendor/add", element: <AddVendorFormDisplay /> },
+  { path: "/order/vendor-list", element: <VendorListDisplay />, perm: { module: "vendors", requireView: true } },
+  { path: "/order/vendor/add", element: <AddVendorFormDisplay />, perm: { module: "vendors", action: "create" } },
 
-  { path: "/order/detail/:orderId", element: <OrderDetailDisplay /> },
-  { path: "/order/edit/:orderId", element: <EditOrderFormDisplay /> },
+  { path: "/order/detail/:orderId", element: <OrderDetailDisplay />, perm: { module: "orders", requireView: true } },
+  { path: "/order/edit/:orderId", element: <EditOrderFormDisplay />, perm: { module: "orders", action: "edit" } },
+  { path: "/order/my-orders", element: <MyOrdersDisplay /> },
 
-  { path: "/staff/staff-list", element: <StaffListDisplay />, admin: true },
-  { path: "/staff/team", element: <TeamManagementDisplay />, admin: true },
-  { path: "/staff/staff-detail/:slug", element: <StaffDetailDisplay />, admin: true },
-  { path: "/staff/edit/:slug", element: <StaffEditDisplay />, admin: true },
-  { path: "/staff/exited-staffs-list", element: <ExitedStaffsListDisplay />, admin: true },
-  { path: "/staff/payroll-list", element: <PayrollListDisplay />, admin: true },
-  { path: "/staff/generate-payroll", element: <GeneratePayrollListDisplay />, admin: true },
+  { path: "/staff/staff-list", element: <StaffListDisplay />, perm: { module: "staff", requireView: true } },
+  { path: "/staff/team", element: <TeamManagementDisplay />, perm: { module: "staff", requireView: true } },
+  { path: "/staff/staff-detail/:slug", element: <StaffDetailDisplay />, perm: { module: "staff", requireView: true } },
+  { path: "/staff/edit/:slug", element: <StaffEditDisplay />, perm: { module: "staff", action: "manage" } },
+  { path: "/staff/exited-staffs-list", element: <ExitedStaffsListDisplay />, perm: { module: "staff", requireView: true } },
+  { path: "/staff/payroll-list", element: <PayrollListDisplay />, perm: { module: "payroll", requireView: true } },
+  { path: "/staff/generate-payroll", element: <GeneratePayrollListDisplay />, perm: { module: "payroll", action: "manage" } },
 
-  { path: "/reports/reports/dashboard", element: <ReportDashboardDisplay /> },
-  { path: "/reports/monthly/data", element: <MonthlyDataReportDisplay /> },
-  { path: "/reports/sales/report", element: <SalesReportDisplay /> },
-  { path: "/reports/payments/report", element: <PaymentsReportDisplay /> },
-  { path: "/reports/orders/report", element: <OrderReportDisplay /> },
-  { path: "/reports/bills/report", element: <BillsReportDisplay /> },
+  { path: "/reports/reports/dashboard", element: <ReportDashboardDisplay />, perm: { module: "reports", requireView: true } },
+  { path: "/reports/monthly/data", element: <MonthlyDataReportDisplay />, perm: { module: "reports", requireView: true } },
+  { path: "/reports/sales/report", element: <SalesReportDisplay />, perm: { module: "reports", requireView: true } },
+  { path: "/reports/payments/report", element: <PaymentsReportDisplay />, perm: { module: "reports", requireView: true } },
+  { path: "/reports/orders/report", element: <OrderReportDisplay />, perm: { module: "reports", requireView: true } },
+  { path: "/reports/bills/report", element: <BillsReportDisplay />, perm: { module: "reports", requireView: true } },
   {
     path: "/reports/staff/performance/report",
     element: <StaffPerformanceReportDisplay />,
+    perm: { module: "reports", requireView: true },
   },
-  { path: "/reports/financial/report", element: <FinancialReportDisplay /> },
-  { path: "/reports/expenses/report", element: <ExpensesReportDisplay /> },
+  { path: "/reports/financial/report", element: <FinancialReportDisplay />, perm: { module: "reports", requireView: true } },
+  { path: "/reports/expenses/report", element: <ExpensesReportDisplay />, perm: { module: "reports", requireView: true } },
 
-  { path: "/expenses/overview", element: <ExpensesDashboardDisplay /> },
-  { path: "/expenses/category/list", element: <ExpensesCategoryListDisplay /> },
+  { path: "/expenses/overview", element: <ExpensesDashboardDisplay />, perm: { module: "expenses", requireView: true } },
+  { path: "/expenses/category/list", element: <ExpensesCategoryListDisplay />, perm: { module: "expenses", requireView: true } },
 
-  { path: "/inventory/list/overview", element: <InventoryListDisplay /> },
-  { path: "/inventory/detail/:itemId", element: <InventoryDetailDisplay /> },
+  { path: "/inventory/list/overview", element: <InventoryListDisplay />, perm: { module: "inventory", requireView: true } },
+  { path: "/inventory/detail/:itemId", element: <InventoryDetailDisplay />, perm: { module: "inventory", requireView: true } },
   {
     path: "/inventory/category/list",
     element: <InventoryCategoryListDisplay />,
+    perm: { module: "inventory", requireView: true },
   },
   {
     path: "/inventory/dispense/list",
     element: <DispenseInventoryListDisplay />,
+    perm: { module: "inventory", requireView: true },
+  },
+  {
+    path: "/inventory/dispense-materials",
+    element: <DispenseMaterialsDisplay />,
+    perm: { module: "inventory", requireView: true },
   },
   {
     path: "/inventory/history",
     element: <InventoryHistoryListDisplay />,
+    perm: { module: "inventory", requireView: true },
   },
   {
     path: "/inventory/stock-movements",
     element: <StockMovementHistoryDisplay />,
+    perm: { module: "inventory", requireView: true },
   },
 
   { path: "/subscriptions/panel", element: <SubscriptionPanelDisplay /> },
@@ -161,16 +176,17 @@ const protectedRoutes = [
 
   { path: "/notifications", element: <NotificationsListDisplay /> },
 
-  { path: "/production/dashboard", element: <ProductionDashboardDisplay /> },
-  { path: "/production/orders-list", element: <ProductionOrderListDisplay /> },
+  { path: "/production/dashboard", element: <ProductionDashboardDisplay />, perm: { module: "production", requireView: true } },
+  { path: "/production/orders-list", element: <ProductionOrderListDisplay />, perm: { module: "production", requireView: true } },
   {
     path: "/production/detail/:productionId",
     element: <ProductionOrderDetailDisplay />,
+    perm: { module: "production", requireView: true },
   },
-  { path: "/production/report", element: <ProductionReportDisplay /> },
+  { path: "/production/report", element: <ProductionReportDisplay />, perm: { module: "production", requireView: true } },
 
-  { path: "/settings", element: <ProfileSettingsDisplay /> },
-  { path: "/settings/roles", element: <RoleSettingsDisplay /> },
+  { path: "/settings", element: <ProfileSettingsDisplay />, perm: { module: "settings", requireView: true } },
+  { path: "/settings/roles", element: <RoleSettingsDisplay />, perm: { module: "settings", action: "manage" } },
   { path: "/profile", element: <ProfileSettingsDisplay /> },
 
   { path: "/help-centre", element: <GetHelpDisplay /> },
@@ -200,19 +216,26 @@ const App = () => {
           />
         ))}
 
-        {protectedRoutes.map(({ path, element, admin }, index) => (
-          <Route
-            key={index}
-            path={path}
-            element={
-              admin ? (
-                <AdminRoute>{element}</AdminRoute>
-              ) : (
-                <ProtectedRoute>{element}</ProtectedRoute>
-              )
-            }
-          />
-        ))}
+        {protectedRoutes.map(({ path, element, admin, perm }, index) => {
+          let wrapped = element;
+          if (admin) {
+            wrapped = <AdminRoute>{element}</AdminRoute>;
+          } else if (perm) {
+            wrapped = (
+              <PermissionRoute
+                module={perm.module}
+                action={perm.action}
+                anyActions={perm.anyActions}
+                requireView={perm.requireView}
+              >
+                {element}
+              </PermissionRoute>
+            );
+          } else {
+            wrapped = <ProtectedRoute>{element}</ProtectedRoute>;
+          }
+          return <Route key={index} path={path} element={wrapped} />;
+        })}
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

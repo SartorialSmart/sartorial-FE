@@ -93,6 +93,57 @@ const ProductionService = {
   logAssignmentCompletion: (id, payload) =>
     apiPost(API.PRODUCTION_MANAGEMENT.ASSIGNMENTS.COMPLETIONS(id), payload),
 
+  /**
+   * Fetch the per-parameter work progress on one assignment.
+   * @param {string} id - assignment id
+   */
+  getAssignmentProgress: (id) =>
+    apiGet(API.PRODUCTION_MANAGEMENT.ASSIGNMENTS.PROGRESS(id)),
+
+  /**
+   * Update the per-parameter work progress on one assignment.
+   * Payload: { progress: { <parameterKey>: 1-100, ... } }
+   * @param {string} id - assignment id
+   * @param {Object} progressMap
+   */
+  updateAssignmentProgress: (id, progressMap) =>
+    apiPut(API.PRODUCTION_MANAGEMENT.ASSIGNMENTS.PROGRESS(id), { progress: progressMap }),
+
+  // ---------------------------------------------------------------------------
+  // Measurements + Size (step 2)
+  // ---------------------------------------------------------------------------
+  updateMeasurements: (orderId, payload) =>
+    apiPatch(API.PRODUCTION_MANAGEMENT.MEASUREMENTS.UPDATE(orderId), payload),
+
+  getMeasurements: (orderId) =>
+    apiGet(API.PRODUCTION_MANAGEMENT.ORDERS.DETAIL(orderId)).then((o) => ({
+      gender_target: o.gender_target,
+      size_category: o.size_category,
+      measurement_unit: o.measurement_unit,
+      measurements: o.measurements,
+    })),
+
+  // ---------------------------------------------------------------------------
+  // Materials BOM (step 4, per-unit)
+  // ---------------------------------------------------------------------------
+  getOrderMaterials: (orderId) =>
+    apiGet(API.PRODUCTION_MANAGEMENT.MATERIALS.LIST(orderId)),
+
+  addOrderMaterial: (orderId, payload) =>
+    apiPost(API.PRODUCTION_MANAGEMENT.MATERIALS.CREATE(orderId), payload),
+
+  updateOrderMaterial: (materialId, payload) =>
+    apiPatch(API.PRODUCTION_MANAGEMENT.MATERIALS.UPDATE(materialId), payload),
+
+  deleteOrderMaterial: (materialId) =>
+    apiDelete(API.PRODUCTION_MANAGEMENT.MATERIALS.DELETE(materialId)),
+
+  dispenseOrderMaterial: (materialId) =>
+    apiPost(API.PRODUCTION_MANAGEMENT.MATERIALS.DISPENSE(materialId), {}),
+
+  dispenseAllOrderMaterials: (orderId) =>
+    apiPost(API.PRODUCTION_MANAGEMENT.MATERIALS.DISPENSE_ALL(orderId), {}),
+
   // ---------------------------------------------------------------------------
   // QA Checklist
   // ---------------------------------------------------------------------------

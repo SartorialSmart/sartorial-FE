@@ -105,8 +105,12 @@ const getStatusClass = (status) => {
 };
 
 const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = true, title = "Orders Management", clientView = false }) => {
-  const { canPerform } = usePermissions();
-  const canManageOrders = canPerform("orders", "manage_orders");
+  const { canPerform, canPerformAny } = usePermissions();
+  // Catalog for orders is view/create/edit/delete (no single "manage_orders").
+  // Add => create, Edit/Assign => edit, and generic manage = any write action.
+  const canCreateOrders = canPerform("orders", "create");
+  const canEditOrders = canPerform("orders", "edit");
+  const canManageOrders = canPerformAny("orders", ["create", "edit", "delete"]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   // Data states
   const [orders, setOrders] = useState([]);
@@ -468,6 +472,7 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
 
   const handleStatusClick = (order) => {
     if (clientView) return;
+    if (!canEditOrders) return;
     if (order.order_status === "Pending" && !order.assignment_status) {
       setSelectedOrder(order);
       setModalMode("assign");
@@ -563,8 +568,8 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
           {showAddButton && (
             <button
               onClick={() => setIsModalOpen(true)}
-              disabled={!canManageOrders}
-              title={!canManageOrders ? "You do not have permission to add orders" : undefined}
+              disabled={!canCreateOrders}
+              title={!canCreateOrders ? "You do not have permission to add orders" : undefined}
               className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={16} />
@@ -1046,7 +1051,7 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
                   </div>
                 </Link>
               </li>
-              {showEditAction && canManageOrders && (
+              {showEditAction && canEditOrders && (
                 <li>
                   <Link
                     to={`/order/edit/${filteredOrders[activeDropdown]?.id}`}
@@ -1062,7 +1067,7 @@ const OrderListTable = ({ searchTerm, showAddButton = true, showEditAction = tru
                   </Link>
                 </li>
               )}
-              {!clientView && !isReadyMadeOrder(filteredOrders[activeDropdown]) && ["Pending", "Assigned", "In Progress"].includes(filteredOrders[activeDropdown]?.order_status) && (
+              {!clientView && canEditOrders && !isReadyMadeOrder(filteredOrders[activeDropdown]) && ["Pending", "Assigned", "In Progress"].includes(filteredOrders[activeDropdown]?.order_status) && (
                 <li>
                   <button
                     onClick={() =>

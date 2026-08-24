@@ -2,8 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../src/contexts/AuthContext';
 import PageLoader from '../src/components/loaders/PageLoader';
-
-const ALLOWED_ROLES = ['super_admin', 'admin', 'organization'];
+import { isAdminRole } from '../src/utils/permissions';
 
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -26,7 +25,7 @@ const AdminRoute = ({ children }) => {
     return <Navigate to="/login" state={{ from }} replace />;
   }
 
-  if (!ALLOWED_ROLES.includes(user.role?.toLowerCase())) {
+  if (!isAdminRole(user.role)) {
     return <Navigate to="/dashboard" replace />;
   }
 
