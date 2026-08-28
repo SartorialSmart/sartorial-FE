@@ -1,20 +1,26 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
-import { Package, PackagePlus, Search, Send, Trash2, RefreshCw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { PackagePlus, Search, Send, Trash2, RefreshCw, AlertCircle } from "lucide-react";
 import ProductionService from "../../../services/ProductionService";
 import InventoryService from "../../../services/InventoryService";
 
 const formatCurrency = (v) => `₦${Number(v || 0).toLocaleString()}`;
 
+const LAST_CATEGORY_KEY = "prod_materials_last_category";
+
 const ProductionMaterialsStep = ({ orderId, totalQuantity, onBack, onNext }) => {
   const [categories, setCategories] = useState([]);
   const [items, setItems] = useState([]);
   const [materialsData, setMaterialsData] = useState({ items: [], material_cost_per_unit: 0, total_material_cost: 0 });
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState(
+    () => localStorage.getItem(LAST_CATEGORY_KEY) || "all"
+  );
   const [itemSearch, setItemSearch] = useState("");
   const [qtyDrafts, setQtyDrafts] = useState({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState(null);
 
   const loadAll = useCallback(async () => {
     try {
@@ -26,6 +32,14 @@ const ProductionMaterialsStep = ({ orderId, totalQuantity, onBack, onNext }) => 
       setCategories(Array.isArray(cats) ? cats : cats?.results || []);
       setItems(Array.isArray(inv) ? inv : inv?.results || []);
       setMaterialsData(mats);
+      // Drop a persisted category that no longer exists
+      const saved = localStorage.getItem(LAST_CATEGORY_KEY);
+      if (saved && saved !== "all") {
+        const exists = (Array.isArray(cats) ? cats : cats?.results || []).some(
+          (c) => String(c.id) === String(saved)
+        );
+        if (!exists) setSelectedCategory("all");
+      }
     } catch (e) {
       setError(e?.response?.data?.detail || "Failed to load materials.");
     }
@@ -34,6 +48,14 @@ const ProductionMaterialsStep = ({ orderId, totalQuantity, onBack, onNext }) => 
   useEffect(() => {
     loadAll();
   }, [loadAll]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LAST_CATEGORY_KEY, selectedCategory);
+    } catch {
+      // ignore storage failures (private mode, quota, etc.)
+    }
+  }, [selectedCategory]);
 
   const filteredItems = useMemo(() => {
     const q = itemSearch.trim().toLowerCase();
@@ -58,7 +80,9 @@ const ProductionMaterialsStep = ({ orderId, totalQuantity, onBack, onNext }) => 
       const mats = await ProductionService.getOrderMaterials(orderId);
       setMaterialsData(mats);
     } catch (e) {
-      setError(e?.response?.data?.detail || e?.response?.data?.inventory?.[0] || "Failed to add material.");
+      const msg = e?.response?.data?.detail || e?.response?.data?.inventory?.[0] || "Failed to add material.";
+      setError(msg);
+      setActionError(msg);
     } finally {
       setBusy(false);
     }
@@ -71,7 +95,9 @@ const ProductionMaterialsStep = ({ orderId, totalQuantity, onBack, onNext }) => 
       await ProductionService.deleteOrderMaterial(mat.id);
       setMaterialsData(await ProductionService.getOrderMaterials(orderId));
     } catch (e) {
-      setError("Failed to remove.");
+      const msg = e?.response?.data?.detail || "Failed to remove the material.";
+      setError(msg);
+      setActionError(msg);
     } finally {
       setBusy(false);
     }
@@ -84,7 +110,9 @@ const ProductionMaterialsStep = ({ orderId, totalQuantity, onBack, onNext }) => 
       await ProductionService.dispenseOrderMaterial(mat.id);
       setMaterialsData(await ProductionService.getOrderMaterials(orderId));
     } catch (e) {
-      setError(e?.response?.data?.detail || "Dispense failed.");
+      const msg = e?.response?.data?.detail || "Dispense failed. Check available stock and try again.";
+      setError(msg);
+      setActionError(msg);
     } finally {
       setBusy(false);
     }
@@ -96,7 +124,9 @@ const ProductionMaterialsStep = ({ orderId, totalQuantity, onBack, onNext }) => 
       const res = await ProductionService.dispenseAllOrderMaterials(orderId);
       setMaterialsData(res);
     } catch (e) {
-      setError(e?.response?.data?.detail || "Dispense all failed.");
+      const msg = e?.response?.data?.detail || "Dispense all failed. Check available stock and try again.";
+      setError(msg);
+      setActionError(msg);
     } finally {
       setBusy(false);
     }
@@ -105,7 +135,8 @@ const ProductionMaterialsStep = ({ orderId, totalQuantity, onBack, onNext }) => 
   const catName = (id) => categories.find((c) => String(c.id) === String(id))?.name || id || "—";
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <PackagePlus size={20} className="text-blue-600" /> Materials Dispensing (Step 4)
@@ -191,7 +222,42 @@ const ProductionMaterialsStep = ({ orderId, totalQuantity, onBack, onNext }) => 
         <button onClick={onBack} className="border border-gray-300 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50">Back to Assign</button>
         <button onClick={onNext} className="bg-emerald-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-emerald-700">Finish — Production Ready</button>
       </div>
-    </div>
+      </div>
+
+      {/* Custom action error modal */}
+      <AnimatePresence>
+        {actionError && (
+          <motion.div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center"
+              initial={{ scale: 0.9, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                <AlertCircle size={24} className="text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                We couldn&apos;t complete that
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">{actionError}</p>
+              <button
+                onClick={() => setActionError(null)}
+                className="w-full bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 text-sm font-medium transition-colors"
+              >
+                Got it
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 

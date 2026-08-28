@@ -10,6 +10,7 @@ import {
   Loader2,
   MapPin,
   Package,
+  Pencil,
   PackagePlus,
   Tag,
   Target,
@@ -28,6 +29,8 @@ import ProductionService from "../../../services/ProductionService";
 import AssignProductionModal from "../../allocationModals/AssignProductionModal";
 import ProductionQAModal from "../../allocationModals/ProductionQAModal";
 import AddProductionToInventoryModal from "../../allocationModals/AddProductionToInventoryModal";
+import EditProductionOrderModal from "../../modals/formModals/EditProductionOrderModal";
+import ProductionMaterialsStep from "../../forms/productionForms/ProductionMaterialsStep";
 import Avatar from "../../avatar/Avatar";
 import { usePermissions } from "../../../utils/permissions";
 import { progressTone } from "../../../constants/workProgressConstants";
@@ -63,6 +66,8 @@ const ProductionOrderDetail = () => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showQAModal, setShowQAModal] = useState(false);
   const [showInventoryModal, setShowInventoryModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showMaterialsModal, setShowMaterialsModal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [completionDrafts, setCompletionDrafts] = useState({});
   const [updatingId, setUpdatingId] = useState(null);
@@ -257,16 +262,25 @@ const ProductionOrderDetail = () => {
           <ArrowLeft size={16} />
           Back to Production Orders
         </Link>
-        <div className="flex items-center gap-3">
-          {!isCompleted && !isCancelled && status === "Pending" && canManage && (
-            <button
-              onClick={() => setShowAssignModal(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium"
-            >
-              <UserPlus size={16} />
-              Assign Staff
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {!isCompleted && !isCancelled && status === "Pending" && canManage && (
+              <>
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm font-medium"
+                >
+                  <Pencil size={16} />
+                  Edit Order
+                </button>
+                <button
+                  onClick={() => setShowAssignModal(true)}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium"
+                >
+                  <UserPlus size={16} />
+                  Assign Staff
+                </button>
+              </>
+            )}
           {!isCompleted && !isCancelled && status === "QA Check" && canManage && (
             <button
               onClick={() => setShowQAModal(true)}
@@ -459,12 +473,21 @@ const ProductionOrderDetail = () => {
 
       {/* Materials & Cost per unit vs total */}
       <div className="bg-white rounded-2xl shadow border border-gray-100 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <ShoppingBag className="text-emerald-600" size={20} />
-            Materials & Cost
-          </h2>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <ShoppingBag className="text-emerald-600" size={20} />
+              Materials & Cost
+            </h2>
+            <div className="flex items-center gap-3">
+              {!isCompleted && !isCancelled && canManage && (
+                <button
+                  onClick={() => setShowMaterialsModal(true)}
+                  className="flex items-center gap-2 border border-emerald-600 text-emerald-700 px-4 py-2 rounded-lg hover:bg-emerald-50 text-sm font-medium"
+                >
+                  <PackagePlus size={16} />
+                  Manage / Dispense Materials
+                </button>
+              )}
             <div className="text-right">
               <p className="text-xs text-gray-500">Per unit</p>
               <p className="text-sm font-bold text-indigo-700">₦{Number(order?.material_cost_per_unit || 0).toLocaleString()}</p>
@@ -969,6 +992,48 @@ const ProductionOrderDetail = () => {
         order={order}
         onSuccess={fetchOrder}
       />
+      <EditProductionOrderModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        order={order}
+        onSuccess={fetchOrder}
+      />
+
+      {showMaterialsModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <PackagePlus size={20} className="text-emerald-600" />
+                Manage & Dispense Materials
+              </h2>
+              <button
+                onClick={() => {
+                  setShowMaterialsModal(false);
+                  fetchOrder();
+                }}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <ProductionMaterialsStep
+                orderId={String(order.id)}
+                totalQuantity={Number(order.total_quantity) || 0}
+                onBack={() => {
+                  setShowMaterialsModal(false);
+                  fetchOrder();
+                }}
+                onNext={() => {
+                  setShowMaterialsModal(false);
+                  fetchOrder();
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -28,7 +28,14 @@ import {
   PRODUCTION_ORDER_STATUSES,
   getProductionOrderStatusStyle,
   getProductionProgress,
+  SIZE_CATEGORIES,
 } from "../../constants/productionConstants";
+
+const getSizeLabel = (size) => {
+  if (!size) return "N/A";
+  const found = SIZE_CATEGORIES.find((s) => s.value === size);
+  return found ? found.label : size;
+};
 
 const formatDate = (dateString) => {
   if (!dateString) return "—";
@@ -178,12 +185,13 @@ const ProductionOrderList = ({ searchTerm }) => {
   }, [orders]);
 
   const handleExport = () => {
-    const csvContent = [
-      ["Title", "Category", "Status", "Total Quantity", "Progress", "Created", "Target"],
-      ...filteredOrders.map((order) => [
-        `"${order.title || ""}"`,
-        `"${order.category_name || order.category || ""}"`,
-        `"${order.status || ""}"`,
+      const csvContent = [
+        ["Title", "Category", "Size", "Status", "Total Quantity", "Progress", "Created", "Target"],
+        ...filteredOrders.map((order) => [
+          `"${order.title || ""}"`,
+          `"${order.category_name || order.category || ""}"`,
+          `"${getSizeLabel(order.size_category)}"`,
+          `"${order.status || ""}"`,
         order.total_quantity,
         `${getProductionProgress(order)}%`,
         `"${formatDate(order.order_created_at)}"`,
@@ -371,8 +379,11 @@ const ProductionOrderList = ({ searchTerm }) => {
                     <th className="p-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                       Production Order
                     </th>
-                    <th className="p-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                     <th className="p-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                       Category
+                    </th>
+                    <th className="p-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                      Size
                     </th>
                     <th className="p-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                       Quantity
@@ -420,9 +431,20 @@ const ProductionOrderList = ({ searchTerm }) => {
                             </div>
                           </Link>
                         </td>
-                        <td className="px-3 py-3">
+                         <td className="px-3 py-3">
                           <span className="text-sm text-gray-600">
                             {order.category_name || order.category || "—"}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${
+                              order.size_category
+                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                : "bg-gray-50 text-gray-400 border-gray-200"
+                            }`}
+                          >
+                            {getSizeLabel(order.size_category)}
                           </span>
                         </td>
                         <td className="px-3 py-3">

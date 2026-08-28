@@ -11,7 +11,8 @@ const ProductionMeasurementsForm = ({ initialGender = "Unisex", initialSize = ""
   const [measurements, setMeasurements] = useState({});
   const [errors, setErrors] = useState({});
 
-  const fields = getMeasurementsForGender(gender === "Unisex" ? "Female" : gender);
+  const showMeasurements = gender !== "Unisex";
+  const fields = showMeasurements ? getMeasurementsForGender(gender) : [];
 
   useEffect(() => {
     const init = {};
@@ -34,14 +35,13 @@ const ProductionMeasurementsForm = ({ initialGender = "Unisex", initialSize = ""
       newErrors.size_category = "Size category is required for e-commerce listing.";
       ok = false;
     }
-    fields.forEach(({ key, label }) => {
+    fields.forEach(({ key }) => {
       const v = measurements[key];
-      if (v === "" || v == null) {
-        newErrors[key] = `${label} is required`;
-        ok = false;
-      } else if (isNaN(v) || Number(v) <= 0) {
-        newErrors[key] = "Enter a valid number";
-        ok = false;
+      if (v !== "" && v != null && v !== undefined) {
+        if (isNaN(v) || Number(v) <= 0) {
+          newErrors[key] = "Enter a valid number";
+          ok = false;
+        }
       }
     });
     setErrors(newErrors);
@@ -100,30 +100,39 @@ const ProductionMeasurementsForm = ({ initialGender = "Unisex", initialSize = ""
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-        {fields.map(({ key, label, icon }) => (
-          <div key={key} className="flex items-center gap-3">
-            <div className="w-20 h-20 flex-shrink-0">
-              <MeasurementPlaceholder label={label} icon={icon} />
-            </div>
-            <div className="flex-1">
-              <label className="text-gray-600 text-sm font-medium block mb-1">{label}</label>
-              <div className="relative">
-                <input
-                  type="number"
-                  name={key}
-                  value={measurements[key] || ""}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  className={`border ${errors[key] ? "border-red-500" : "border-gray-300"} rounded-lg px-3 py-2 pr-10 w-full text-sm focus:outline-none focus:ring-2 ${errors[key] ? "focus:ring-red-200" : "focus:ring-blue-200"}`}
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">{getUnitLabel(unit)}</span>
+      {showMeasurements ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+          {fields.map(({ key, label, icon }) => (
+            <div key={key} className="flex items-center gap-3">
+              <div className="w-20 h-20 flex-shrink-0">
+                <MeasurementPlaceholder label={label} icon={icon} />
               </div>
-              {errors[key] && <p className="text-red-500 text-xs mt-1">{errors[key]}</p>}
+              <div className="flex-1">
+                <label className="text-gray-600 text-sm font-medium block mb-1">{label}</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    name={key}
+                    value={measurements[key] || ""}
+                    onChange={handleChange}
+                    placeholder="0.00"
+                    className={`border ${errors[key] ? "border-red-500" : "border-gray-300"} rounded-lg px-3 py-2 pr-10 w-full text-sm focus:outline-none focus:ring-2 ${errors[key] ? "focus:ring-red-200" : "focus:ring-blue-200"}`}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">{getUnitLabel(unit)}</span>
+                </div>
+                {errors[key] && <p className="text-red-500 text-xs mt-1">{errors[key]}</p>}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-start gap-3">
+          <Ruler size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-gray-500">
+            Measurements are optional for <span className="font-semibold text-gray-700">Unisex</span> items (e.g. caps, custom handbags). You can continue without entering any measurements.
+          </p>
+        </div>
+      )}
 
       <div className="flex justify-between pt-4 border-t border-gray-100">
         <button onClick={onBack} className="border border-gray-300 text-gray-600 px-5 py-2.5 rounded-lg hover:bg-gray-50 text-sm font-medium flex items-center gap-1">
