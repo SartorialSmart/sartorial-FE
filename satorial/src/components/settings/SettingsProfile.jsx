@@ -9,6 +9,7 @@ import LocationManagement from "./LocationManagement";
 import InvoiceContent from "./InvoiceContent";
 import FabricsContent from "./FabricsContent";
 import NotificationSettings from "./NotificationSettings";
+import PayrollSettings from "./PayrollSettings";
 
 const SettingsProfile = () => {
   const [activeTab, setActiveTab] = useState("Profile");
@@ -20,6 +21,7 @@ const SettingsProfile = () => {
     { id: "Locations", label: "Locations" },
     { id: "Invoice", label: "Invoice Settings" },
     { id: "Fabrics", label: "Fabrics Catalog" },
+    { id: "Payroll", label: "Payroll Configuration" },
     { id: "Notifications", label: "Notifications" },
   ];
 
@@ -37,6 +39,8 @@ const SettingsProfile = () => {
         return <InvoiceContent />;
       case "Fabrics":
         return <FabricsContent />;
+      case "Payroll":
+        return <PayrollSettings />;
       case "Notifications":
         return <NotificationSettings />;
       default:

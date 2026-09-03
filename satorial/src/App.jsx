@@ -40,6 +40,7 @@ import StaffEditDisplay from "./pages/staffPages/StaffEditDisplay";
 import ExitedStaffsListDisplay from "./pages/staffPages/ExitedStaffsListDisplay";
 import PayrollListDisplay from "./pages/staffPages/PayrollListDisplay";
 import GeneratePayrollListDisplay from "./pages/staffPages/GeneratePayrollListDisplay";
+import LoanListDisplay from "./pages/staffPages/LoanListDisplay";
 
 import ReportDashboardDisplay from "./pages/reportPages/ReportDashboardDisplay";
 import MonthlyDataReportDisplay from "./pages/reportPages/MonthlyDataReportDisplay";
@@ -125,6 +126,7 @@ const protectedRoutes = [
   { path: "/staff/exited-staffs-list", element: <ExitedStaffsListDisplay />, perm: { module: "staff", requireView: true } },
   { path: "/staff/payroll-list", element: <PayrollListDisplay />, perm: { module: "payroll", requireView: true } },
   { path: "/staff/generate-payroll", element: <GeneratePayrollListDisplay />, perm: { module: "payroll", action: "manage" } },
+  { path: "/staff/loans", element: <LoanListDisplay />, perm: { module: "payroll", requireView: true } },
 
   { path: "/reports/reports/dashboard", element: <ReportDashboardDisplay />, perm: { module: "reports", requireView: true } },
   { path: "/reports/monthly/data", element: <MonthlyDataReportDisplay />, perm: { module: "reports", requireView: true } },
