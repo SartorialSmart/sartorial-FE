@@ -183,6 +183,59 @@ export const API = {
       LIST: "/users/payroll/",
       DETAIL: (payrollId) => `/users/payroll/${payrollId}/`,
     },
+
+    PAY_COMPONENTS: {
+      LIST: "/payroll/components/",
+      CREATE: "/payroll/components/",
+      DETAIL: (id) => `/payroll/components/${id}/`,
+      UPDATE: (id) => `/payroll/components/${id}/`,
+      DELETE: (id) => `/payroll/components/${id}/`,
+    },
+
+    PAY_DEDUCTIONS: {
+      LIST: "/payroll/deductions/",
+      CREATE: "/payroll/deductions/",
+      DETAIL: (id) => `/payroll/deductions/${id}/`,
+      UPDATE: (id) => `/payroll/deductions/${id}/`,
+      DELETE: (id) => `/payroll/deductions/${id}/`,
+    },
+
+    STAFF_LOANS: {
+      LIST: "/payroll/loans/",
+      CREATE: "/payroll/loans/",
+      DETAIL: (id) => `/payroll/loans/${id}/`,
+      UPDATE: (id) => `/payroll/loans/${id}/`,
+      DELETE: (id) => `/payroll/loans/${id}/`,
+    },
+
+    BONUS_RULES: {
+      LIST: "/payroll/bonus-rules/",
+      CREATE: "/payroll/bonus-rules/",
+      DETAIL: (id) => `/payroll/bonus-rules/${id}/`,
+      UPDATE: (id) => `/payroll/bonus-rules/${id}/`,
+      DELETE: (id) => `/payroll/bonus-rules/${id}/`,
+    },
+
+    PAYROLL_PERIODS: {
+      LIST: "/payroll/periods/",
+      CREATE: "/payroll/periods/",
+      DETAIL: (id) => `/payroll/periods/${id}/`,
+      UPDATE: (id) => `/payroll/periods/${id}/`,
+      DELETE: (id) => `/payroll/periods/${id}/`,
+      GENERATE: (id) => `/payroll/periods/${id}/generate/`,
+    },
+
+    PAYROLL_RECORDS: {
+      LIST: "/payroll/records/",
+      DETAIL: (id) => `/payroll/records/${id}/`,
+      FINALIZE: (id) => `/payroll/records/${id}/finalize/`,
+      BULK_FINALIZE: "/payroll/records/bulk-finalize/",
+      EXPORT: "/payroll/records/export/",
+    },
+
+    PAYROLL_DASHBOARD: {
+      SUMMARY: "/payroll/dashboard/",
+    },
     ROLES: {
       LIST: "/users/staff-roles/",
       DETAIL: (roleId) => `/users/staff-roles/${roleId}/`,
