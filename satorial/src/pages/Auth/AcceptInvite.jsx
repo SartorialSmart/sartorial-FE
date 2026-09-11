@@ -5,6 +5,10 @@ import { toast } from "react-toastify";
 import StaffService from "../../services/staffServices/StaffService";
 import { extractErrorMessage } from "../../../utils/errorUtils";
 
+// The backend column holds 15 characters. Without this the form happily posts a
+// longer number and the invitee gets a server error they cannot act on.
+const PHONE_MAX_LENGTH = 15;
+
 const initialForm = {
   first_name: "",
   last_name: "",
@@ -28,6 +32,11 @@ export default function AcceptInvite() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const phone = form.phone_number.trim();
+    if (phone.length > PHONE_MAX_LENGTH) {
+      message.error(`Phone number must be at most ${PHONE_MAX_LENGTH} characters.`);
+      return;
+    }
     if (form.password.length < 8) {
       message.error("Password must be at least 8 characters.");
       return;
@@ -41,9 +50,9 @@ export default function AcceptInvite() {
       await StaffService.acceptInvite({
         uid,
         token,
-        first_name: form.first_name,
-        last_name: form.last_name,
-        phone_number: form.phone_number,
+        first_name: form.first_name.trim(),
+        last_name: form.last_name.trim(),
+        phone_number: phone,
         password: form.password,
       });
       message.success("Account set up successfully. Please log in.");
@@ -87,6 +96,7 @@ export default function AcceptInvite() {
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Phone number</label>
               <input name="phone_number" value={form.phone_number} onChange={onChange} required
+                maxLength={PHONE_MAX_LENGTH} inputMode="tel"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
             </div>
             <div>
