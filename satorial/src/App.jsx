@@ -69,6 +69,7 @@ import AddVendorFormDisplay from "./pages/orderPages/AddVendorFormDisplay";
 import NotificationsListDisplay from "./pages/notificationPages/NotificationsListDisplay";
 import ProfileSettingsDisplay from "./pages/settingsPages/ProfileSettingsDisplay";
 import RoleSettingsDisplay from "./pages/settingsPages/RoleSettingsDisplay";
+import SettingsStorefrontDisplay from "./pages/settingsPages/SettingsStorefrontDisplay";
 import StockMovementHistoryDisplay from "./pages/inventories/StockMovementHistoryDisplay";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
@@ -78,6 +79,16 @@ import ProductionDashboardDisplay from "./pages/productionPages/ProductionDashbo
 import ProductionOrderListDisplay from "./pages/productionPages/ProductionOrderListDisplay";
 import ProductionOrderDetailDisplay from "./pages/productionPages/ProductionOrderDetailDisplay";
 import ProductionReportDisplay from "./pages/productionPages/ProductionReportDisplay";
+
+import StoreProducts from "./pages/dashboard/store/StoreProducts";
+import StoreOrders from "./pages/dashboard/store/StoreOrders";
+import StoreIntegrations from "./pages/dashboard/store/StoreIntegrations";
+import StoreSettings from "./pages/dashboard/store/StoreSettings";
+import StoreSettingsEcommerceDisplay from "./pages/dashboard/store/StoreSettingsEcommerceDisplay";
+import StorefrontCatalog from "./pages/storefront/StorefrontCatalog";
+import ProductDetail from "./pages/storefront/ProductDetail";
+import Cart from "./pages/storefront/Cart";
+import Checkout from "./pages/storefront/Checkout";
 
 const dashboards = [
   "client",
@@ -188,8 +199,14 @@ const protectedRoutes = [
   { path: "/production/report", element: <ProductionReportDisplay />, perm: { module: "production", requireView: true } },
 
   { path: "/settings", element: <ProfileSettingsDisplay />, perm: { module: "settings", requireView: true } },
+  { path: "/settings/storefront", element: <SettingsStorefrontDisplay />, perm: { module: "settings", requireView: true } },
   { path: "/settings/roles", element: <RoleSettingsDisplay />, perm: { module: "settings", action: "manage" } },
   { path: "/profile", element: <ProfileSettingsDisplay /> },
+
+  { path: "/store/products", element: <StoreProducts />, perm: { module: "inventory", requireView: true } },
+  { path: "/store/orders", element: <StoreOrders />, perm: { module: "orders", requireView: true } },
+  { path: "/store/integrations", element: <StoreIntegrations />, perm: { module: "inventory", requireView: true } },
+  { path: "/store/settings", element: <StoreSettingsEcommerceDisplay />, perm: { module: "settings", requireView: true } },
 
   { path: "/help-centre", element: <GetHelpDisplay /> },
 ];
@@ -205,6 +222,12 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/accept-invite" element={<AcceptInvite />} />
+        {/* Public storefront — storeSlug param for path mode; also works via subdomain/custom domain */}
+        <Route path="/store/:storeSlug" element={<StorefrontCatalog />} />
+        <Route path="/store/:storeSlug/product/:productSlug" element={<ProductDetail />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/store/:storeSlug/checkout" element={<Checkout />} />
+        <Route path="/checkout" element={<Checkout />} />
 
         {dashboards.map((dashboard, index) => (
           <Route

@@ -41,6 +41,10 @@ const VIEW_KEY_MAP = {
   "/production/dashboard": "production",
   "/subscriptions/panel": "subscriptions",
   "/settings": "settings",
+  "/store/products": "inventory",
+  "/store/orders": "orders",
+  "/store/integrations": "inventory",
+  "/store/settings": "settings",
 };
 
 const formatCurrency = (amount) => `₦${Number(amount || 0).toLocaleString()}`;
@@ -129,6 +133,18 @@ const getDashboardItems = (stats) => [
     borderColor: "border-cyan-200",
     stats: stats.productionOrders !== null ? `${stats.productionOrders} Orders` : "—",
     textColor: "text-cyan-900"
+  },
+  {
+    title: "Ecommerce Storefront",
+    description: "Sell finished products via your own store, Shopify & WooCommerce",
+    icon: <Box size={24} />,
+    img: PATTERN_6,
+    button_link: "/store/products",
+    color: "from-fuchsia-500 to-pink-600",
+    bgColor: "bg-pink-500/10",
+    borderColor: "border-pink-200",
+    stats: "Store + Sync",
+    textColor: "text-pink-900"
   },
   {
     title: "Subscription",

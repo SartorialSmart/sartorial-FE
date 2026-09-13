@@ -400,6 +400,60 @@ export const API = {
     },
   },
 
+  ECOMMERCE: {
+    STORES: {
+      LIST: "/ecommerce/stores/",
+      CREATE: "/ecommerce/stores/",
+      DETAIL: (id) => `/ecommerce/stores/${id}/`,
+      UPDATE: (id) => `/ecommerce/stores/${id}/`,
+      DELETE: (id) => `/ecommerce/stores/${id}/`,
+      VERIFY_DOMAIN: (id) => `/ecommerce/stores/${id}/domains/verify/`,
+      RESOLVE: "/ecommerce/storefront/stores/resolve/",
+    },
+    PRODUCTS: {
+      LIST: "/ecommerce/products/",
+      CREATE: "/ecommerce/products/",
+      DETAIL: (id) => `/ecommerce/products/${id}/`,
+      UPDATE: (id) => `/ecommerce/products/${id}/`,
+      DELETE: (id) => `/ecommerce/products/${id}/`,
+    },
+    VARIANTS: {
+      CREATE: (productId) => `/ecommerce/products/${productId}/variants/`,
+      DETAIL: (id) => `/ecommerce/variants/${id}/`,
+      UPDATE: (id) => `/ecommerce/variants/${id}/`,
+      DELETE: (id) => `/ecommerce/variants/${id}/`,
+    },
+    IMAGES: {
+      CREATE: (productId) => `/ecommerce/products/${productId}/images/`,
+      DELETE: (id) => `/ecommerce/images/${id}/`,
+    },
+    STOREFRONT: {
+      CATALOG: "/ecommerce/storefront/catalog/",
+      PRODUCT_DETAIL: (slug) => `/ecommerce/storefront/products/${slug}/`,
+      CHECKOUT: "/ecommerce/storefront/orders/",
+      PAY: (orderId) => `/ecommerce/storefront/orders/${orderId}/pay/`,
+    },
+    ADMIN_ORDERS: {
+      LIST: "/ecommerce/admin/orders/",
+      DETAIL: (id) => `/ecommerce/admin/orders/${id}/`,
+    },
+    EXTERNAL: {
+      LIST: "/ecommerce/external-configs/",
+      CREATE: "/ecommerce/external-configs/",
+      DETAIL: (id) => `/ecommerce/external-configs/${id}/`,
+    },
+    SYNC_ERRORS: {
+      LIST: "/ecommerce/sync-errors/",
+      DETAIL: (id) => `/ecommerce/sync-errors/${id}/`,
+    },
+    WEBHOOKS: {
+      SHOPIFY: "/ecommerce/webhooks/shopify/",
+      WOOCOMMERCE: "/ecommerce/webhooks/woocommerce/",
+      PAYSTACK: "/ecommerce/webhooks/paystack/",
+      FLUTTERWAVE: "/ecommerce/webhooks/flutterwave/",
+    },
+  },
+
   SETTINGS: {
     // Organization Profile
     PROFILE: {
