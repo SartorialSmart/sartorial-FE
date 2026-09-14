@@ -417,6 +417,12 @@ export const API = {
       UPDATE: (id) => `/ecommerce/products/${id}/`,
       DELETE: (id) => `/ecommerce/products/${id}/`,
     },
+    AVAILABLE_INVENTORY: {
+      LIST: "/ecommerce/available-inventory/",
+    },
+    INVENTORY_CATEGORIES: {
+      LIST: "/ecommerce/inventory-categories/",
+    },
     VARIANTS: {
       CREATE: (productId) => `/ecommerce/products/${productId}/variants/`,
       DETAIL: (id) => `/ecommerce/variants/${id}/`,

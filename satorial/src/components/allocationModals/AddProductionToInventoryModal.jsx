@@ -54,6 +54,7 @@ const AddProductionToInventoryModal = ({ isOpen, onClose, order, onSuccess }) =>
         selling_price: Number(formData.selling_price) || 0,
         low_stock_threshold: Number(formData.low_stock_threshold) || 0,
         barcode: formData.barcode || "",
+        image_url: formData.image_url || order?.image_url || "",
       });
       if (onSuccess) onSuccess();
       onClose();
@@ -109,11 +110,22 @@ const AddProductionToInventoryModal = ({ isOpen, onClose, order, onSuccess }) =>
                   {error}
                 </div>
               )}
+              {order?.image_url && (
+                <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-3">
+                  <img src={order.image_url} alt={order.title} className="w-16 h-16 object-cover rounded-lg border border-gray-200" onError={(e)=>{e.target.style.display='none'}} />
+                  <div className="text-sm">
+                    <p className="font-medium text-gray-700">Production photo</p>
+                    <p className="text-xs text-gray-500">Will be used as inventory & storefront image unless you replace it below.</p>
+                  </div>
+                </div>
+              )}
               <InventoryForm
                 key={formKey}
                 initialValues={{
                   item_name: order?.title || "",
                   quantity: String(order?.total_quantity || ""),
+                  category: order?.category || "",
+                  image_url: order?.image_url || "",
                 }}
                 onSubmit={handleSubmit}
                 onCancel={onClose}

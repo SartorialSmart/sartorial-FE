@@ -33,6 +33,23 @@ const ProductDetail = () => {
         <Descriptions column={1} size="small">
           <Descriptions.Item label="Status">{product.status}</Descriptions.Item>
           <Descriptions.Item label="Stock">{product.current_stock ?? "—"}</Descriptions.Item>
+          <Descriptions.Item label="Price">
+            {(() => {
+              const price = product.price || product.inventory_selling_price || product.variants?.[0]?.price;
+              return price ? `₦${Number(price).toLocaleString()}` : "—";
+            })()}
+          </Descriptions.Item>
+          {(product.size_category || product.available_sizes?.length) && (
+            <Descriptions.Item label="Sizes">
+              <span className="flex gap-1 flex-wrap">
+                {(product.available_sizes?.length ? product.available_sizes : product.size_category ? [product.size_category] : []).map((s) => (
+                  <Tag key={s}>{s}</Tag>
+                ))}
+                {product.gender_target && <Tag>{product.gender_target}</Tag>}
+              </span>
+            </Descriptions.Item>
+          )}
+          {product.production_order_title && <Descriptions.Item label="Production batch">{product.production_order_title}</Descriptions.Item>}
         </Descriptions>
         <div className="mt-4">
           <h4 className="font-semibold mb-2">Variants</h4>

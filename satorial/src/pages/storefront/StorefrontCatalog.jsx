@@ -78,7 +78,20 @@ const StorefrontCatalog = () => {
                   <Meta title={p.title} description={p.description?.slice(0, 80)} />
                   <div className="mt-2 flex gap-2 flex-wrap">
                     {p.is_featured && <Tag color={primary}>Featured</Tag>}
-                    {p.variants?.slice(0, 2).map((v) => <Tag key={v.id}>₦{v.price} — {v.size}</Tag>)}
+                    {/* Price — variant price takes precedence, fallback to product.price / inventory selling_price */}
+                    {(() => {
+                      const price = p.price || p.inventory_selling_price || p.variants?.[0]?.price;
+                      return price ? <Tag color="green">₦{Number(price).toLocaleString()}</Tag> : <Tag color="default">Price on request</Tag>;
+                    })()}
+                    {/* Sizes from production — show real sizes (XL, XXL…) not generic One Size; fallback to available_sizes/size_category */}
+                    {(() => {
+                      const sizes = p.available_sizes?.length ? p.available_sizes : p.size_category ? [p.size_category] : p.variants?.map((v) => v.size).filter((s) => s && s !== "One Size");
+                      const display = (sizes && sizes.length ? sizes : []).slice(0, 3);
+                      return display.map((s) => <Tag key={s}>{s}</Tag>);
+                    })()}
+                    {/* Show at most 2 variant price/size tags when multiple sizes exist */}
+                    {p.variants?.length > 1 && p.variants?.slice(0, 2).map((v) => v.size !== "One Size" && <Tag key={v.id}>₦{Number(v.price).toLocaleString()} — {v.size}</Tag>)}
+                    {p.gender_target && <Tag>{p.gender_target}</Tag>}
                   </div>
                 </Card>
               </Link>

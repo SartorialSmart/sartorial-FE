@@ -51,6 +51,7 @@ const InventoryForm = ({
     unit_cost: initialValues.unit_cost || "",
     selling_price: initialValues.selling_price || "",
     low_stock_threshold: initialValues.low_stock_threshold || "",
+    image_url: initialValues.image_url || "",
   });
   const [errors, setErrors] = useState({});
 
@@ -322,6 +323,28 @@ const InventoryForm = ({
             <XCircle className="w-3 h-3" />
             {errors.low_stock_threshold}
           </div>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+          <Package className="w-4 h-4" />
+          Finished product image <span className="text-gray-400 font-normal">(optional — Cloudinary URL)</span>
+        </label>
+        <input
+          name="image_url"
+          value={form.image_url}
+          onChange={handleChange}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="https://res.cloudinary.com/.../product.jpg"
+        />
+        {form.image_url ? (
+          <div className="mt-2">
+            <img src={form.image_url} alt="Preview" className="w-24 h-24 object-cover rounded-lg border border-gray-200" onError={(e)=>{e.target.style.display='none'}} />
+            <p className="text-xs text-gray-400 mt-1">This image will become the storefront product photo (you can still replace it in the store).</p>
+          </div>
+        ) : (
+          <p className="text-xs text-gray-400 mt-1">Leave blank to inherit the production order photo (if set).</p>
         )}
       </div>
       
