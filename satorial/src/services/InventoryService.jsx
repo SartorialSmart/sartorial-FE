@@ -37,9 +37,10 @@ const InventoryService = {
   },
 
   // Inventory Category
-  listInventoryCategory: async () => {
+  listInventoryCategory: async (params = {}) => {
     const response = await axiosInstance.get(
-      API.INVENTORY_MANAGEMENT.INVENTORY_CATEGORY.LIST
+      API.INVENTORY_MANAGEMENT.INVENTORY_CATEGORY.LIST,
+      { params }
     );
     return response.data;
   },
@@ -71,9 +72,10 @@ const InventoryService = {
   },
 
   // Inventory
-  listInventory: async () => {
+  listInventory: async (params = {}) => {
     const response = await axiosInstance.get(
-      API.INVENTORY_MANAGEMENT.INVENTORY.LIST
+      API.INVENTORY_MANAGEMENT.INVENTORY.LIST,
+      { params }
     );
     return response.data;
   },

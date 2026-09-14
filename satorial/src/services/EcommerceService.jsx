@@ -74,6 +74,15 @@ const EcommerceService = {
     const res = await axiosInstance.delete(API.ECOMMERCE.IMAGES.DELETE(id));
     return res.data;
   },
+  // Available inventory helpers for ProductEditor category dropdown (ready-made)
+  availableInventory: async (params = {}) => {
+    const res = await axiosInstance.get(API.ECOMMERCE.AVAILABLE_INVENTORY.LIST, { params });
+    return res.data;
+  },
+  inventoryCategories: async (params = {}) => {
+    const res = await axiosInstance.get(API.ECOMMERCE.INVENTORY_CATEGORIES.LIST, { params });
+    return res.data;
+  },
   // Storefront (public, but uses same axiosInstance with optional auth)
   catalog: async (params) => {
     const res = await axiosInstance.get(API.ECOMMERCE.STOREFRONT.CATALOG, { params });

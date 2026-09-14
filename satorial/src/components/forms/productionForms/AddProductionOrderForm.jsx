@@ -41,6 +41,7 @@ const AddProductionOrderForm = ({ onClose, onCreated, onCreatedFallback }) => {
     location: isAdmin ? "" : user?.location || "",
     order_created_at: todayDate,
     target_completion_date: todayDate,
+    image_url: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -94,6 +95,7 @@ const AddProductionOrderForm = ({ onClose, onCreated, onCreatedFallback }) => {
         location: isAdmin ? "" : user?.location || "",
         order_created_at: getTodayDateString(),
         target_completion_date: getTodayDateString(),
+        image_url: "",
       });
       setSelectedCategory(null);
       setCopiedOrderId("");
@@ -380,6 +382,30 @@ const AddProductionOrderForm = ({ onClose, onCreated, onCreatedFallback }) => {
                 disabled={loading}
               />
             </div>
+          </div>
+
+          {/* Finished product image — wires to inventory → storefront */}
+          <div className="mt-4">
+            <label className="block text-gray-700 font-medium mb-2">
+              Finished product image <span className="text-gray-400 font-normal">(optional — Cloudinary URL)</span>
+            </label>
+            <input
+              type="url"
+              name="image_url"
+              value={formData.image_url}
+              onChange={handleChange}
+              placeholder="https://res.cloudinary.com/.../finished.jpg — shows in inventory & storefront"
+              className="w-full border border-gray-300 rounded-md p-3 focus:ring-blue-500 focus:border-blue-500"
+              disabled={loading}
+            />
+            {formData.image_url ? (
+              <div className="mt-2 flex items-center gap-3">
+                <img src={formData.image_url} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" onError={(e)=>{e.target.style.display='none'}} />
+                <p className="text-xs text-gray-500">This photo will be copied to inventory when you complete the order, and auto-wired to the storefront product (you can replace it there).</p>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 mt-1">Leave blank to add later. When production completes, this image becomes the inventory photo and the default storefront image.</p>
+            )}
           </div>
 
           <div className="mt-6 text-right">
