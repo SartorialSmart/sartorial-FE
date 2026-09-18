@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { X, PackageCheck, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-toastify";
+import { message } from "antd";
+import { extractErrorMessage } from "../../../utils/errorUtils";
 import InventoryForm from "../forms/InventoryForm";
 import InventoryService from "../../services/InventoryService";
 import LocationService from "../../services/LocationService";
@@ -42,6 +45,20 @@ const AddProductionToInventoryModal = ({ isOpen, onClose, order, onSuccess }) =>
   const handleSubmit = async (formData) => {
     setLoading(true);
     setError(null);
+    // Validate image_url if provided
+    if (formData.image_url) {
+      try {
+        const url = new URL(formData.image_url);
+        if (!["http:", "https:"].includes(url.protocol)) throw new Error("Invalid protocol");
+      } catch {
+        const msg = "Invalid image URL. Must be http(s) Cloudinary URL.";
+        setError(msg);
+        toast.error(msg);
+        message.error(msg);
+        setLoading(false);
+        return;
+      }
+    }
     try {
       await ProductionService.completeOrder(order.id, {
         item_name: formData.item_name,
@@ -56,12 +73,17 @@ const AddProductionToInventoryModal = ({ isOpen, onClose, order, onSuccess }) =>
         barcode: formData.barcode || "",
         image_url: formData.image_url || order?.image_url || "",
       });
+      const successMsg = "Production completed and added to inventory";
+      toast.success(successMsg);
+      message.success(successMsg);
       if (onSuccess) onSuccess();
       onClose();
-    } catch {
-      setError(
-        "Failed to add production output to inventory. Please try again."
-      );
+    } catch (err) {
+      const msg = extractErrorMessage(err, "Failed to add production output to inventory. Please try again.");
+      console.error("Complete production failed:", err.response?.data || err);
+      setError(msg);
+      toast.error(msg);
+      message.error(msg);
     } finally {
       setLoading(false);
     }

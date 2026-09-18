@@ -5,12 +5,15 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { message } from "antd";
+import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 import PayrollPeriodService from "../../services/staffServices/PayrollPeriodService";
 import PayRollService from "../../services/staffServices/PayRolService";
 import StaffService from "../../services/staffServices/StaffService";
 import SettingsService from "../../services/settings";
+import { extractErrorMessage } from "../../../utils/errorUtils";
 import SuccessModal from "../modals/SuccessModal";
+import PayslipDetailModal from "../modals/PayslipDetailModal";
 
 const GeneratePayrollTable = () => {
   const [periods, setPeriods] = useState([]);
@@ -30,6 +33,7 @@ const GeneratePayrollTable = () => {
   });
   const [creatingPeriod, setCreatingPeriod] = useState(false);
   const [selectedRecords, setSelectedRecords] = useState([]);
+  const [payslipModal, setPayslipModal] = useState({ open: false, record: null });
 
   useEffect(() => {
     fetchPeriods();
@@ -41,11 +45,18 @@ const GeneratePayrollTable = () => {
       const data = await PayrollPeriodService.listPeriods();
       const list = Array.isArray(data) ? data : data?.results || [];
       setPeriods(list);
-      if (list.length > 0 && !selectedPeriod) {
-        handleSelectPeriod(list[0]);
-      }
-    } catch {
-      message.error("Failed to load pay periods");
+      // Use functional check to avoid stale closure on selectedPeriod
+      setSelectedPeriod((prev) => {
+        if (list.length > 0 && !prev) {
+          // Schedule selection after state update to avoid race
+          setTimeout(() => handleSelectPeriod(list[0]), 0);
+        }
+        return prev;
+      });
+    } catch (err) {
+      const errMsg = extractErrorMessage(err, "Failed to load pay periods");
+      message.error(errMsg);
+      toast.error(errMsg);
     }
   };
 
@@ -105,12 +116,14 @@ const GeneratePayrollTable = () => {
     e.preventDefault();
     if (!newPeriod.name || !newPeriod.start_date || !newPeriod.end_date) {
       message.warning("Please fill all period fields");
+      toast.warning("Please fill all period fields");
       return;
     }
     try {
       setCreatingPeriod(true);
       const created = await PayrollPeriodService.createPeriod(newPeriod);
       message.success("Pay period created");
+      toast.success("Pay period created");
       setShowPeriodForm(false);
       setNewPeriod({ name: "", start_date: "", end_date: "" });
       await fetchPeriods();
@@ -118,7 +131,9 @@ const GeneratePayrollTable = () => {
         handleSelectPeriod(created);
       }
     } catch (error) {
-      message.error(error.response?.data?.detail || "Failed to create period");
+      const errMsg = error.response?.data?.detail || "Failed to create period";
+      message.error(errMsg);
+      toast.error(errMsg);
     } finally {
       setCreatingPeriod(false);
     }
@@ -127,16 +142,72 @@ const GeneratePayrollTable = () => {
   const handleGenerate = async () => {
     if (!selectedPeriod) {
       message.warning("Select a pay period first");
+      toast.warning("Select a pay period first");
       return;
     }
+    // Capture period id at call time to avoid stale closure
+    const periodId = selectedPeriod.id;
+    const periodName = selectedPeriod.name;
+    const isRegenerate = records.length > 0;
     try {
       setGenerating(true);
-      await PayrollPeriodService.generatePayroll(selectedPeriod.id);
-      message.success("Payroll generated successfully");
-      await fetchRecords(selectedPeriod.id);
-      await fetchPeriods();
+      // Explicit empty body ensures backend receives valid JSON; some backends reject no-body POST
+      const result = await PayrollPeriodService.generatePayroll(periodId);
+      // Backend may return {success:false} which is converted to rejection via interceptor,
+      // so reaching here means success. Handle both message shapes.
+      const successMsg =
+        result?.detail ||
+        result?.message ||
+        (isRegenerate ? `Payroll regenerated for ${periodName}` : `Payroll generated for ${periodName}`);
+      message.success(successMsg);
+      toast.success(successMsg);
+      // Real-time update: prefer records returned by generate, fallback to fresh fetch
+      let freshList = [];
+      try {
+        const freshData = await PayRollService.listRecords({ period: periodId });
+        freshList = Array.isArray(freshData) ? freshData : freshData?.results || [];
+      } catch (fetchErr) {
+        console.warn("Failed to fetch fresh records after generate:", fetchErr);
+      }
+      const returnedRecords = result?.records || result?.data?.records || result?.data;
+      if (Array.isArray(returnedRecords) && returnedRecords.length > 0) {
+        setRecords(returnedRecords);
+      } else if (freshList.length > 0) {
+        setRecords(freshList);
+      } else if (Array.isArray(result) && result.length > 0) {
+        // Some backends return array directly
+        setRecords(result);
+      }
+      setLoading(false);
+      // Refresh periods without stale closure — use fresh fetch without triggering selection loop
+      try {
+        const periodData = await PayrollPeriodService.listPeriods();
+        const list = Array.isArray(periodData) ? periodData : periodData?.results || [];
+        setPeriods(list);
+      } catch {
+        // non-critical
+      }
     } catch (error) {
-      message.error(error.response?.data?.detail || "Failed to generate payroll");
+      // Ignore canceled requests (React StrictMode double-invoke)
+      if (error.code === "ERR_CANCELED") {
+        setGenerating(false);
+        return;
+      }
+      const isNetwork = !error.response;
+      const rawMsg = extractErrorMessage(error, "Failed to generate payroll");
+      const errMsg = isNetwork
+        ? "Network error. Please check your connection and try again."
+        : rawMsg;
+      console.error("Generate payroll failed:", error.response?.data || error.message || error);
+      const action = isRegenerate ? "regenerate" : "generate";
+      const displayMsg = errMsg.includes("Failed to generate") || isNetwork ? errMsg : `Failed to ${action} payroll: ${errMsg}`;
+      message.error(displayMsg);
+      toast.error(displayMsg);
+      try {
+        await fetchRecords(periodId);
+      } catch {
+        // ignore
+      }
     } finally {
       setGenerating(false);
     }
@@ -147,9 +218,12 @@ const GeneratePayrollTable = () => {
       setFinalizing(recordId);
       await PayRollService.finalizeRecord(recordId);
       message.success("Record finalized");
+      toast.success("Record finalized");
       await fetchRecords(selectedPeriod.id);
     } catch (error) {
-      message.error(error.response?.data?.detail || "Failed to finalize");
+      const errMsg = error.response?.data?.detail || "Failed to finalize";
+      message.error(errMsg);
+      toast.error(errMsg);
     } finally {
       setFinalizing(null);
     }
@@ -158,6 +232,7 @@ const GeneratePayrollTable = () => {
   const handleBulkFinalize = async () => {
     if (selectedRecords.length === 0) {
       message.warning("Select records to finalize");
+      toast.warning("Select records to finalize");
       return;
     }
     try {
@@ -166,10 +241,13 @@ const GeneratePayrollTable = () => {
         record_ids: selectedRecords,
       });
       message.success(`${selectedRecords.length} records finalized`);
+      toast.success(`${selectedRecords.length} records finalized`);
       setSelectedRecords([]);
       await fetchRecords(selectedPeriod.id);
     } catch (error) {
-      message.error(error.response?.data?.detail || "Failed to finalize records");
+      const errMsg = error.response?.data?.detail || "Failed to finalize records";
+      message.error(errMsg);
+      toast.error(errMsg);
     } finally {
       setFinalizing(null);
     }
@@ -178,6 +256,7 @@ const GeneratePayrollTable = () => {
   const handleExport = () => {
     if (records.length === 0) {
       message.warning("No records to export");
+      toast.warning("No records to export");
       return;
     }
     const rows = records.map((r) => {
@@ -502,20 +581,29 @@ const GeneratePayrollTable = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            {record.status === "draft" && (
+                            <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() => handleFinalize(record.id)}
-                                disabled={finalizing === record.id}
-                                className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 ml-auto"
+                                onClick={() => setPayslipModal({ open: true, record })}
+                                className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="View payslip details"
                               >
-                                {finalizing === record.id ? (
-                                  <Loader2 size={14} className="animate-spin" />
-                                ) : (
-                                  <CheckCircle size={14} />
-                                )}
-                                Finalize
+                                <Eye size={16} />
                               </button>
-                            )}
+                              {record.status === "draft" && (
+                                <button
+                                  onClick={() => handleFinalize(record.id)}
+                                  disabled={finalizing === record.id}
+                                  className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                                >
+                                  {finalizing === record.id ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                  ) : (
+                                    <CheckCircle size={14} />
+                                  )}
+                                  Finalize
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -531,6 +619,18 @@ const GeneratePayrollTable = () => {
       {successModal && (
         <SuccessModal {...successModal} onClose={() => setSuccessModal(null)} />
       )}
+
+      <PayslipDetailModal
+        isOpen={payslipModal.open}
+        onClose={() => setPayslipModal({ open: false, record: null })}
+        record={payslipModal.record}
+        employee={payslipModal.record ? staffMap[String(payslipModal.record.employee)] : null}
+        department={
+          payslipModal.record
+            ? resolveDept(staffMap[String(payslipModal.record.employee)]?.department)
+            : null
+        }
+      />
     </div>
   );
 };

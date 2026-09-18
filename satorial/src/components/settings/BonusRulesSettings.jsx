@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, Loader2, Zap, ToggleLeft, ToggleRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { message } from "antd";
+import { toast } from "react-toastify";
 import BonusRuleService from "../../services/staffServices/BonusRuleService";
 import SettingsService from "../../services/settings";
 import Modal from "../common/Modal";
@@ -74,6 +75,7 @@ const BonusRulesSettings = () => {
       setDepartments(deptList);
     } catch {
       message.error("Failed to load bonus rules");
+      toast.error("Failed to load bonus rules");
     } finally {
       setLoading(false);
     }
@@ -121,12 +123,46 @@ const BonusRulesSettings = () => {
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+  const isDeptSelected = (dept) => {
+    const selected = formData.applies_to_departments || [];
+    return selected.some(
+      (v) =>
+        String(v) === String(dept.id) ||
+        String(v).toLowerCase() === String(dept.name).toLowerCase()
+    );
+  };
+
+  const normalizeDeptIdsForPayload = (deptValues) => {
+    if (!deptValues || deptValues.length === 0) return [];
+    return deptValues.map((v) => {
+      const byId = departments.find((d) => String(d.id) === String(v));
+      if (byId) return byId.id;
+      const byName = departments.find(
+        (d) => String(d.name).toLowerCase() === String(v).toLowerCase()
+      );
+      return byName ? byName.id : v;
+    });
+  };
+
   const handleDepartmentToggle = (deptId) => {
+    const dept = departments.find((d) => String(d.id) === String(deptId)) || { id: deptId, name: "" };
     setFormData((prev) => {
       const current = prev.applies_to_departments || [];
-      const updated = current.includes(deptId)
-        ? current.filter((id) => id !== deptId)
-        : [...current, deptId];
+      const isSelected = current.some(
+        (v) =>
+          String(v) === String(dept.id) ||
+          (dept.name && String(v).toLowerCase() === dept.name.toLowerCase())
+      );
+      let updated;
+      if (isSelected) {
+        updated = current.filter(
+          (v) =>
+            String(v) !== String(dept.id) &&
+            (!dept.name || String(v).toLowerCase() !== dept.name.toLowerCase())
+        );
+      } else {
+        updated = [...current, dept.id];
+      }
       return { ...prev, applies_to_departments: updated };
     });
   };
@@ -152,6 +188,7 @@ const BonusRulesSettings = () => {
         ...formData,
         threshold: Number(formData.threshold),
         bonus_value: Number(formData.bonus_value),
+        applies_to_departments: normalizeDeptIdsForPayload(formData.applies_to_departments),
       };
 
       if (editingItem) {
@@ -178,6 +215,7 @@ const BonusRulesSettings = () => {
         error.response?.data?.detail ||
         "Failed to save bonus rule";
       message.error(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -191,9 +229,12 @@ const BonusRulesSettings = () => {
         message: "The bonus rule has been deleted successfully.",
         buttonText: "Done",
       });
+      message.success("Rule deleted");
+      toast.success("Rule deleted");
       fetchData();
     } catch {
       message.error("Failed to delete bonus rule");
+      toast.error("Failed to delete bonus rule");
     }
   };
 
@@ -202,9 +243,13 @@ const BonusRulesSettings = () => {
       await BonusRuleService.updateRule(item.id, {
         is_active: !item.is_active,
       });
+      const msg = !item.is_active ? "Activated" : "Deactivated";
+      message.success(`Rule ${msg.toLowerCase()}`);
+      toast.success(`Rule ${msg.toLowerCase()}`);
       fetchData();
     } catch {
       message.error("Failed to update status");
+      toast.error("Failed to update status");
     }
   };
 
@@ -474,7 +519,7 @@ const BonusRulesSettings = () => {
                   type="button"
                   onClick={() => handleDepartmentToggle(dept.id)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
-                    (formData.applies_to_departments || []).includes(dept.id)
+                    isDeptSelected(dept)
                       ? "bg-blue-600 text-white border-blue-600"
                       : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                   }`}

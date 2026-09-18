@@ -6,6 +6,8 @@ import StaffRoleService from "../../services/staffServices/StaffRoleService";
 import RolesService from "../../services/settings/RolesService";
 import SettingsService from "../../services/settings";
 import { extractErrorMessage } from "../../../utils/errorUtils";
+import { toast } from "react-toastify";
+import { message } from "antd";
 import StaffSideBarLayout from "../../components/navs/StaffSideBarLayout";
 
 const StaffEditDisplay = () => {
@@ -42,6 +44,7 @@ const StaffEditDisplay = () => {
         const staffData = staffRes.status === "fulfilled" ? staffRes.value : null;
         if (!staffData) {
           toast.error("Failed to load staff details");
+          message.error("Failed to load staff details");
           return;
         }
 
@@ -50,15 +53,15 @@ const StaffEditDisplay = () => {
           : deptRes.value?.results || [];
         setDepartments(departments);
 
-        // Resolve the stored department value (name or legacy ID) to its
-        // display name so the department select shows the correct option.
+        // Normalize stored department (name or ID) to ID for payroll consistency
+        // tailoring staff often stored as "Tailoring" name but payroll settings use IDs
         let departmentValue = staffData.department || "";
         const departmentMatch =
-          departments.find((d) => d.id === departmentValue) ||
+          departments.find((d) => String(d.id) === String(departmentValue)) ||
           departments.find(
             (d) => d.name?.toLowerCase() === String(departmentValue).toLowerCase()
           );
-        if (departmentMatch) departmentValue = departmentMatch.name;
+        if (departmentMatch) departmentValue = String(departmentMatch.id);
 
         setFormData({
           first_name: staffData.first_name || "",
@@ -96,6 +99,7 @@ const StaffEditDisplay = () => {
       } catch (error) {
         console.error("Error loading staff:", error);
         toast.error("Failed to load staff details");
+        message.error("Failed to load staff details");
       } finally {
         setLoading(false);
       }
@@ -126,10 +130,13 @@ const StaffEditDisplay = () => {
 
       await StaffService.updateStaff(slug, payload);
       toast.success("Staff updated successfully");
+      message.success("Staff updated successfully");
       navigate(`/staff/staff-detail/${slug}`);
     } catch (error) {
       console.error("Error updating staff:", error.response?.data || error);
-      toast.error(extractErrorMessage(error, "Failed to update staff"));
+      const errMsg = extractErrorMessage(error, "Failed to update staff");
+      toast.error(errMsg);
+      message.error(errMsg);
     } finally {
       setSaving(false);
     }
@@ -221,7 +228,7 @@ const StaffEditDisplay = () => {
                 >
                   <option value="">Select Department</option>
                   {departments.map((dept) => (
-                    <option key={dept.id} value={dept.name}>{dept.name}</option>
+                    <option key={dept.id} value={String(dept.id)}>{dept.name}</option>
                   ))}
                 </select>
               </div>

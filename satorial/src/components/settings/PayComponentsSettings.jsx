@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, Loader2, Gift, ToggleLeft, ToggleRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { message } from "antd";
+import { toast } from "react-toastify";
 import PayComponentService from "../../services/staffServices/PayComponentService";
 import SettingsService from "../../services/settings";
 import Modal from "../common/Modal";
@@ -64,6 +65,7 @@ const PayComponentsSettings = () => {
       setDepartments(deptList);
     } catch {
       message.error("Failed to load pay components");
+      toast.error("Failed to load pay components");
     } finally {
       setLoading(false);
     }
@@ -109,12 +111,49 @@ const PayComponentsSettings = () => {
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+  // Helpers to make department matching robust for tailoring and legacy data.
+  // Backend may return IDs, names, or case-variant names; staff.department is often a name string.
+  const isDeptSelected = (dept) => {
+    const selected = formData.applies_to_departments || [];
+    return selected.some(
+      (v) =>
+        String(v) === String(dept.id) ||
+        String(v).toLowerCase() === String(dept.name).toLowerCase()
+    );
+  };
+
+  const normalizeDeptIdsForPayload = (deptValues) => {
+    if (!deptValues || deptValues.length === 0) return [];
+    return deptValues.map((v) => {
+      const byId = departments.find((d) => String(d.id) === String(v));
+      if (byId) return byId.id;
+      const byName = departments.find(
+        (d) => String(d.name).toLowerCase() === String(v).toLowerCase()
+      );
+      return byName ? byName.id : v;
+    });
+  };
+
   const handleDepartmentToggle = (deptId) => {
+    // Also resolve by name to handle legacy values where selected contains names
+    const dept = departments.find((d) => String(d.id) === String(deptId)) || { id: deptId, name: "" };
     setFormData((prev) => {
       const current = prev.applies_to_departments || [];
-      const updated = current.includes(deptId)
-        ? current.filter((id) => id !== deptId)
-        : [...current, deptId];
+      const isSelected = current.some(
+        (v) =>
+          String(v) === String(dept.id) ||
+          (dept.name && String(v).toLowerCase() === dept.name.toLowerCase())
+      );
+      let updated;
+      if (isSelected) {
+        updated = current.filter(
+          (v) =>
+            String(v) !== String(dept.id) &&
+            (!dept.name || String(v).toLowerCase() !== dept.name.toLowerCase())
+        );
+      } else {
+        updated = [...current, dept.id];
+      }
       return { ...prev, applies_to_departments: updated };
     });
   };
@@ -137,6 +176,7 @@ const PayComponentsSettings = () => {
       const payload = {
         ...formData,
         value: Number(formData.value),
+        applies_to_departments: normalizeDeptIdsForPayload(formData.applies_to_departments),
       };
 
       if (editingItem) {
@@ -163,6 +203,7 @@ const PayComponentsSettings = () => {
         error.response?.data?.detail ||
         "Failed to save pay component";
       message.error(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -176,9 +217,12 @@ const PayComponentsSettings = () => {
         message: "The pay component has been deleted successfully.",
         buttonText: "Done",
       });
+      message.success("Component deleted");
+      toast.success("Component deleted");
       fetchData();
     } catch {
       message.error("Failed to delete pay component");
+      toast.error("Failed to delete pay component");
     }
   };
 
@@ -187,9 +231,13 @@ const PayComponentsSettings = () => {
       await PayComponentService.updateComponent(item.id, {
         is_active: !item.is_active,
       });
+      const msg = !item.is_active ? "Activated" : "Deactivated";
+      message.success(`Component ${msg.toLowerCase()}`);
+      toast.success(`Component ${msg.toLowerCase()}`);
       fetchData();
     } catch {
       message.error("Failed to update status");
+      toast.error("Failed to update status");
     }
   };
 
@@ -450,7 +498,7 @@ const PayComponentsSettings = () => {
                   type="button"
                   onClick={() => handleDepartmentToggle(dept.id)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
-                    (formData.applies_to_departments || []).includes(dept.id)
+                    isDeptSelected(dept)
                       ? "bg-blue-600 text-white border-blue-600"
                       : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                   }`}

@@ -7,6 +7,7 @@ import RolesService from "../../../services/settings/RolesService";
 import SettingsService from "../../../services/settings";
 import LocationService from "../../../services/LocationService";
 import { toast } from "react-toastify";
+import { message } from "antd";
 import PropTypes from "prop-types";
 import dayjs from "dayjs";
 
@@ -90,16 +91,17 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
         setRoles(roleList);
         setLocations(locList);
 
-        // Resolve stored department value (name or legacy ID) to its display
-        // name so the select shows the correct option.
+        // Normalize stored department value (name or ID) to department ID
+        // so payroll settings (which use IDs) correctly match tailoring staff.
+        // Keep display via ID->name lookup, but store ID for consistency.
         setFormData((prev) => {
           const raw = prev.department || "";
           const match =
-            deptList.find((d) => d.id === raw) ||
+            deptList.find((d) => String(d.id) === String(raw)) ||
             deptList.find(
               (d) => d.name?.toLowerCase() === String(raw).toLowerCase()
             );
-          return match ? { ...prev, department: match.name } : prev;
+          return match ? { ...prev, department: String(match.id) } : prev;
         });
       })
       .finally(() => setLoading(false));
@@ -116,10 +118,12 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
       toast.error("File size must be less than 2MB");
+      message.error("File size must be less than 2MB");
       return;
     }
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
+      message.error("Please upload an image file");
       return;
     }
     setAvatarFile(file);
@@ -158,6 +162,7 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
       toast.error("Please fix the highlighted required fields.");
+      message.error("Please fix the highlighted required fields.");
       return;
     }
 
@@ -176,6 +181,7 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
       await StaffService.updateStaff(staff.slug, payload);
 
       toast.success("Staff updated successfully");
+      message.success("Staff updated successfully");
       if (onSaved) onSaved();
       onClose();
     } catch (error) {
@@ -183,12 +189,13 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
       const errData = error.response?.data;
       if (errData && typeof errData === "object") {
         Object.entries(errData).forEach(([field, msgs]) => {
-          toast.error(
-            `${field}: ${Array.isArray(msgs) ? msgs.join(", ") : msgs}`
-          );
+          const msg = `${field}: ${Array.isArray(msgs) ? msgs.join(", ") : msgs}`;
+          toast.error(msg);
+          message.error(msg);
         });
       } else {
         toast.error("Failed to update staff");
+        message.error("Failed to update staff");
       }
     } finally {
       setSaving(false);
@@ -325,7 +332,7 @@ const EditStaffForm = ({ staff, onClose, onSaved }) => {
               >
                 <option value="">Select Department</option>
                 {departments.map((dept) => (
-                  <option key={dept.id} value={dept.name}>
+                  <option key={dept.id} value={String(dept.id)}>
                     {dept.name}
                   </option>
                 ))}

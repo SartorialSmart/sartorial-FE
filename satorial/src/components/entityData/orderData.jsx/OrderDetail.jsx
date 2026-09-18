@@ -20,6 +20,8 @@ import { extractErrorMessage } from "../../../../utils/errorUtils";
 import { useAuth } from "../../../contexts/AuthContext";
 import { canViewModule } from "../../../utils/permissions";
 import { progressTone } from "../../../constants/workProgressConstants";
+import { toast } from "react-toastify";
+import { message } from "antd";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
@@ -287,6 +289,25 @@ const OrderDetail = () => {
   };
 
   const handleCompleteConfirm = async () => {
+    // Validate image before upload
+    if (completeOrderImage) {
+      const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+      const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+      if (!ALLOWED_TYPES.includes(completeOrderImage.type)) {
+        const msg = "Invalid file type. Please upload JPEG, PNG or WebP.";
+        toast.error(msg);
+        message.error(msg);
+        setErrorModal({ show: true, title: "Invalid image", message: msg });
+        return;
+      }
+      if (completeOrderImage.size > MAX_SIZE) {
+        const msg = `Image too large (${(completeOrderImage.size / 1024 / 1024).toFixed(1)}MB). Max 5MB.`;
+        toast.error(msg);
+        message.error(msg);
+        setErrorModal({ show: true, title: "Image too large", message: msg });
+        return;
+      }
+    }
     setShowCompleteUploadModal(false);
     setUpdatingStatus(true);
     try {
@@ -294,20 +315,34 @@ const OrderDetail = () => {
         const formData = new FormData();
         formData.append("order_status", "Completed");
         formData.append("order_completion_image", completeOrderImage);
-        await OrderService.updateOrder(orderId, formData);
+        // Use PATCH for partial FormData update to avoid PUT full-replace validation errors
+        if (OrderService.patchOrder) {
+          await OrderService.patchOrder(orderId, formData);
+        } else {
+          await OrderService.updateOrder(orderId, formData);
+        }
       } else {
-      await OrderService.updateOrder(orderId, { ...order, order_status: "Completed" });
+        // Minimal payload to avoid sending read-only/large fields
+        await OrderService.patchOrder(orderId, { order_status: "Completed" });
       }
       const updatedOrder = await OrderService.getOrderById(orderId);
       setOrder(preserveAllocation(updatedOrder));
       setCompleteOrderImage(null);
+      const successMsg = "Order marked as Completed successfully";
+      toast.success(successMsg);
+      message.success(successMsg);
     } catch (err) {
       console.error("Failed to update status:", err);
+      const msg = extractErrorMessage(err, "Please try again.");
+      toast.error(msg);
+      message.error(msg);
       setErrorModal({
         show: true,
         title: "Failed to update order status",
-        message: extractErrorMessage(err, "Please try again."),
+        message: msg,
       });
+      // Re-open modal on failure so user can retry without losing image
+      setShowCompleteUploadModal(true);
     } finally {
       setUpdatingStatus(false);
     }
@@ -2024,10 +2059,28 @@ const OrderDetail = () => {
                   <span className="text-xs text-gray-400">Optional</span>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp,image/jpg"
                     className="hidden"
                     onChange={(e) => {
-                      if (e.target.files[0]) setCompleteOrderImage(e.target.files[0]);
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+                      const MAX_SIZE = 5 * 1024 * 1024;
+                      if (!ALLOWED_TYPES.includes(file.type)) {
+                        const msg = "Invalid file type. Use JPEG, PNG or WebP.";
+                        toast.error(msg);
+                        message.error(msg);
+                        e.target.value = "";
+                        return;
+                      }
+                      if (file.size > MAX_SIZE) {
+                        const msg = `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max 5MB.`;
+                        toast.error(msg);
+                        message.error(msg);
+                        e.target.value = "";
+                        return;
+                      }
+                      setCompleteOrderImage(file);
                     }}
                   />
                 </label>

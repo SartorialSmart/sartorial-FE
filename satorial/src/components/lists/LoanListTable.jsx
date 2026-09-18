@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, Loader2, DollarSign, Clock, CheckCircle, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { message } from "antd";
+import { toast } from "react-toastify";
 import StaffLoanService from "../../services/staffServices/StaffLoanService";
 import StaffService from "../../services/staffServices/StaffService";
+import { extractErrorMessage } from "../../../utils/errorUtils";
 import Table from "../common/Table";
 import LoanFormModal from "../modals/LoanFormModal";
 import SuccessModal from "../modals/SuccessModal";
@@ -47,6 +49,7 @@ const LoanListTable = () => {
       setEmployees(staffList);
     } catch {
       message.error("Failed to load loans");
+      toast.error("Failed to load loans");
     } finally {
       setLoading(false);
     }
@@ -80,37 +83,51 @@ const LoanListTable = () => {
         message: "The loan record has been deleted.",
         buttonText: "Done",
       });
+      message.success("Loan deleted");
+      toast.success("Loan deleted");
       fetchData();
     } catch {
       message.error("Failed to delete loan");
+      toast.error("Failed to delete loan");
     }
   };
 
   const handleSubmit = async (data) => {
     try {
+      // Build payload: keep employee as-is (string from <select>); backend handles coercion.
+      // For creates, omit status if backend treats it as read-only (prevents 500).
+      const payload = { ...data };
+      if (!editingLoan && payload.status) {
+        delete payload.status;
+      }
+      console.log("Submitting loan payload:", payload, "editing:", !!editingLoan);
       if (editingLoan) {
-        await StaffLoanService.updateLoan(editingLoan.id, data);
+        await StaffLoanService.updateLoan(editingLoan.id, payload);
         setSuccessModal({
           title: "Loan Updated",
           message: "The loan has been updated successfully.",
           buttonText: "Done",
         });
+        message.success("Loan updated successfully");
+        toast.success("Loan updated successfully");
       } else {
-        await StaffLoanService.createLoan(data);
+        await StaffLoanService.createLoan(payload);
         setSuccessModal({
           title: "Loan Created",
           message: "The loan has been created successfully.",
           buttonText: "Done",
         });
+        message.success("Loan created successfully");
+        toast.success("Loan created successfully");
       }
       setIsModalOpen(false);
+      setEditingLoan(null);
       fetchData();
     } catch (error) {
-      const errorMsg =
-        error.response?.data?.detail ||
-        error.response?.data?.employee?.[0] ||
-        "Failed to save loan";
+      console.error("Loan save failed:", error.response?.data || error.message || error);
+      const errorMsg = extractErrorMessage(error, "Failed to save loan");
       message.error(errorMsg);
+      toast.error(errorMsg);
       throw error;
     }
   };
