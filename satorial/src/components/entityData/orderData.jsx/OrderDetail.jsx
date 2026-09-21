@@ -45,6 +45,7 @@ const OrderDetail = () => {
   });
   const [showCompleteUploadModal, setShowCompleteUploadModal] = useState(false);
   const [completeOrderImage, setCompleteOrderImage] = useState(null);
+  const [completeImagePreviewUrl, setCompleteImagePreviewUrl] = useState(null);
   const [errorModal, setErrorModal] = useState({ show: false, title: "", message: "" });
   const [timelineSortAsc, setTimelineSortAsc] = useState(false);
   const [cachedAllocation, setCachedAllocation] = useState(null);
@@ -56,6 +57,18 @@ const OrderDetail = () => {
   const ALLOWED_ROLES = ["super_admin", "admin", "organization"];
   const isAdmin = ALLOWED_ROLES.includes(user?.role?.toLowerCase());
   const canAccessQA = isAdmin || canViewModule(user, "qa_checklist");
+
+  // Resolve completion image URL — backend may return relative /media path in production
+  const resolveCompletionImageUrl = (orderObj) => {
+    const raw = orderObj?.order_completion_image_url || orderObj?.order_completion_image;
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw) || raw.startsWith("data:") || raw.startsWith("blob:")) return raw;
+    const base = (import.meta.env.VITE_BASE_URL || "").replace(/\/api\/v1\/?$/, "").replace(/\/+$/, "");
+    if (!base) return raw;
+    const path = raw.startsWith("/") ? raw : `/${raw}`;
+    // If raw is /media/... backend serves from same origin as API
+    return `${base}${path}`;
+  };
 
   // Define all possible statuses in order (Completed before On Delivery)
   const STATUS_FLOW = [
@@ -242,6 +255,17 @@ const OrderDetail = () => {
     fetchInvoiceLayout();
   }, []);
 
+  // Object URL lifecycle for upload preview — avoid leaks & stale URLs in production
+  useEffect(() => {
+    if (!completeOrderImage) {
+      setCompleteImagePreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(completeOrderImage);
+    setCompleteImagePreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [completeOrderImage]);
+
   const handleSavePayment = async () => {
     // AddPaymentForm already called PaymentService.createPayment — refresh order in background
     setShowPaymentModal(false);
@@ -276,7 +300,12 @@ const OrderDetail = () => {
     if (!shouldComplete) {
       setUpdatingStatus(true);
       try {
-        await OrderService.updateOrder(orderId, { ...order, order_status: qaStatus });
+        // Minimal payload — avoid PUT full-replace with read-only fields that breaks production
+        if (OrderService.patchOrder) {
+          await OrderService.patchOrder(orderId, { order_status: qaStatus });
+        } else {
+          await OrderService.updateOrder(orderId, { order_status: qaStatus });
+        }
         const updatedOrder = await OrderService.getOrderById(orderId);
         setOrder(preserveAllocation(updatedOrder));
       } catch (err) {
@@ -315,11 +344,23 @@ const OrderDetail = () => {
         const formData = new FormData();
         formData.append("order_status", "Completed");
         formData.append("order_completion_image", completeOrderImage);
-        // Use PATCH for partial FormData update to avoid PUT full-replace validation errors
-        if (OrderService.patchOrder) {
-          await OrderService.patchOrder(orderId, formData);
-        } else {
+        // Production fix: use PUT for multipart uploads.
+        // - Backend's PATCH parser and production CORS/proxy may not handle
+        //   multipart/form-data; PUT with FormData is proven via OrganizationProfile/logo and
+        //   earlier OrderDetail revisions.
+        // - Keep PATCH as fallback if PUT fails with validation (some backends enforce full-replace).
+        try {
           await OrderService.updateOrder(orderId, formData);
+        } catch (putErr) {
+          const status = putErr?.response?.status;
+          const isValidationOrParserError = status === 400 || status === 415 || status === 500;
+          const hasPatch = typeof OrderService.patchOrder === "function";
+          if (isValidationOrParserError && hasPatch) {
+            console.warn("PUT multipart failed, retrying via PATCH:", putErr?.response?.data || putErr.message);
+            await OrderService.patchOrder(orderId, formData);
+          } else {
+            throw putErr;
+          }
         }
       } else {
         // Minimal payload to avoid sending read-only/large fields
@@ -1732,13 +1773,23 @@ const OrderDetail = () => {
               <CheckCircle className="text-green-600" size={20} />
               Completed Work
             </h3>
-            {order.order_completion_image_url || order.order_completion_image ? (
+            {resolveCompletionImageUrl(order) ? (
               <div className="space-y-3">
                 <img
-                  src={order.order_completion_image_url || order.order_completion_image}
+                  src={resolveCompletionImageUrl(order)}
                   alt="Completed garment"
                   className="w-full rounded-lg object-contain border border-gray-200"
                   style={{ maxHeight: "320px" }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                    const parent = e.currentTarget.parentElement;
+                    if (parent && !parent.querySelector(".img-error")) {
+                      const msg = document.createElement("p");
+                      msg.className = "img-error text-sm text-red-500 text-center py-2";
+                      msg.textContent = "Failed to load image. URL: " + (resolveCompletionImageUrl(order) || "");
+                      parent.appendChild(msg);
+                    }
+                  }}
                 />
               </div>
             ) : (
@@ -2040,11 +2091,11 @@ const OrderDetail = () => {
               {completeOrderImage ? (
                 <div className="space-y-3">
                   <img
-                    src={URL.createObjectURL(completeOrderImage)}
+                    src={completeImagePreviewUrl || ""}
                     alt="Completed garment preview"
                     className="max-h-48 mx-auto rounded-lg object-contain"
                   />
-                  <p className="text-sm text-gray-500">{completeOrderImage.name}</p>
+                  <p className="text-sm text-gray-500">{completeOrderImage.name} ({(completeOrderImage.size / 1024).toFixed(0)} KB)</p>
                   <button
                     onClick={() => setCompleteOrderImage(null)}
                     className="text-sm text-red-500 hover:text-red-700"

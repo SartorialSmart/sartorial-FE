@@ -1,18 +1,42 @@
 import axios from 'axios';
 
+const resolvedBaseUrl =
+  import.meta.env.VITE_BASE_URL ||
+  (import.meta.env.PROD ? "https://api.sartorialsmart.com/api/v1/" : "http://127.0.0.1:8000/api/v1/");
+
+if (!import.meta.env.VITE_BASE_URL) {
+  console.warn(
+    `[axiosConfig] VITE_BASE_URL is not set — falling back to ${resolvedBaseUrl}. ` +
+      "Set VITE_BASE_URL in your .env or Vercel env vars."
+  );
+}
+
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL,
+  baseURL: resolvedBaseUrl,
 });
 
 const PUBLIC_ENDPOINTS = ['/users/login/', '/users/register-organization/', '/users/forgot-password/', '/users/reset-password/', '/users/accept-invite/', '/ecommerce/storefront/', '/ecommerce/webhooks/'];
 
 axiosInstance.interceptors.request.use(
   async (config) => {
-    // Set JSON Content-Type for non-FormData requests
-    if (!(config.data instanceof FormData)) {
-      config.headers['Content-Type'] = 'application/json';
+    // Robust FormData detection — instanceof can fail across realms/bundles
+    const isFormData =
+      config.data instanceof FormData ||
+      (config.data != null &&
+        typeof config.data.append === "function" &&
+        typeof config.data.get === "function" &&
+        typeof config.data.has === "function");
+    if (isFormData) {
+      // Let browser/axios set multipart boundary — delete any preset JSON header
+      if (config.headers["Content-Type"]) delete config.headers["Content-Type"];
+      if (config.headers["content-type"]) delete config.headers["content-type"];
+      if (axiosInstance.defaults.headers.common["Content-Type"]) {
+        // ensure per-request header is removed so it doesn't leak from defaults
+        delete config.headers["Content-Type"];
+      }
+    } else {
+      config.headers["Content-Type"] = "application/json";
     }
-    // For FormData, let axios/browser auto-set multipart/form-data with boundary
 
     if (!PUBLIC_ENDPOINTS.some((ep) => config.url.includes(ep))) {
       let token = localStorage.getItem('accessToken');
@@ -78,7 +102,7 @@ axiosInstance.interceptors.response.use(
 
       return new Promise((resolve, reject) => {
         axios
-          .post(`${import.meta.env.VITE_BASE_URL}users/token/refresh/`, {
+          .post(`${resolvedBaseUrl}users/token/refresh/`, {
             refresh: refreshToken,
           })
           .then((response) => {
