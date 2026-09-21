@@ -20,7 +20,7 @@ const PayrollPeriodService = {
     apiDelete(API.STAFF_MANAGEMENT.PAYROLL_PERIODS.DELETE(id)),
 
   generatePayroll: (periodId) =>
-    apiPost(API.STAFF_MANAGEMENT.PAYROLL_PERIODS.GENERATE(periodId)),
+    apiPost(API.STAFF_MANAGEMENT.PAYROLL_PERIODS.GENERATE(periodId), {}, { skipGlobalError: true }),
 };
 
 export default PayrollPeriodService;

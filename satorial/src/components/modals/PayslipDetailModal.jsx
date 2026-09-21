@@ -3,11 +3,52 @@ import { Printer, X, DollarSign, TrendingUp, TrendingDown, Gift, MinusCircle, Za
 const PayslipDetailModal = ({ isOpen, onClose, record, employee, department }) => {
   if (!isOpen || !record) return null;
 
-  const additions = record.additions || [];
-  const deductions = record.deductions || [];
+  const additions = record.additions || record.breakdown?.additions || [];
+  const deductions = record.deductions || record.breakdown?.deductions || [];
+  const bonusDetails = record.bonus_details || [];
 
   const handlePrint = () => {
-    window.print();
+    const content = document.getElementById("payslip-content");
+    if (!content) {
+      window.print();
+      return;
+    }
+    // Clone styles from current document for print window
+    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map((el) => el.outerHTML)
+      .join("\n");
+    const printWindow = window.open("", "_blank", "width=800,height=900");
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+    const employeeName = employee?.full_name || `${employee?.first_name || ""} ${employee?.last_name || ""}`.trim() || "Employee";
+    const periodName = record.period_name || record.period?.name || "Pay Period";
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Payslip - ${employeeName} - ${periodName}</title>
+          ${styles}
+          <style>
+            @media print {
+              body { margin: 0; padding: 16px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              .no-print { display: none !important; }
+              .print-break-inside-avoid { break-inside: avoid; }
+            }
+            body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; background: white; color: #111827; }
+            .payslip-container { max-width: 700px; margin: 0 auto; }
+          </style>
+        </head>
+        <body>
+          <div class="payslip-container">${content.innerHTML}</div>
+          <script>
+            setTimeout(() => { window.focus(); window.print(); }, 300);
+            window.onafterprint = () => window.close();
+          <\/script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   return (

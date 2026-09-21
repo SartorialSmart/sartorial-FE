@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import StaffService from "../../services/staffServices/StaffService";
 
 const LOAN_STATUSES = [
   { value: "active", label: "Active" },
@@ -9,16 +8,28 @@ const LOAN_STATUSES = [
 ];
 
 const LoanFormModal = ({ isOpen, onClose, onSubmit, editingLoan, employees }) => {
-  const [formData, setFormData] = useState({
-    employee: editingLoan?.employee || "",
-    total_amount: editingLoan?.total_amount || "",
-    monthly_deduction: editingLoan?.monthly_deduction || "",
-    description: editingLoan?.description || "",
-    status: editingLoan?.status || "active",
-    start_date: editingLoan?.start_date || new Date().toISOString().split("T")[0],
+  const getInitialFormData = (loan) => ({
+    employee: loan?.employee ?? loan?.employee_id ?? "",
+    total_amount: loan?.total_amount ?? "",
+    monthly_deduction: loan?.monthly_deduction ?? "",
+    description: loan?.description ?? "",
+    status: loan?.status ?? "active",
+    start_date: loan?.start_date ? String(loan.start_date).slice(0, 10) : new Date().toISOString().split("T")[0],
   });
+
+  const [formData, setFormData] = useState(() => getInitialFormData(editingLoan));
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+
+  // Sync form when modal opens or editingLoan changes — fixes stale state where
+  // "Add Loan" after "Edit Loan" kept the previous loan's values and prevented saves.
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(getInitialFormData(editingLoan));
+      setErrors({});
+      setSaving(false);
+    }
+  }, [isOpen, editingLoan]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
