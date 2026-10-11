@@ -14,7 +14,7 @@ export function getNotificationRoute(notif) {
 
     case "payment":
       if (orderId) return `/order/detail/${orderId}`;
-      return "/order/payments-list";
+      return "/accounting/payments-list";
 
     case "low_stock":
       return "/inventory/list/overview";

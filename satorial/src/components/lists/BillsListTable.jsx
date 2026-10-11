@@ -79,7 +79,7 @@ const BillsList = () => {
   };
 
   const handleViewDetail = (billId) => {
-    navigate(`/order/bill-detail/${billId}`);
+    navigate(`/accounting/bill-detail/${billId}`);
   };
 
   const handleEditBill = (billId) => {

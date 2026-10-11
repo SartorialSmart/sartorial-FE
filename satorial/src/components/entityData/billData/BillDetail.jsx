@@ -85,7 +85,7 @@ const BillDetail = () => {
         <AlertCircle className="text-red-500 mb-3" size={40} />
         <p className="text-gray-700 font-medium">{error || "Bill not found."}</p>
         <button
-          onClick={() => navigate("/order/bills-list")}
+          onClick={() => navigate("/accounting/bills-list")}
           className="mt-4 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
         >
           Back to Bills
@@ -104,7 +104,7 @@ const BillDetail = () => {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/order/bills-list")}
+              onClick={() => navigate("/accounting/bills-list")}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ArrowLeft size={20} className="text-gray-600" />

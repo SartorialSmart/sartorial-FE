@@ -1,4 +1,4 @@
-import OrderSideABrLayout from "../../components/navs/OrderSideBarLayout";
+import AccountingSideBarLayout from "../../components/navs/AccountingSideBarLayout";
 import VendorCategoryListTable from "../../components/lists/VendorCategoryListTable";
 import ToolbarWithDateFilter_5 from "../../components/toolbars/ToolBarwithDateFilter_5";
 import { useState } from "react";
@@ -6,7 +6,7 @@ import { useState } from "react";
 const VendorCategoryListDisplay = () => {
   const [searchQuery, setSearchQuery] = useState("");
   return (
-    <OrderSideABrLayout>
+    <AccountingSideBarLayout>
       <div className="space-y-6">
         <ToolbarWithDateFilter_5
           searchQuery={searchQuery}
@@ -14,7 +14,7 @@ const VendorCategoryListDisplay = () => {
         />
         <VendorCategoryListTable searchTerm={searchQuery} />
       </div>
-    </OrderSideABrLayout>
+    </AccountingSideBarLayout>
   );
 };
 

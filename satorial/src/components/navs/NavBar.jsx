@@ -12,7 +12,7 @@ import NotificationDetailModal from "../modals/NotificationDetailModal";
 import Avatar from "../avatar/Avatar";
 import LogoutButton from "../buttons/LogoutButton";
 import logo from "../../assets/images/Logo.png";
-import SettingsService from "../../services/settings";
+import { useOrganizationBranding } from "../../hooks/useOrganizationBranding";
 
 const Navbar = () => {
   const { user } = useAuth();
@@ -24,17 +24,13 @@ const Navbar = () => {
   const navHeight = isDashboard ? "h-20" : "h-12";
   const [isOpen, setIsOpen] = useState(false);
   const [detailNotifId, setDetailNotifId] = useState(null);
-  const [orgLogo, setOrgLogo] = useState(null);
+  const { orgLogo, orgName } = useOrganizationBranding();
+  // Logged out -> Sartorial logo. Logged in (org admin or staff) with an
+  // uploaded company logo -> organization logo. Otherwise Sartorial fallback.
+  const brandSrc = orgLogo || logo;
+  const brandAlt = orgLogo ? `${orgName || "Organization"} Logo` : "logo";
   const dropdownRef = useRef(null);
   const bellRef = useRef(null);
-
-  useEffect(() => {
-    if (user?.role?.toLowerCase() === "organization") {
-      SettingsService.Profile.getProfile()
-        .then((data) => setOrgLogo(data?.logo_url || null))
-        .catch(() => {});
-    }
-  }, [user?.role]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -72,9 +68,10 @@ const Navbar = () => {
     <nav className={`flex justify-between items-center ${navPadding} ${navHeight} border-b shadow-sm bg-white`}>
       <div className="flex items-center space-x-1">
         <img
-          src={logo}
-          alt="logo"
-          className={isDashboard ? "h-24 w-auto" : "h-16 w-auto"}
+          src={brandSrc}
+          alt={brandAlt}
+          title={orgLogo ? orgName || brandAlt : brandAlt}
+          className={isDashboard ? "h-24 w-auto max-w-[220px]" : "h-16 w-auto max-w-[180px]"}
           style={{ objectFit: 'contain' }}
         />
       </div>

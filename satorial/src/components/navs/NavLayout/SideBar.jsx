@@ -3,9 +3,15 @@ import PropTypes from "prop-types";
 import { Menu, ChevronLeft, Home } from "lucide-react";
 import LOGO from "../../../assets/images/Logo.png";
 import PATTERN from "../../../assets/images/pattern-1.svg";
+import { useOrganizationBranding } from "../../../hooks/useOrganizationBranding";
 
 const Sidebar = ({ isOpen, toggleSidebar, sidebarItems }) => {
   const location = useLocation();
+  const { orgLogo, orgName } = useOrganizationBranding();
+  // Logged out -> Sartorial logo. Logged in (admin or staff) with an uploaded
+  // company logo -> organization logo. Otherwise fall back to Sartorial.
+  const brandSrc = orgLogo || LOGO;
+  const brandAlt = orgLogo ? `${orgName || "Organization"} Logo` : "Sartorial Logo";
 
   return (
     <div
@@ -17,11 +23,17 @@ const Sidebar = ({ isOpen, toggleSidebar, sidebarItems }) => {
       <div className="flex items-center justify-between mb-6">
         <div className={`flex items-center gap-3 transition-all duration-300 ${!isOpen && "justify-center"}`}>
           <img
-            src={LOGO}
-            alt="Sartorial Logo"
-            className={`transition-all duration-300 ${isOpen ? "h-[72px] w-auto" : "w-10 h-10"}`}
+            src={brandSrc}
+            alt={brandAlt}
+            title={orgLogo ? orgName || brandAlt : brandAlt}
+            className={`transition-all duration-300 ${isOpen ? "h-[72px] w-auto max-w-[180px]" : "w-10 h-10 rounded-md"}`}
             style={{ objectFit: 'contain' }}
           />
+          {isOpen && orgLogo && orgName && (
+            <span className="text-sm font-semibold text-gray-800 truncate max-w-[140px]" title={orgName}>
+              {orgName}
+            </span>
+          )}
         </div>
         <button
           onClick={toggleSidebar}

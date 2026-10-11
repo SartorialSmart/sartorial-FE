@@ -18,6 +18,8 @@ const OrderDashboardDisplay = () => {
     <OrderSideABrLayout>
       <div className="space-y-6">
         <ToolbarWithDateFilter_1 
+          title="Sales and Orders Management"
+          subtitle="Manage and track all sales and customer orders"
           onDateFilterChange={handleDateFilterChange}
         />
         <div className="flex justify-end">

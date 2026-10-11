@@ -1,13 +1,13 @@
-import OrderSideABrLayout from "../../components/navs/OrderSideBarLayout";
+import AccountingSideBarLayout from "../../components/navs/AccountingSideBarLayout";
 import BillDetail from "../../components/entityData/billData/BillDetail";
 
 const BillDetailDisplay = () => {
   return (
-    <OrderSideABrLayout>
+    <AccountingSideBarLayout>
       <div className="space-y-6">
         <BillDetail />
       </div>
-    </OrderSideABrLayout>
+    </AccountingSideBarLayout>
   );
 };
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import OrderSideABrLayout from "../../components/navs/OrderSideBarLayout";
+import AccountingSideBarLayout from "../../components/navs/AccountingSideBarLayout";
 import PaymentsListTable from "../../components/lists/PaymentListTable";
 import ToolbarWithDateFilter_4 from "../../components/toolbars/ToolBarwithDateFilter_4";
 
@@ -25,7 +25,7 @@ const PaymentsListDisplay = () => {
   };
 
   return (
-    <OrderSideABrLayout>
+    <AccountingSideBarLayout>
       <div className="space-y-6">
         <ToolbarWithDateFilter_4
           onSearchChange={handleSearchChange}
@@ -38,7 +38,7 @@ const PaymentsListDisplay = () => {
           customDateRange={customDateRange}
         />
       </div>
-    </OrderSideABrLayout>
+    </AccountingSideBarLayout>
   );
 };
 

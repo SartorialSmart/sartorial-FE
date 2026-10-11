@@ -1,14 +1,14 @@
-import OrderSideABrLayout from "../../components/navs/OrderSideBarLayout";
+import AccountingSideBarLayout from "../../components/navs/AccountingSideBarLayout";
 import VendorsList from "../../components/lists/VendorList";
 
 const VendorListDisplay = () => {
   
   return (
-    <OrderSideABrLayout>
+    <AccountingSideBarLayout>
       <div className="space-y-6">
         <VendorsList />
       </div>
-    </OrderSideABrLayout>
+    </AccountingSideBarLayout>
   );
 };
 

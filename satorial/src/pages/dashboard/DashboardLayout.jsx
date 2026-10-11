@@ -22,6 +22,7 @@ import {
   Sparkles,
   ArrowUpRight,
   ClipboardList,
+  Receipt,
 } from "lucide-react";
 import IconButton from "../../components/buttons/IconButton";
 import { isAdminRole, canViewModule } from "../../utils/permissions";
@@ -34,6 +35,7 @@ import PATTERN_6 from "../../assets/images/pattern-6.svg";
 const VIEW_KEY_MAP = {
   "/client/client-dashboard": "clients",
   "/order/order-dashboard": "orders",
+  "/accounting/bills-list": "billing",
   "/staff/staff-list": "staff",
   "/reports/reports/dashboard": "reports",
   "/expenses/overview": "expenses",
@@ -63,8 +65,8 @@ const getDashboardItems = (stats) => [
     textColor: "text-blue-900"
   },
   {
-    title: "Orders Management",
-    description: "Track and manage all orders",
+    title: "Sales and Orders Management",
+    description: "Track and manage sales and all orders",
     icon: <Archive size={24} />,
     img: PATTERN_2,
     button_link: "/order/order-dashboard",
@@ -73,6 +75,18 @@ const getDashboardItems = (stats) => [
     borderColor: "border-purple-200",
     stats: stats.pendingOrders !== null ? `${stats.pendingOrders} Pending` : "—",
     textColor: "text-purple-900"
+  },
+  {
+    title: "Accounting",
+    description: "Manage payments, bills and vendors",
+    icon: <Receipt size={24} />,
+    img: PATTERN_6,
+    button_link: "/accounting/bills-list",
+    color: "from-emerald-500 to-emerald-600",
+    bgColor: "bg-emerald-500/10",
+    borderColor: "border-emerald-200",
+    stats: "Bills & Vendors",
+    textColor: "text-emerald-900"
   },
   {
     title: "Staff Management",
@@ -322,7 +336,10 @@ const DashboardLayout = () => {
     : allItems.filter(
         (item) =>
           item.button_link === "/order/my-orders" || // staff workspace is always visible to staff
-          canViewModule(user, VIEW_KEY_MAP[item.button_link])
+          (item.button_link === "/accounting/bills-list"
+            // Accounting spans two permission modules: billing + vendors.
+            ? canViewModule(user, "billing") || canViewModule(user, "vendors")
+            : canViewModule(user, VIEW_KEY_MAP[item.button_link]))
       );
 
   return (

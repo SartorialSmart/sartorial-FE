@@ -6,10 +6,14 @@ import LOGO from "../../../assets/images/logo.svg";
 import PATTERN from "../../../assets/images/pattern-1.svg";
 import DFAULT_AVATAR from "../../../assets/images/default_avatar.svg";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useOrganizationBranding } from "../../../hooks/useOrganizationBranding";
 import LogoutButton from "../../buttons/LogoutButton";
 
 const Navigation = ({ sidebarItems }) => {
   const { user } = useAuth();
+  const { orgLogo, orgName } = useOrganizationBranding();
+  const brandSrc = orgLogo || LOGO;
+  const brandAlt = orgLogo ? `${orgName || "Organization"} Logo` : "Sartorial Logo";
   const [isOpen, setIsOpen] = useState(true);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
@@ -28,7 +32,7 @@ const Navigation = ({ sidebarItems }) => {
       >
         <div className="flex items-center justify-between mb-8">
           <div className={`flex items-center gap-3 transition-all duration-300 ${!isOpen && "justify-center"}`}>
-            <img src={LOGO} alt="Sartorial Logo" className={`transition-all duration-300 ${isOpen ? "h-6" : "h-8"}`} />
+            <img src={brandSrc} alt={brandAlt} title={orgLogo ? orgName || brandAlt : brandAlt} className={`transition-all duration-300 ${isOpen ? "h-6 max-w-[160px]" : "h-8"} w-auto`} style={{ objectFit: 'contain' }} />
           </div>
           <button onClick={toggleSidebar} className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">
             <Menu className="w-5 h-5 text-gray-600" />

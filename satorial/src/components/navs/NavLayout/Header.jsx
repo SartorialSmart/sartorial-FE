@@ -11,7 +11,7 @@ import {
 } from "../../../constants/notificationConstants";
 import { getNotificationRoute } from "../../../utils/notificationNavigation";
 import NotificationDetailModal from "../../modals/NotificationDetailModal";
-import SettingsService from "../../../services/settings";
+import { useOrganizationBranding } from "../../../hooks/useOrganizationBranding";
 
 const Header = ({ toggleSidebar }) => {
   const { user, logout } = useAuth();
@@ -19,7 +19,7 @@ const Header = ({ toggleSidebar }) => {
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [isNotifOpen, setNotifOpen] = useState(false);
   const [detailNotifId, setDetailNotifId] = useState(null);
-  const [orgLogo, setOrgLogo] = useState(null);
+  const { orgLogo } = useOrganizationBranding();
 
   const profileRef = useRef(null);
   const notifRef = useRef(null);
@@ -45,14 +45,6 @@ const Header = ({ toggleSidebar }) => {
       markAllAsRead();
     }
   }, [isNotifOpen]);
-
-  useEffect(() => {
-    if (user?.role?.toLowerCase() === "organization") {
-      SettingsService.Profile.getProfile()
-        .then((data) => setOrgLogo(data?.logo_url || null))
-        .catch(() => {});
-    }
-  }, [user?.role]);
 
   const handleLogout = async () => {
     try {

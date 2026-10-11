@@ -1,17 +1,17 @@
-import OrderSideABrLayout from "../../components/navs/OrderSideBarLayout";
+import AccountingSideBarLayout from "../../components/navs/AccountingSideBarLayout";
 import BillsList from "../../components/lists/BillsListTable";
 import ToolbarWithDateFilter_3 from "../../components/toolbars/ToolBarwithDateFilter_3";
 
 const BillsListDisplay = () => {
   
   return (
-    <OrderSideABrLayout>
+    <AccountingSideBarLayout>
       <div className="space-y-6">
         <ToolbarWithDateFilter_3 />
 
         <BillsList />
       </div>
-    </OrderSideABrLayout>
+    </AccountingSideBarLayout>
   );
 };
 

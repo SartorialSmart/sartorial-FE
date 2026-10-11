@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useParams,
 } from "react-router-dom";
 import ProtectedRoute from "../utils/ProtectedRoutes";
 import AdminRoute from "../utils/AdminRoute";
@@ -25,10 +26,10 @@ import ClientDataDisplay from "./pages/clientPages/ClientDataDisplay";
 import OrderDashboardDisplay from "./pages/orderPages/OrderDashboard";
 import OrderListDisplay from "./pages/orderPages/OrderListDisplay";
 import MyOrdersDisplay from "./pages/orderPages/MyOrdersDisplay";
-import BillsListDisplay from "./pages/orderPages/BillsListDisplay";
-import BillDetailDisplay from "./pages/orderPages/BillDetailDisplay";
-import PaymentsListDisplay from "./pages/orderPages/PaymentsListDisplay";
-import VendorCategoryListDisplay from "./pages/orderPages/VendorCategoryListDisplay";
+import BillsListDisplay from "./pages/accountingPages/BillsListDisplay";
+import BillDetailDisplay from "./pages/accountingPages/BillDetailDisplay";
+import PaymentsListDisplay from "./pages/accountingPages/PaymentsListDisplay";
+import VendorCategoryListDisplay from "./pages/accountingPages/VendorCategoryListDisplay";
 import OrderDetailDisplay from "./pages/orderPages/OrderDetailDisplay";
 import EditOrderFormDisplay from "./pages/orderPages/EditOrderFormDisplay";
 
@@ -61,10 +62,10 @@ import InventoryCategoryListDisplay from "./pages/inventories/InventoryCategoryL
 import DispenseInventoryListDisplay from "./pages/inventories/DispenseInventoryListDisplay";
 import DispenseMaterialsDisplay from "./pages/inventories/DispenseMaterialsDisplay";
 import InventoryHistoryListDisplay from "./pages/inventories/InventoryHistoryListDisplay";
-import VendorListDisplay from "./pages/orderPages/VendorListDisplay";
+import VendorListDisplay from "./pages/accountingPages/VendorListDisplay";
 import SubscriptionPanelDisplay from "./pages/subscriptionPages/SubscriptionPanelDisplay";
 import PricingPlansDisplay from "./pages/subscriptionPages/PricingPlansDisplay";
-import AddVendorFormDisplay from "./pages/orderPages/AddVendorFormDisplay";
+import AddVendorFormDisplay from "./pages/accountingPages/AddVendorFormDisplay";
 
 import NotificationsListDisplay from "./pages/notificationPages/NotificationsListDisplay";
 import ProfileSettingsDisplay from "./pages/settingsPages/ProfileSettingsDisplay";
@@ -93,6 +94,7 @@ import Checkout from "./pages/storefront/Checkout";
 const dashboards = [
   "client",
   "order",
+  "accounting",
   "expenses",
   "reports",
   "settings",
@@ -115,16 +117,17 @@ const protectedRoutes = [
 
   { path: "/order/order-dashboard", element: <OrderDashboardDisplay />, perm: { module: "orders", requireView: true } },
   { path: "/order/orders-list", element: <OrderListDisplay />, perm: { module: "orders", requireView: true } },
-  { path: "/order/bills-list", element: <BillsListDisplay />, perm: { module: "billing", requireView: true } },
-  { path: "/order/bill-detail/:billId", element: <BillDetailDisplay />, perm: { module: "billing", requireView: true } },
-  { path: "/order/payments-list", element: <PaymentsListDisplay />, perm: { module: "billing", requireView: true } },
+
+  { path: "/accounting/bills-list", element: <BillsListDisplay />, perm: { module: "billing", requireView: true } },
+  { path: "/accounting/bill-detail/:billId", element: <BillDetailDisplay />, perm: { module: "billing", requireView: true } },
+  { path: "/accounting/payments-list", element: <PaymentsListDisplay />, perm: { module: "billing", requireView: true } },
   {
-    path: "/order/vendor-category-list",
+    path: "/accounting/vendor-category-list",
     element: <VendorCategoryListDisplay />,
     perm: { module: "vendors", requireView: true },
   },
-  { path: "/order/vendor-list", element: <VendorListDisplay />, perm: { module: "vendors", requireView: true } },
-  { path: "/order/vendor/add", element: <AddVendorFormDisplay />, perm: { module: "vendors", action: "create" } },
+  { path: "/accounting/vendor-list", element: <VendorListDisplay />, perm: { module: "vendors", requireView: true } },
+  { path: "/accounting/vendor/add", element: <AddVendorFormDisplay />, perm: { module: "vendors", action: "create" } },
 
   { path: "/order/detail/:orderId", element: <OrderDetailDisplay />, perm: { module: "orders", requireView: true } },
   { path: "/order/edit/:orderId", element: <EditOrderFormDisplay />, perm: { module: "orders", action: "edit" } },
@@ -211,6 +214,21 @@ const protectedRoutes = [
   { path: "/help-centre", element: <GetHelpDisplay /> },
 ];
 
+// Accounting pages moved from /order/* to /accounting/*. These redirects keep
+// old bookmarks, notification links and browser history working.
+const accountingRedirects = [
+  { from: "/order/bills-list", to: "/accounting/bills-list" },
+  { from: "/order/payments-list", to: "/accounting/payments-list" },
+  { from: "/order/vendor-category-list", to: "/accounting/vendor-category-list" },
+  { from: "/order/vendor-list", to: "/accounting/vendor-list" },
+  { from: "/order/vendor/add", to: "/accounting/vendor/add" },
+];
+
+const BillDetailRedirect = () => {
+  const { billId } = useParams();
+  return <Navigate to={`/accounting/bill-detail/${billId}`} replace />;
+};
+
 const App = () => {
   return (
     <ErrorBoundary>
@@ -261,6 +279,27 @@ const App = () => {
           }
           return <Route key={index} path={path} element={wrapped} />;
         })}
+
+        {/* Legacy /order/* accounting URLs -> /accounting/* */}
+        {accountingRedirects.map(({ from, to }, index) => (
+          <Route
+            key={`accounting-redirect-${index}`}
+            path={from}
+            element={
+              <ProtectedRoute>
+                <Navigate to={to} replace />
+              </ProtectedRoute>
+            }
+          />
+        ))}
+        <Route
+          path="/order/bill-detail/:billId"
+          element={
+            <ProtectedRoute>
+              <BillDetailRedirect />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
