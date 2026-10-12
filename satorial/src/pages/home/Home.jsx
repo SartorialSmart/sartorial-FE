@@ -382,10 +382,7 @@ const LandingPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              From client measurements to order delivery, Satorial gives you
-              everything you need to run a professional fashion business.
-              Manage clients, track orders, control inventory, and grow your
-              revenue — all from one powerful dashboard.
+              The all-in-one operating system that powers your fashion business—from first customer interaction to final delivery and everything in between.
             </motion.p>
 
             <motion.div
