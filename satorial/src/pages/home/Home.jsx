@@ -375,14 +375,14 @@ const LandingPage = () => {
                 Manage Your Fashion Business
               </span>
             </motion.h1>
-
+            {/* edits */}
             <motion.p
               className="mt-6 text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              The all-in-one operating system that powers your fashion business—from first customer interaction to final delivery and everything in between.
+              The all-in-one operating system that powers your fashion business—from first customer interaction to final delivery and everything in between. 
             </motion.p>
 
             <motion.div
