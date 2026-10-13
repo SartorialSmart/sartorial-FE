@@ -8,6 +8,7 @@ import googleIcon from "../../assets/images/google-logo.svg";
 import twitterIcon from "../../assets/images/twitter-logo.svg";
 import { extractErrorMessage } from "../../../utils/errorUtils";
 import SuccessModal from "../../components/modals/SuccessModal";
+import { IDLE_LOGOUT_REASON_KEY } from "../../hooks/useIdleLogout";
 
 const Login = () => {
   const { login } = useAuth();
@@ -27,6 +28,30 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [idleMessage, setIdleMessage] = useState("");
+
+  // Surface the idle-timeout logout reason (set by useIdleLogout) so users
+  // understand why they were returned to the login screen.
+  useEffect(() => {
+    let reason = location.state?.reason;
+    if (!reason) {
+      try {
+        reason = sessionStorage.getItem(IDLE_LOGOUT_REASON_KEY);
+      } catch {
+        reason = null;
+      }
+    }
+    if (reason === "idle") {
+      setIdleMessage(
+        "You were logged out due to 15 minutes of inactivity. Please log in again."
+      );
+      try {
+        sessionStorage.removeItem(IDLE_LOGOUT_REASON_KEY);
+      } catch {
+        /* ignore storage errors */
+      }
+    }
+  }, [location]);
 
   // Aggressive state clearing on mount and unmount
   useEffect(() => {
@@ -179,6 +204,14 @@ const Login = () => {
           <h2 className="text-3xl font-bold text-gray-800 mb-6">
             Welcome Back!
           </h2>
+          {idleMessage && (
+            <div
+              role="status"
+              className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+            >
+              {idleMessage}
+            </div>
+          )}
           <form className="space-y-4" onSubmit={handleSubmit} noValidate>
             <div>
               <label className="block text-gray-700 mb-1">Email</label>

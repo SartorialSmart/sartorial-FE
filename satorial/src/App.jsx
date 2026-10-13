@@ -74,6 +74,7 @@ import SettingsStorefrontDisplay from "./pages/settingsPages/SettingsStorefrontD
 import StockMovementHistoryDisplay from "./pages/inventories/StockMovementHistoryDisplay";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
+import IdleLogoutGuard from "./components/auth/IdleLogoutGuard";
 import PlanNoticeGate from "./components/Subscriptions/PlanNoticeGate";
 
 import ProductionDashboardDisplay from "./pages/productionPages/ProductionDashboardDisplay";
@@ -233,6 +234,7 @@ const App = () => {
   return (
     <ErrorBoundary>
     <Router>
+      <IdleLogoutGuard />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<OrganizationRegister />} />
