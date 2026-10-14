@@ -384,6 +384,7 @@ const LandingPage = () => {
             >
               The all-in-one operating system that powers your fashion business—from first customer interaction to final delivery and everything in between. 
             </motion.p>
+            {/* edits */}
 
             <motion.div
               className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
