@@ -7,10 +7,10 @@ import { useOrganizationBranding } from "../../../hooks/useOrganizationBranding"
 
 const Sidebar = ({ isOpen, toggleSidebar, sidebarItems }) => {
   const location = useLocation();
-  const { orgLogo, orgName } = useOrganizationBranding();
+  const { orgLogo, orgName, isBrandingReady } = useOrganizationBranding();
   // Logged out -> Sartorial logo. Logged in (admin or staff) with an uploaded
   // company logo -> organization logo. Otherwise fall back to Sartorial.
-  const brandSrc = orgLogo || LOGO;
+  const brandSrc = orgLogo || (isBrandingReady ? LOGO : null);
   const brandAlt = orgLogo ? `${orgName || "Organization"} Logo` : "Sartorial Logo";
 
   return (
@@ -22,13 +22,20 @@ const Sidebar = ({ isOpen, toggleSidebar, sidebarItems }) => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className={`flex items-center gap-3 transition-all duration-300 ${!isOpen && "justify-center"}`}>
-          <img
-            src={brandSrc}
-            alt={brandAlt}
-            title={orgLogo ? orgName || brandAlt : brandAlt}
-            className={`transition-all duration-300 ${isOpen ? "h-[72px] w-auto max-w-[180px]" : "w-10 h-10 rounded-md"}`}
-            style={{ objectFit: 'contain' }}
-          />
+          {brandSrc ? (
+            <img
+              src={brandSrc}
+              alt={brandAlt}
+              title={orgLogo ? orgName || brandAlt : brandAlt}
+              className={`transition-all duration-300 ${isOpen ? "h-[72px] w-auto max-w-[180px]" : "w-10 h-10 rounded-md"}`}
+              style={{ objectFit: 'contain' }}
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className={`transition-all duration-300 ${isOpen ? "h-[72px] w-[180px]" : "w-10 h-10 rounded-md"}`}
+            />
+          )}
           {isOpen && orgLogo && orgName && (
             <span className="text-sm font-semibold text-gray-800 truncate max-w-[140px]" title={orgName}>
               {orgName}

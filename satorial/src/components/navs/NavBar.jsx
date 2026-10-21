@@ -24,10 +24,10 @@ const Navbar = () => {
   const navHeight = isDashboard ? "h-20" : "h-12";
   const [isOpen, setIsOpen] = useState(false);
   const [detailNotifId, setDetailNotifId] = useState(null);
-  const { orgLogo, orgName } = useOrganizationBranding();
+  const { orgLogo, orgName, isBrandingReady } = useOrganizationBranding();
   // Logged out -> Sartorial logo. Logged in (org admin or staff) with an
   // uploaded company logo -> organization logo. Otherwise Sartorial fallback.
-  const brandSrc = orgLogo || logo;
+  const brandSrc = orgLogo || (isBrandingReady ? logo : null);
   const brandAlt = orgLogo ? `${orgName || "Organization"} Logo` : "logo";
   const dropdownRef = useRef(null);
   const bellRef = useRef(null);
@@ -67,13 +67,20 @@ const Navbar = () => {
   return (
     <nav className={`flex justify-between items-center ${navPadding} ${navHeight} border-b shadow-sm bg-white`}>
       <div className="flex items-center space-x-1">
-        <img
-          src={brandSrc}
-          alt={brandAlt}
-          title={orgLogo ? orgName || brandAlt : brandAlt}
-          className={isDashboard ? "h-24 w-auto max-w-[220px]" : "h-16 w-auto max-w-[180px]"}
-          style={{ objectFit: 'contain' }}
-        />
+        {brandSrc ? (
+          <img
+            src={brandSrc}
+            alt={brandAlt}
+            title={orgLogo ? orgName || brandAlt : brandAlt}
+            className={isDashboard ? "h-24 w-auto max-w-[220px]" : "h-16 w-auto max-w-[180px]"}
+            style={{ objectFit: 'contain' }}
+          />
+        ) : (
+          <div
+            aria-hidden="true"
+            className={isDashboard ? "h-24 w-[220px]" : "h-16 w-[180px]"}
+          />
+        )}
       </div>
 
       <div className="flex items-center space-x-4">

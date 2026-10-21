@@ -27,6 +27,7 @@ import {
 } from "../common/FormComponents";
 import SuccessModal from "../modals/SuccessModal";
 import { saveImageLocally, getLocalImage, saveProfileLocally, getLocalProfile, STORAGE_KEYS } from "../../utils/localImageService";
+import { invalidateOrganizationBranding } from "../../hooks/useOrganizationBranding";
 
 const OrganizationProfile = () => {
   const [loading, setLoading] = useState(false);
@@ -163,6 +164,7 @@ const OrganizationProfile = () => {
         message: "Your organization profile has been updated successfully.",
         buttonText: "Done",
       });
+      invalidateOrganizationBranding();
       fetchProfile();
     } catch (error) {
       console.error("Error updating profile:", error);

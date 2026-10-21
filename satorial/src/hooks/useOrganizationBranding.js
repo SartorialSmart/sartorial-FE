@@ -3,6 +3,14 @@ import { useAuth } from "../contexts/AuthContext";
 import SettingsService from "../services/settings";
 import { getLogoUrl } from "../utils/localImageService";
 
+const BRANDING_CACHE_TTL_MS = 5 * 60 * 1000;
+const brandingCache = new Map();
+const inFlightRequests = new Map();
+
+const toLogoSrc = (logo) => (logo ? getLogoUrl(logo) || logo : null);
+
+const getUserKey = (user) => user?.email || user?.id || null;
+
 /**
  * Extract an embedded organization logo / name from the authenticated user
  * payload (GET /users/me/). Field names vary across backend revisions, so
@@ -29,6 +37,44 @@ const getEmbeddedBranding = (user) => {
   return { logo, name };
 };
 
+const buildSnapshot = (user) => {
+  if (!user) return { logo: null, name: null, ready: true };
+
+  const cached = brandingCache.get(getUserKey(user));
+  const embedded = getEmbeddedBranding(user);
+
+  return {
+    logo: cached?.logo || toLogoSrc(embedded.logo),
+    name: cached?.name || embedded.name || null,
+    ready: Boolean(cached || embedded.logo),
+  };
+};
+
+const fetchBranding = (userKey) => {
+  if (inFlightRequests.has(userKey)) return inFlightRequests.get(userKey);
+
+  const request = SettingsService.Profile.getProfile()
+    .then((data) => {
+      const entry = {
+        logo: toLogoSrc(data?.logo_url || data?.logo || null),
+        name: data?.business_name || null,
+        fetchedAt: Date.now(),
+      };
+      brandingCache.set(userKey, entry);
+      return entry;
+    })
+    .finally(() => {
+      inFlightRequests.delete(userKey);
+    });
+
+  inFlightRequests.set(userKey, request);
+  return request;
+};
+
+export const invalidateOrganizationBranding = () => {
+  brandingCache.clear();
+};
+
 /**
  * Single source of truth for organization branding in logged-in chrome.
  *
@@ -37,46 +83,47 @@ const getEmbeddedBranding = (user) => {
  *   business_name when one exists, otherwise nulls (caller falls back to the
  *   Sartorial logo).
  *
- * The fresh logo comes from GET /settings/profile/ so a newly uploaded logo
- * appears without re-login. Staff accounts that lack profile-read permission
- * simply keep whatever branding was embedded in the auth payload.
+ * The result is cached across hook instances and hydrated synchronously from
+ * the auth payload, so remounting layouts do not flash the Sartorial logo
+ * before the organization logo. `isBrandingReady` stays false while the
+ * organization logo is still being resolved, letting callers render a neutral
+ * placeholder instead of the wrong logo.
  */
 export const useOrganizationBranding = () => {
   const { user } = useAuth();
-  const [orgLogo, setOrgLogo] = useState(null);
-  const [orgName, setOrgName] = useState(null);
-
-  const userKey = user?.email || user?.id || null;
+  const userKey = getUserKey(user);
+  const [branding, setBranding] = useState(() => buildSnapshot(user));
 
   useEffect(() => {
     let cancelled = false;
 
     if (!user) {
-      setOrgLogo(null);
-      setOrgName(null);
+      setBranding({ logo: null, name: null, ready: true });
       return undefined;
     }
 
     const embedded = getEmbeddedBranding(user);
-    if (embedded.logo) setOrgLogo(getLogoUrl(embedded.logo) || embedded.logo);
-    else setOrgLogo(null);
-    if (embedded.name) setOrgName(embedded.name);
-    else setOrgName(null);
+    setBranding(buildSnapshot(user));
+
+    const cached = brandingCache.get(userKey);
+    const cacheIsFresh =
+      cached && Date.now() - cached.fetchedAt < BRANDING_CACHE_TTL_MS;
+    if (cacheIsFresh) return undefined;
 
     // Refresh from the organization profile so logo updates propagate.
     // Any authenticated member (admin or staff) may call this; a 403/404 for
     // restricted staff roles is ignored and the embedded values are kept.
-    SettingsService.Profile.getProfile()
-      .then((data) => {
-        if (cancelled || !data) return;
-        const freshLogo = data.logo_url || data.logo || null;
-        if (freshLogo) setOrgLogo(getLogoUrl(freshLogo) || freshLogo);
-        else if (!embedded.logo) setOrgLogo(null);
-        const freshName = data.business_name || null;
-        if (freshName) setOrgName(freshName);
+    fetchBranding(userKey)
+      .then((entry) => {
+        if (cancelled || !entry) return;
+        setBranding({
+          logo: entry.logo || toLogoSrc(embedded.logo),
+          name: entry.name || embedded.name || null,
+          ready: true,
+        });
       })
       .catch(() => {
-        // Keep embedded branding (or null -> Sartorial fallback).
+        if (!cancelled) setBranding((prev) => ({ ...prev, ready: true }));
       });
 
     return () => {
@@ -85,7 +132,12 @@ export const useOrganizationBranding = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userKey, !!user]);
 
-  return { orgLogo, orgName, hasOrgLogo: Boolean(orgLogo) };
+  return {
+    orgLogo: branding.logo,
+    orgName: branding.name,
+    hasOrgLogo: Boolean(branding.logo),
+    isBrandingReady: branding.ready,
+  };
 };
 
 export default useOrganizationBranding;

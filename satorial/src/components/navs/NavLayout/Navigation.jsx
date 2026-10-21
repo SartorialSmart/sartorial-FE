@@ -11,8 +11,8 @@ import LogoutButton from "../../buttons/LogoutButton";
 
 const Navigation = ({ sidebarItems }) => {
   const { user } = useAuth();
-  const { orgLogo, orgName } = useOrganizationBranding();
-  const brandSrc = orgLogo || LOGO;
+  const { orgLogo, orgName, isBrandingReady } = useOrganizationBranding();
+  const brandSrc = orgLogo || (isBrandingReady ? LOGO : null);
   const brandAlt = orgLogo ? `${orgName || "Organization"} Logo` : "Sartorial Logo";
   const [isOpen, setIsOpen] = useState(true);
   const [isProfileOpen, setProfileOpen] = useState(false);
@@ -32,7 +32,11 @@ const Navigation = ({ sidebarItems }) => {
       >
         <div className="flex items-center justify-between mb-8">
           <div className={`flex items-center gap-3 transition-all duration-300 ${!isOpen && "justify-center"}`}>
-            <img src={brandSrc} alt={brandAlt} title={orgLogo ? orgName || brandAlt : brandAlt} className={`transition-all duration-300 ${isOpen ? "h-6 max-w-[160px]" : "h-8"} w-auto`} style={{ objectFit: 'contain' }} />
+            {brandSrc ? (
+              <img src={brandSrc} alt={brandAlt} title={orgLogo ? orgName || brandAlt : brandAlt} className={`transition-all duration-300 ${isOpen ? "h-6 max-w-[160px]" : "h-8"} w-auto`} style={{ objectFit: 'contain' }} />
+            ) : (
+              <div aria-hidden="true" className={`transition-all duration-300 ${isOpen ? "h-6 w-[160px]" : "h-8 w-8"}`} />
+            )}
           </div>
           <button onClick={toggleSidebar} className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">
             <Menu className="w-5 h-5 text-gray-600" />
