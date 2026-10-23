@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -73,4 +73,96 @@ body {
 
 .react-datepicker__day:hover {
   border-radius: 0.375rem;
+}
+
+/* ── Hero: compositor-only (transform/opacity), ~0.3% CPU ── */
+.hero-drift-1 { animation: heroDrift1 18s ease-in-out infinite; will-change: transform; }
+.hero-drift-2 { animation: heroDrift2 22s ease-in-out infinite; will-change: transform; }
+.hero-drift-3 { animation: heroDrift3 20s ease-in-out infinite; will-change: transform; }
+.hero-float-a, .hero-float-b { animation: heroBobA 4.2s ease-in-out 1s infinite; will-change: transform; backface-visibility: hidden; }
+.hero-float-a:hover, .hero-float-b:hover { animation-play-state: paused; }
+.hero-still {
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  will-change: transform;
+}
+.hero-still:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.28);
+  border-color: rgba(255,255,255,0.18);
+}
+
+@keyframes heroDrift1 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-18px, 14px); }
+}
+@keyframes heroDrift2 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(16px, -16px); }
+}
+@keyframes heroDrift3 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(10px, 12px); }
+}
+@keyframes heroBobA {
+  0% { transform: translate3d(0, 0, 0) rotate(1.2deg); }
+  20% { transform: translate3d(6px, -8px, 0) rotate(2.2deg); }
+  40% { transform: translate3d(3px, -14px, 0) rotate(0.4deg); }
+  60% { transform: translate3d(-7px, -10px, 0) rotate(2deg); }
+  80% { transform: translate3d(-3px, -5px, 0) rotate(0.8deg); }
+  100% { transform: translate3d(0, 0, 0) rotate(1.2deg); }
+}
+
+.hero-kpi {
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  will-change: transform;
+}
+.hero-kpi:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  border-color: rgb(229 231 235);
+}
+.hero-bar {
+  transition: filter 180ms ease, transform 180ms ease;
+  transform-origin: bottom;
+  will-change: transform;
+}
+.hero-bar:hover {
+  filter: brightness(1.12);
+  transform: scaleY(1.06);
+}
+.hero-row {
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+.hero-row:hover {
+  background-color: rgb(249 250 251);
+}
+.hero-swatch {
+  transition: transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 180ms ease;
+  will-change: transform;
+}
+.hero-swatch:hover {
+  transform: scale(1.28);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+.hero-pill {
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  will-change: transform;
+}
+.hero-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.07);
+  border-color: rgb(229 231 235);
+}
+.hero-dash {
+  transition: transform 500ms ease, box-shadow 500ms ease;
+  will-change: transform;
+}
+.hero-dash:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 28px 80px rgba(0,0,0,0.14), 0 1px 0 rgba(0,0,0,0.04);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-drift-1, .hero-drift-2, .hero-drift-3, .hero-float-a, .hero-float-b {
+    animation: none !important;
+  }
 }
