@@ -111,7 +111,7 @@ Production (make clothes) ──size + photo──▶ Inventory (finished stock)
 1. Log in as **Organization**.
 2. Go to **Settings → Storefront** (`/settings/storefront`). Alias `/store/settings` also works.
 3. You will see **Create your storefront** card if you have no store yet.
-   - `Store name` — e.g. “Ada’s Atelier” (required).
+   - `Store Name` — e.g. “Ada’s Atelier” (required).
    - `Slug (URL)` — auto-filled from name as `adas-atelier` (lowercase + hyphens). You can edit. Reserved words like `api`, `admin`, `store`, `www` are blocked (`ecommerce/models/store.py:9`).
    - `Currency` — NGN / USD / GHS.
    - `Description` — short what you sell.

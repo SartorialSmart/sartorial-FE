@@ -298,7 +298,7 @@ const StoreSettings = () => {
 
         <Card title="Create your storefront">
           <Form form={createForm} layout="vertical" onFinish={handleCreate} onValuesChange={handleCreateValuesChange}>
-            <Form.Item name="store_name" label="Store name" rules={[{ required: true }]}>
+            <Form.Item name="store_name" label="Store Name" rules={[{ required: true }]}>
               <Input placeholder="My Fashion Store" autoFocus />
             </Form.Item>
             <Form.Item
@@ -353,7 +353,7 @@ const StoreSettings = () => {
           width={560}
         >
           <Form form={createForm} layout="vertical" onFinish={handleCreate} onValuesChange={handleCreateValuesChange}>
-            <Form.Item name="store_name" label="Store name" rules={[{ required: true }]}>
+            <Form.Item name="store_name" label="Store Name" rules={[{ required: true }]}>
               <Input placeholder="My Fashion Store" autoFocus />
             </Form.Item>
             <Form.Item name="store_slug" label="Slug (URL)">
@@ -414,7 +414,7 @@ const StoreSettings = () => {
             }
           >
             <Form form={editForm} layout="vertical" onFinish={handleUpdate} onValuesChange={handleEditValuesChange}>
-              <Form.Item name="store_name" label="Store name" rules={[{ required: true }]}>
+              <Form.Item name="store_name" label="Store Name" rules={[{ required: true }]}>
                 <Input />
               </Form.Item>
               <Form.Item
