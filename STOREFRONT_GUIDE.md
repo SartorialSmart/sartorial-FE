@@ -186,7 +186,7 @@ npm run build  # satorial/dist — 6676 modules expected
 
 1. **Sign in** as `Organization`.
 2. **Sidebar → Settings → Storefront** (`/settings/storefront`). This is the correct place — alias `/store/settings` also works but Settings is canonical. `satorial/src/components/navs/SettingsSideBarLayout.jsx:19` adds the icon.
-3. **Create form** (`satorial/src/pages/dashboard/store/StoreSettings.jsx:36`): `Store name` (e.g. “Ada’s Atelier”), optional `Slug` (auto slugifies `store_name` if blank; `ecommerce/models/store.py:90` loop ensures uniqueness; reserved `api, admin, store, www, cname` blocked), `Currency` (NGN/USD/GHS), `Description`. Click **Create store**. One store per org initially (enforced `StoreAdminAPIView.post`).
+3. **Create form** (`satorial/src/pages/dashboard/store/StoreSettings.jsx:36`): `Store Name` (e.g. “Ada’s Atelier”), optional `Slug` (auto slugifies `store_name` if blank; `ecommerce/models/store.py:90` loop ensures uniqueness; reserved `api, admin, store, www, cname` blocked), `Currency` (NGN/USD/GHS), `Description`. Click **Create store**. One store per org initially (enforced `StoreAdminAPIView.post`).
 4. You now have: Path `https://sartorialsmart.com/store/<slug>` and Subdomain `https://<slug>.sartorialsmart.com` active immediately — no DNS needed. Test: open `https://<slug>.sartorialsmart.com` — `StoreResolutionMiddleware` will resolve `sub` before hitting DB.
 
 Manage later under **Dashboard → Ecommerce Storefront** card (`satorial/src/pages/dashboard/DashboardLayout.jsx:111`) or Settings.
