@@ -9,6 +9,7 @@ import StaffService from "../../services/staffServices/StaffService";
 import ExpensesService from "../../services/expensesServices/ExpensesService";
 import InventoryService from "../../services/InventoryService";
 import ProductionService from "../../services/ProductionService";
+import EcommerceService from "../../services/EcommerceService";
 import {
   HelpCircle,
   Archive,
@@ -157,7 +158,7 @@ const getDashboardItems = (stats) => [
     color: "from-fuchsia-500 to-pink-600",
     bgColor: "bg-pink-500/10",
     borderColor: "border-pink-200",
-    stats: "Store + Sync",
+    stats: stats.storeProducts !== null ? `${stats.storeProducts} Products` : "—",
     textColor: "text-pink-900"
   },
   {
@@ -200,6 +201,7 @@ const DashboardLayout = () => {
     expenses: null,
     inventoryItems: null,
     productionOrders: null,
+    storeProducts: null,
     subscriptionStatus: null,
   });
 
@@ -246,9 +248,10 @@ const DashboardLayout = () => {
         ExpensesService.getExpenseSummary(),
         InventoryService.listInventory(),
         ProductionService.listOrders(),
+        EcommerceService.listStores(),
       ]);
 
-      const [clientsRes, ordersRes, staffRes, expensesRes, inventoryRes, productionRes] = results;
+      const [clientsRes, ordersRes, staffRes, expensesRes, inventoryRes, productionRes, storesRes] = results;
 
       const clientCount = clientsRes.status === "fulfilled"
         ? (clientsRes.value?.total_clients ?? clientsRes.value?.count ?? null)
@@ -276,6 +279,26 @@ const DashboardLayout = () => {
         ? (Array.isArray(productionRes.value) ? productionRes.value.length : productionRes.value?.count ?? null)
         : null;
 
+      let storeProductCount = null;
+      if (storesRes.status === "fulfilled") {
+        const rawStores = storesRes.value;
+        const stores = Array.isArray(rawStores)
+          ? rawStores
+          : rawStores?.results || rawStores?.data || rawStores?.stores || (rawStores?.store_slug ? [rawStores] : []);
+        if (stores[0]?.id) {
+          const productsRes = await Promise.allSettled([EcommerceService.listProducts({ store: stores[0].id })]);
+          if (productsRes[0].status === "fulfilled") {
+            const rawProducts = productsRes[0].value;
+            const products = Array.isArray(rawProducts)
+              ? rawProducts
+              : rawProducts?.results || rawProducts?.data || [];
+            storeProductCount = products.length;
+          }
+        } else {
+          storeProductCount = 0;
+        }
+      }
+
       setStats({
         clients: clientCount,
         pendingOrders,
@@ -283,6 +306,7 @@ const DashboardLayout = () => {
         expenses: totalExpenses,
         inventoryItems: inventoryCount,
         productionOrders: productionCount,
+        storeProducts: storeProductCount,
         subscriptionStatus: null,
       });
     };
